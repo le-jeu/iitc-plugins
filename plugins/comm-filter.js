@@ -12,7 +12,116 @@
 //5) add per agent total MUs created in the backlog
 //6) the #6 answer
 
-// replace chat functions
+let renderPortal = function (portal) {
+  const lat = portal.latE6/1E6, lng = portal.lngE6/1E6;
+  const perma = window.makePermalink([lat,lng]);
+  const js = 'window.selectPortalByLatLng('+lat+', '+lng+');return false';
+  return '<a onclick="'+js+'"'
+    + ' title="'+portal.address+'"'
+    + ' href="'+perma+'" class="help">'
+    + portal.name
+    + '</a>';
+}
+
+let renderAtPlayer = function (player) {
+  const name = player.plain.slice(1);
+  const thisToPlayer = name == window.PLAYER.nickname;
+  const spanClass = thisToPlayer ? "pl_nudge_me" : (player.team + " pl_nudge_player");
+  return $('<div/>').html($('<span/>')
+                    .attr('class', spanClass)
+                    .attr('onclick',"window.chat.nicknameClicked(event, '"+name+"')")
+                    .text('@' + name)).html();
+}
+
+let renderMarkupEntity = function (ent) {
+  if (ent[0] == 'PORTAL')
+    return renderPortal(ent[1]);
+  if (ent[0] == 'AT_PLAYER')
+    return renderAtPlayer(ent[1]);
+  if (ent[0] == 'TEXT')
+    return $('<div/>').text(ent[1].plain).html().autoLink();
+  return $('<div/>').text(ent[0]+':<'+ent[1].plain+'>').html();
+}
+
+let compareLog = function (l1, l2) {
+  let d1 = l1[4];
+  let d2 = l2[4];
+  if (d1.time != d2.time)
+    return d1.time - d2.time;
+  if (d1.player.name != d2.player.name)
+    return d1.player.name.localeCompare(d2.player.name);
+  if (d1.type != d2.type)
+    return d1.type.localeCompare(d2.type);
+  if (d1.portal) {
+    if (d1.portal.latE6 != d2.portal.latE6)
+      return d1.portal.latE6 - d2.portal.latE6;
+    return d1.portal.lngE6 - d2.portal.lngE6;
+  }
+  if (d1.from) {
+    if (d1.from.latE6 != d2.from.latE6)
+      return d1.from.latE6 - d2.from.latE6;
+    if (d1.from.lngE6 != d2.from.lngE6)
+      return d1.from.lngE6 - d2.from.lngE6;
+    if (d1.to.latE6 != d2.to.latE6)
+      return d1.to.latE6 - d2.to.latE6;
+    return d1.to.lngE6 - d2.to.lngE6;
+  }
+  return 0;
+}
+
+let renderVirus = function (virus) {
+  return '<span style=\"color: #f88; background-color: #500;\">[virus]<\/span> destroyed ' + virus.virusCount + ' resonators on ' + renderPortal(virus.portal);
+}
+
+let findVirus = function (logs) {
+  let virus = new Map();
+  let hide = new Set();
+  let last_data = {};
+  let amount = 0;
+  for (const log of logs) {
+    if (log.type != 'destroy resonator')
+      continue;
+    if (log.time != last_data.time
+        || log.player.name != last_data.player.name
+        || log.portal.latE6 != last_data.portal.latE6
+        || log.portal.lngE6 != last_data.portal.lngE6) {
+      last_data = log;
+      log.virus = false;
+      amount = 1;
+    }
+    else {
+      amount += 1;
+      log.virus = last_data.hash;
+      last_data.virus = true;
+      last_data.virusCount = amount;
+      last_data.virusMsg = window.chat.renderMsg(
+        renderVirus(last_data),
+        last_data.player.name,
+        last_data.time,
+        last_data.player.team === 'RESISTANCE' ? TEAM_RES : TEAM_ENL,
+        last_data.alert,
+        false
+      );
+    }
+  }
+}
+
+let computeMUs = function (logs) {
+  let agents = new Map();
+  let sum = 0;
+  for (const log of logs) {
+    if (log.type == 'field') {
+      let tot = agents.get(log.player.name, 0);
+      tot += log.mus;
+      agents.set(log.player.name, tot);
+      sum += log.mus;
+      log.totalMUs = {
+        agent: tot,
+        all: sum
+      }
+    }
+  }
+}
 
 window.chat.writeDataToHash = function(newData, storageHash, isPublicChannel, isOlderMsgs) {
   $.each(newData.result, function(ind, json) {
@@ -32,6 +141,7 @@ window.chat.writeDataToHash = function(newData, storageHash, isPublicChannel, is
     if (storageHash.newestTimestamp === -1 || storageHash.newestTimestamp < time) storageHash.newestTimestamp = time;
 
     let data = {
+      hash: json[0],
       public: isPublic,
       secure: isSecure,
       alert: msgAlert,
@@ -101,6 +211,8 @@ window.chat.writeDataToHash = function(newData, storageHash, isPublicChannel, is
       else if (markup[1][1].plain.search('destroyed a Control Field') != -1) {
         data.type = 'destroy field';
         data.portal = portals[0];
+        if (numbers.length > 0)
+          data.mus = numbers[0];
       }
       else if (markup[1][1].plain.search('destroyed a Resonator') != -1) {
         data.type = 'destroy resonator';
@@ -115,8 +227,6 @@ window.chat.writeDataToHash = function(newData, storageHash, isPublicChannel, is
         data.type = 'link';
         data.from = portals[0];
         data.to = portals[1];
-        if (numbers.length > 0)
-          data.mus = numbers[0];
       }
     }
 
@@ -178,37 +288,6 @@ window.chat.writeDataToHash = function(newData, storageHash, isPublicChannel, is
         data.markup = markup;
     }
 
-    let renderPortal = function (portal) {
-      const lat = portal.latE6/1E6, lng = portal.lngE6/1E6;
-      const perma = window.makePermalink([lat,lng]);
-      const js = 'window.selectPortalByLatLng('+lat+', '+lng+');return false';
-      return '<a onclick="'+js+'"'
-        + ' title="'+portal.address+'"'
-        + ' href="'+perma+'" class="help">'
-        + portal.name
-        + '</a>';
-    }
-
-    let renderAtPlayer = function (player) {
-      const name = player.plain.slice(1);
-      const thisToPlayer = name == window.PLAYER.nickname;
-      const spanClass = thisToPlayer ? "pl_nudge_me" : (player.team + " pl_nudge_player");
-      return $('<div/>').html($('<span/>')
-                        .attr('class', spanClass)
-                        .attr('onclick',"window.chat.nicknameClicked(event, '"+name+"')")
-                        .text('@' + name)).html();
-    }
-
-    let renderMarkupEntity = function (ent) {
-      if (ent[0] == 'PORTAL')
-        return renderPortal(ent[1]);
-      if (ent[0] == 'AT_PLAYER')
-        return renderAtPlayer(ent[1]);
-      if (ent[0] == 'TEXT')
-        return $('<div/>').text(ent[1].plain).html().autoLink();
-      return $('<div/>').text(ent[0]+':<'+ent[1].plain+'>').html();
-    }
-
     //NOTE: these two are redundant with the above two tests in place - but things have changed...
     //from the server, private channel messages are flagged with a SECURE string '[secure] ', and appear in
     //both the public and private channels
@@ -252,7 +331,6 @@ window.chat.writeDataToHash = function(newData, storageHash, isPublicChannel, is
       msg = 'created first field';
     else msg = (data.markup || markup).map(renderMarkupEntity).join(' ');
 
-
     // format: timestamp, autogenerated, HTML message
     storageHash.data[json[0]] = [
       json[1],
@@ -263,6 +341,13 @@ window.chat.writeDataToHash = function(newData, storageHash, isPublicChannel, is
     ];
 
   });
+
+  let vals = $.map(storageHash.data, function(v, k) { return [v]; });
+  vals = vals.sort(compareLog);
+
+  let sortedData = vals.map(e => e[4]);
+  findVirus(sortedData);
+  computeMUs(sortedData);
 }
 
 window.unixTimeToHHmmss = function(time) {
@@ -296,6 +381,37 @@ window.chat.renderMsg = function(msg, nick, time, team, msgToPlayer, systemNarro
   var i = ['<span class="invisep">&lt;</span>', '<span class="invisep">&gt;</span>'];
   return '<tr><td>'+t+'</td><td>'+i[0]+'<mark class="nickname" ' + s + '>'+ nick+'</mark>'+i[1]+'</td><td>'+msg+'</td></tr>';
 }
+
+window.chat.renderData = function(data, element, likelyWereOldMsgs) {
+  var elm = $('#'+element);
+  if(elm.is(':hidden')) return;
+
+  // discard guids and sort old to new
+//TODO? stable sort, to preserve server message ordering? or sort by GUID if timestamps equal?
+  var vals = $.map(data, function(v, k) { return [v]; });
+  vals = vals.sort(compareLog);
+
+  // render to string with date separators inserted
+  var msgs = '';
+  var prevTime = null;
+  $.each(vals, function(ind, msg) {
+    var nextTime = new Date(msg[0]).toLocaleDateString();
+    if(prevTime && prevTime !== nextTime)
+      msgs += chat.renderDivider(nextTime);
+    if (msg[4].virus) {
+      if (msg[4].virusMsg)
+        msgs += msg[4].virusMsg
+    }
+    else
+      msgs += msg[2];
+    prevTime = nextTime;
+  });
+
+  var scrollBefore = scrollBottom(elm);
+  elm.html('<table>' + msgs + '</table>');
+  chat.keepScrollPosition(elm, scrollBefore, likelyWereOldMsgs);
+}
+
 
 window.plugin.commFilter = function () {};
 
