@@ -46,6 +46,10 @@ let renderMarkupEntity = function (ent) {
 let compareLog = function (l1, l2) {
   let d1 = l1[4];
   let d2 = l2[4];
+  return compareLogData(d1, d2);
+};
+
+let compareLogData = function (d1, d2) {
   if (d1.time != d2.time)
     return d1.time - d2.time;
   if (d1.player.name != d2.player.name)
@@ -82,9 +86,7 @@ let findVirus = function (logs) {
     if (log.type != 'destroy resonator')
       continue;
     if (log.time != last_data.time
-        || log.player.name != last_data.player.name
-        || log.portal.latE6 != last_data.portal.latE6
-        || log.portal.lngE6 != last_data.portal.lngE6) {
+        || compareLogData(log, last_data) != 0) {
       last_data = log;
       log.virus = false;
       amount = 1;
@@ -111,7 +113,7 @@ let computeMUs = function (logs) {
   let sum = 0;
   for (const log of logs) {
     if (log.type == 'field') {
-      let tot = agents.get(log.player.name, 0);
+      let tot = agents.get(log.player.name) || 0;
       tot += log.mus;
       agents.set(log.player.name, tot);
       sum += log.mus;
@@ -119,6 +121,15 @@ let computeMUs = function (logs) {
         agent: tot,
         all: sum
       }
+      log.MUMsg = window.chat.renderMsg(
+        'created a field from '+ renderPortal(log.portal) + ' +' + log.mus + 'MUs'
+        + ' (' + tot.toLocaleString('en-US') + '/' + sum.toLocaleString('en-US') + ')',
+        log.player.name,
+        log.time,
+        log.player.team === 'RESISTANCE' ? TEAM_RES : TEAM_ENL,
+        log.alert,
+        false
+      );
     }
   }
 }
@@ -308,9 +319,9 @@ window.chat.writeDataToHash = function(newData, storageHash, isPublicChannel, is
     else if (data.type == 'fracker')
       msg = 'deployed a Fracker on ' + renderPortal(data.portal);
     else if (data.type == 'deploy')
-      msg = 'deployed a Resonator on ' + renderPortal(data.portal);
+      msg = 'deployed a resonator on ' + renderPortal(data.portal);
     else if (data.type == 'destroy resonator')
-      msg = 'destroyed a Resonator on ' + renderPortal(data.portal);
+      msg = 'destroyed a resonator on ' + renderPortal(data.portal);
     else if (data.type == 'field')
       msg = 'created a field from ' + renderPortal(data.portal) + ' +' + data.mus + 'MUs';
     else if (data.type == 'destroy field')
@@ -402,6 +413,8 @@ window.chat.renderData = function(data, element, likelyWereOldMsgs) {
       if (msg[4].virusMsg)
         msgs += msg[4].virusMsg
     }
+    else if (msg[4].type == 'field')
+      msgs += msg[4].MUMsg;
     else
       msgs += msg[2];
     prevTime = nextTime;
