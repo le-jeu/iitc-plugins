@@ -1,8 +1,12 @@
-// @author         udnp
+// @author         jaiperdu
 // @name           COMM Filter
 // @category       COMM
-// @version        0.5.6
+// @version        0.1.0
 // @description    COMM Filter
+
+/*
+Re-write from https://github.com/udnp/iitc-plugins/
+*/
 
 //todo list
 //2) add fracker as a filter
