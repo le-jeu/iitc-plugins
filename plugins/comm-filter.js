@@ -4,7 +4,7 @@
 // @version        0.5.6
 // @description    COMM Filter
 
-//Naf update
+//todo list
 //2) add fracker as a filter
 //3) add virus  filter
 //4) add checkable filtering for all/faction/alert
@@ -343,7 +343,7 @@ window.chat.writeDataToHash = function(newData, storageHash, isPublicChannel, is
     storageHash.data[json[0]] = [
       json[1],
       data.type == 'chat',
-      chat.renderMsg(prefix + msg, data.player.name, data.time, data.player.team === 'RESISTANCE' ? TEAM_RES : TEAM_ENL, data.alert, systemNarrowcast),
+      chat.renderMsg(prefix + msg, data.player.name, data.time, data.player.team === 'RESISTANCE' ? TEAM_RES : TEAM_ENL, data.type == 'chat' && data.alert, systemNarrowcast),
       data.player.name,
       data
     ];
@@ -424,7 +424,5 @@ window.chat.renderData = function(data, element, likelyWereOldMsgs) {
 
 
 window.plugin.commFilter = function () {};
-
-
 
 var setup = function() {};
