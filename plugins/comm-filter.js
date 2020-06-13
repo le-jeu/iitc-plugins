@@ -5,12 +5,9 @@
 // @description    COMM Filter
 
 //Naf update
-//1) add inlined total MUs created in the backlog
 //2) add fracker as a filter
-//3) add virus detection and as a filter
+//3) add virus  filter
 //4) add checkable filtering for all/faction/alert
-//5) add per agent total MUs created in the backlog
-//6) the #6 answer
 
 let renderPortal = function (portal) {
   const lat = portal.latE6/1E6, lng = portal.lngE6/1E6;
