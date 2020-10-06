@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Default base maps with labels above fields
 // @category       Map Tiles
-// @version        0.2.0
+// @version        0.2.1
 // @description    Print labels as an overlay of intel layer
 
 
@@ -52,9 +52,9 @@ window.plugin.labelsLayer.addLayer = function() {
         styles: [
             { featureType:"all", elementType:"all",
               stylers: [{visibility:"on"}, {hue:"#131c1c"}, {saturation:"-50"}, {invert_lightness:true}] },
-            { featureType:"all", elementType:"geometry",
-              stylers: [{visibility:"off"}] },
+            { featureType:"all", elementType:"geometry", stylers: [{visibility:"off"}] },
             { featureType:"poi", stylers:[{visibility:"off"}]},
+            { featureType:"transit", elementType:"all", stylers:[{visibility:"off"}] }
           ],
         pane: 'labels'
       })
