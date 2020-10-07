@@ -1,24 +1,22 @@
 // @author         jaiperdu
 // @name           Default base maps with labels above fields
 // @category       Map Tiles
-// @version        0.2.1
+// @version        0.2.2
 // @description    Print labels as an overlay of intel layer
 
 
 // use own namespace for plugin
 window.plugin.labelsLayer = function() {};
 
-window.plugin.labelsLayer.addLayer = function() {
+window.plugin.labelsLayer.setup = function() {
+  $('<style>').html('\
+    .leaflet-pane.leaflet-labels-pane { z-index: 500; pointer-events: none }\
+  ').appendTo('head');
+
   const baseLayers = {};
 
   // create panes for labels
-  const labelPane = window.map.createPane('labels');
-
-  // This pane is above links/fields
-  labelPane.style.zIndex = 500;
-
-  // Layers in this pane are non-interactive and do not obscure mouse/touch events
-  labelPane.style.pointerEvents = 'none';
+  window.map.createPane('labels');
 
   const cartoAttr = '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>';
   const cartoUrl = 'https://{s}.basemaps.cartocdn.com/{theme}/{z}/{x}/{y}.png';
@@ -71,4 +69,4 @@ window.plugin.labelsLayer.addLayer = function() {
   window.layerChooser._update();
 };
 
-var setup =  window.plugin.labelsLayer.addLayer;
+var setup =  window.plugin.labelsLayer.setup;
