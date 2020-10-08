@@ -1,7 +1,7 @@
 // @author         jaiperdu
-// @name           Portal pictures
+// @name           Portals pictures
 // @category       Info
-// @version        0.1.0
+// @version        0.1.1
 // @description    Show portal pictures in a dialog
 
 // use own namespace for plugin
@@ -28,8 +28,26 @@ window.plugin.portalPictures.showDialog = function() {
     }
   }
 
+  const container = document.createElement('div');
+  container.style.maxWidth = "1000px";
+
+  const filter = document.createElement('input');
+  filter.type = 'text';
+  filter.addEventListener('input', function(ev) {
+    ev.preventDefault();
+    const f = ev.target.value.toLowerCase();
+    for (const n of document.querySelectorAll('.portal-pictures-image')) {
+      const title = n.title.toLowerCase();
+      if (title.includes(f))
+        n.style.display = 'initial';
+      else
+        n.style.display = 'none';
+    }
+  });
+  container.appendChild(filter);
+
   const div = document.createElement('div');
-  div.style.maxWidth = "1000px";
+  container.appendChild(div);
 
   for (const portal of portals) {
     const img = document.createElement("img");
@@ -59,7 +77,7 @@ window.plugin.portalPictures.showDialog = function() {
 
   dialog({
     id: 'plugin-portal-pictures',
-    html: div,
+    html: container,
     title: 'Show portal pictures',
     width: 'auto',
     closeCallback: () => {
