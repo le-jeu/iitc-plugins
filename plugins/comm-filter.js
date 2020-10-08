@@ -410,6 +410,42 @@ window.unixTimeToHHmmss = function(time) {
   return  h + ':' + m + ':' + s;
 }
 
+
+const overlayStyle = {
+  color: "#C33",
+  opacity: 1,
+  weight: 5,
+  fill: false,
+  dashArray: "1,6",
+  radius: 12,
+};
+
+const onChatMouseOver = function() {
+  plugin.commFilter.overlay.clearLayers();
+  const element = $(this);
+  const json = element.attr("data-json");
+
+  if (!json) return;
+
+  const data = JSON.parse(json);
+
+  if (
+    data.type == "link"
+    || data.type == "destroy link"
+    ) {
+    const fromLatLng = L.latLng(data.from.latE6/1E6, data.from.lngE6/1E6);
+    const toLatLng = L.latLng(data.to.latE6/1E6, data.to.lngE6/1E6);
+
+    L.circleMarker(fromLatLng, overlayStyle).addTo(plugin.commFilter.overlay);
+    L.circleMarker(toLatLng, overlayStyle).addTo(plugin.commFilter.overlay);
+
+    L.geodesicPolyline([fromLatLng, toLatLng], overlayStyle).addTo(plugin.commFilter.overlay);
+  } else if (data.portal) {
+    const latLng = L.latLng(data.portal.latE6/1E6, data.portal.lngE6/1E6);
+    L.circleMarker(latLng, overlayStyle).addTo(plugin.commFilter.overlay);
+  }
+};
+
 window.chat.renderMsg = function(msg, nick, time, team, msgToPlayer, systemNarrowcast) {
   var ta = unixTimeToHHmmss(time);
   var tb = unixTimeToDateTimeString(time, true);
@@ -445,27 +481,39 @@ window.chat.renderData = function(data, element, likelyWereOldMsgs) {
   // render to string with date separators inserted
   var msgs = '';
   var prevTime = null;
-  $.each(vals, function(ind, msg) {
+  for (const msg of vals) {
     var nextTime = new Date(msg[0]).toLocaleDateString();
     if(prevTime && prevTime !== nextTime)
       msgs += chat.renderDivider(nextTime);
+    let value = '';
     if (msg[4].virus) {
       if (msg[4].virusMsg)
-        msgs += msg[4].virusMsg
+        value = msg[4].virusMsg
     }
-    else if (msg[4].type == 'field')
-      msgs += msg[4].MUMsg;
-    else
-      msgs += msg[2];
+    else {
+      if (msg[4].type == 'field')
+        value = msg[4].MUMsg;
+      else
+        value = msg[2];
+
+      value = $(value).attr('data-json', JSON.stringify(msg[4])).get(0).outerHTML;
+    }
+
+    msgs += value;
     prevTime = nextTime;
-  });
+  }
 
   var scrollBefore = scrollBottom(elm);
   elm.html('<table>' + msgs + '</table>');
   chat.keepScrollPosition(elm, scrollBefore, likelyWereOldMsgs);
-}
 
+  elm
+    .on('mouseover', 'table tr', onChatMouseOver)
+    .on('mouseout', 'table tr', () => window.plugin.commFilter.overlay.clearLayers());
+}
 
 window.plugin.commFilter = function () {};
 
-var setup = function() {};
+var setup = function() {
+  window.plugin.commFilter.overlay = L.layerGroup().addTo(map);
+};
