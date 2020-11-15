@@ -289,12 +289,20 @@ window.chat.writeDataToHash = function(newData, storageHash, isPublicChannel, is
         data.from = portals[0];
         data.to = portals[1];
       }
-      else if (markup[2][1].plain.search("neutralized") != -1) {
+      else if (markup[2] && markup[2][1].plain.search("neutralized") != -1) {
         data.type = 'destroy portal';
         data.portal = portals[0];
       }
-      else {
+      else if (markup[2] && markup[2][1].plain.search("attack") != -1) {
         data.type = 'attack portal';
+        data.portal = portals[0];
+      }
+      else if (markup[0][1].plain.search("kinetic")) {
+        data.type = 'kinetic';
+        data.player.name = '';
+      }
+      else {
+        data.type = 'unknown';
         data.portal = portals[0];
       }
     }
