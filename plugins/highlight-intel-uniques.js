@@ -8,6 +8,8 @@ let plugin = window.plugin.portalHighlighterVisited = function () { };
 
 let [VISITED, CAPTURED, SCANNED] = [1,2,4];
 
+let hidden = {opacity: 0, fillOpacity:0};
+
 plugin.styles = {
     "Uniques ": {
         order: [CAPTURED, SCANNED, VISITED],
@@ -25,40 +27,40 @@ plugin.styles = {
             {fillColor:'yellow'},
             {fillColor:'magenta'},
         ],
-        default: {opacity: 0, fillOpacity:0},
+        default: hidden,
     },
     "Uniques (Captured)": {
         order: [CAPTURED],
         styles: [
             {},
         ],
-        default: {radius:0},
+        default: hidden,
     },
     "Uniques (Scoot controlled)": {
         order: [SCANNED],
         styles: [
             {},
         ],
-        default: {radius:0},
+        default: hidden,
     },
     "Uniques (Hide captured)": {
         order: [CAPTURED],
         styles: [
-            {radius:0},
+            hidden,
         ],
         default: {},
     },
     "Uniques (Hide visited)": {
         order: [VISITED | CAPTURED | SCANNED],
         styles: [
-            {radius:0},
+            hidden,
         ],
         default: {},
     },
     "Uniques (Hide scoot controlled)": {
         order: [SCANNED],
         styles: [
-            {radius:0},
+            hidden,
         ],
         default: {},
     },
