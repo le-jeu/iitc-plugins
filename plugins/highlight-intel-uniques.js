@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Highlight uniques captured/visited/scanned
 // @category       Highlighter
-// @version        1.5.1
+// @version        1.5.2
 // @description    Highlighter for unique visited/captured/scout controlled portals
 
 let plugin = window.plugin.portalHighlighterVisited = function () { };
@@ -36,7 +36,7 @@ plugin.styles = {
         ],
         default: hidden,
     },
-    "Uniques (Scoot controlled)": {
+    "Uniques (Scout controlled)": {
         order: [SCANNED],
         styles: [
             {},
@@ -57,7 +57,7 @@ plugin.styles = {
         ],
         default: {},
     },
-    "Uniques (Hide scoot controlled)": {
+    "Uniques (Hide scout controlled)": {
         order: [SCANNED],
         styles: [
             hidden,
