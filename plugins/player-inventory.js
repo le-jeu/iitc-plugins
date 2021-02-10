@@ -1,10 +1,8 @@
 // @author         jaiperdu
-// @name           Inventory
+// @name           Player Inventory
 // @category       Info
-// @version        0.1.0
-// @description    View inventory
-
-var plugin = window.plugin.playerInventory = {};
+// @version        0.1.1
+// @description    View inventory (atm keys only)
 
 class Inventory {
 	constructor(name) {
@@ -89,7 +87,7 @@ const parseItem = function (item) {
 	// xxx: other types
 };
 
-var parseInventory = function (name, data) {
+const parseInventory = function (name, data) {
 	const inventory = new Inventory(name);
 	for (const entry of data) {
 		const item = parseItem(entry);
@@ -98,6 +96,8 @@ var parseInventory = function (name, data) {
 	}
 	return inventory;
 };
+
+const plugin = window.plugin.playerInventory = {};
 
 const handleInventory = function (data) {
 	plugin.inventory = parseInventory("☺", data.result);
@@ -142,6 +142,8 @@ const updateLayer = function () {
 		const marker = L.marker(key.latLng, {
 			title: key.title,
 		});
+		marker.on('spiderfiedclick', function() { renderPortalDetails(guid); });
+
 		const count = Array.from(key.count).map(([name, count]) => `<strong>${name}</strong>: ${count}`).join('<br/>');
 		marker.bindPopup(count);
 		marker.addTo(plugin.layer);
