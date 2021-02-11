@@ -4,6 +4,59 @@
 // @version        0.1.1
 // @description    View inventory (atm keys only)
 
+// stock intel
+var en = {
+  BOOSTED_POWER_CUBE: 'Hypercube',
+  BOOSTED_POWER_CUBE_K: 'Hypercube',
+  CAPSULE: 'Capsule',
+  DRONE: 'Drone',
+  EMITTER_A: 'Resonator',
+  EMP_BURSTER: 'Xmp Burster',
+  EXTRA_SHIELD: 'Aegis Shield',
+  FLIP_CARD: 'Alignment Virus',
+  'FLIP_CARD:ADA': 'ADA Refactor',
+  'FLIP_CARD:JARVIS': 'JARVIS Virus',
+  FORCE_AMP: 'Force Amp',
+  HEATSINK: 'Heat Sink',
+  INTEREST_CAPSULE: 'Quantum Capsule',
+  KEY_CAPSULE: 'Key Capsule',
+  KINETIC_CAPSULE: 'Kinetic Capsule',
+  LINK_AMPLIFIER: 'Link Amp',
+  MEDIA: 'Media',
+  MULTIHACK: 'Multi-hack',
+  MYSTERIOUS_ITEM_PLACEHOLDER: 'Mysterious item',
+  PLAYER_POWERUP: 'Player Powerup',
+  'PLAYER_POWERUP:APEX': 'Apex Mod',
+  PORTAL_POWERUP: 'Portal Powerup',
+  'PORTAL_POWERUP:FRACK': 'Portal Fracker',
+  'PORTAL_POWERUP:NEMESIS': 'Beacon - Nemesis',
+  'PORTAL_POWERUP:TOASTY': 'Beacon - Toast!',
+  'PORTAL_POWERUP:EXO5': 'Beacon - EXO5',
+  'PORTAL_POWERUP:MAGNUSRE': 'Beacon - Reawakens',
+  'PORTAL_POWERUP:VIANOIR': 'Beacon - Via Noir',
+  'PORTAL_POWERUP:VIALUX': 'Beacon - Via Lux',
+  'PORTAL_POWERUP:INITIO': 'Beacon - Initio',
+  'PORTAL_POWERUP:AEGISNOVA': 'Beacon - Aegis Nova',
+  'PORTAL_POWERUP:OBSIDIAN': 'Beacon - Obsidian',
+  'PORTAL_POWERUP:NIA': 'Beacon - Niantic',
+  'PORTAL_POWERUP:ENL': 'Beacon - ENL',
+  'PORTAL_POWERUP:RES': 'Beacon - RES',
+  'PORTAL_POWERUP:MEET': 'Beacon - Meetup',
+  'PORTAL_POWERUP:LOOK': 'Beacon - Target',
+  'PORTAL_POWERUP:BB_BATTLE': 'Battle Beacon',
+  'PORTAL_POWERUP:FW_ENL': 'Enlightened Fireworks',
+  'PORTAL_POWERUP:FW_RES': 'Resistance Fireworks',
+  'PORTAL_POWERUP:BN_BLM': 'Beacon - Black Lives Matter',
+  PORTAL_LINK_KEY: 'Portal Key',
+  POWER_CUBE: 'Power Cube',
+  RES_SHIELD: 'Portal Shield',
+  TRANSMUTER_ATTACK: 'Ito En Transmuter (-)',
+  TRANSMUTER_DEFENSE: 'Ito En Transmuter (+)',
+  TURRET: 'Turret',
+  ULTRA_STRIKE: 'Ultra Strike',
+  ULTRA_LINK_AMP: 'Ultra Link'
+};
+
 class Inventory {
 	constructor(name) {
 		this.name = name;
@@ -123,6 +176,7 @@ const parseMod = function (mod) {
 	return {
 		type: mod.modResource.resourceType,
 		name: mod.modResource.displayName,
+		rarity: mod.modResource.rarity,
 		count: 1,
 	}
 }
@@ -140,8 +194,7 @@ const parseMod = function (mod) {
 */
 const parseFlipCard = function (flipcard) {
 	return {
-		type: flipcard.resource.resourceType,
-		name: flipcard.flipCard.flipCardType,
+		type: flipcard.resource.resourceType + ':' + flipcard.flipCard.flipCardType,
 		count: 1,
 	}
 }
@@ -176,6 +229,46 @@ const parseMedia = function (media) {
 		type: media.resourceWithLevels.resourceType,
 		mediaId: media.storyItem.mediaId,
 		name: media.storyItem.shortDescription,
+	}
+}
+
+/*
+{
+	"resource": {
+		"resourceType": "PLAYER_POWERUP",
+		"resourceRarity": "VERY_RARE"
+	},
+	"inInventory": {
+		"playerId": "...",
+		"acquisitionTimestampMs": "..."
+	},
+	"playerPowerupResource": {
+		"playerPowerupEnum": "APEX"
+	}
+}
+*/
+const parsePlayerPowerUp = function (powerup) {
+	return {
+		type: powerup.resource.resourceType + ':' + powerup.playerPowerupResource.playerPowerupEnum,
+	}
+}
+
+/*
+{
+	"resource": {
+		"resourceType": "PORTAL_POWERUP",
+		"resourceRarity": "VERY_RARE"
+	},
+	"timedPowerupResource": {
+		"multiplier": 0,
+		"designation": "NIA",
+		"multiplierE6": 1000000
+	}
+}
+*/
+const parsePortalPowerUp = function (powerup) {
+	return {
+		type: powerup.resource.resourceType + ':' + powerup.timedPowerupResource.designation,
 	}
 }
 /*
@@ -228,6 +321,8 @@ const parseContainer = function (container) {
 */
 const parseItem = function (item) {
 	const [id, ts, obj] = item;
+	if (obj.storyItem)
+		return parseMedia(obj);
 	if (obj.resourceWithLevels)
 		return parseLevelItem(obj);
 	if (obj.modResource)
@@ -238,8 +333,10 @@ const parseItem = function (item) {
 		return parseContainer(obj);
 	if (isKey(obj))
 		return parsePortalKey(obj);
-	if (obj.storyItem)
-		return parseMedia(obj);
+	if (obj.timedPowerupResource)
+		return parsePortalPowerUp(obj);
+	if (obj.playerPowerupResource)
+		return parsePlayerPowerUp(obj);
 	if (obj.resource)
 		return {
 			type: obj.resource.resourceType,
