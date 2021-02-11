@@ -62,14 +62,16 @@ const levelItemTypes = [
 	"EMP_BURSTER",
 	"POWER_CUBE",
 	"ULTRA_STRIKE",
+	"MEDIA",
 ];
 
 const rarityToInt = {
-  COMMON: 0,
-  LESS_COMMON: 1,
-  RARE: 2,
-  VERY_RARE: 3,
-  EXTREMELY_RARE: 4,
+	VERY_COMMON: 0,
+  COMMON: 1,
+  LESS_COMMON: 2,
+  RARE: 3,
+  VERY_RARE: 4,
+  EXTREMELY_RARE: 5,
 }
 
 class Inventory {
@@ -84,13 +86,13 @@ class Inventory {
 		this.capsules = {}
 		this.items = {};
 		for (const type in itemTypes) {
-			items[type] = {
+			this.items[type] = {
 				type: type,
 				name: itemTypes[type],
-				counts: [{},{},{},{},{}],
+				counts: [{},{},{},{},{},{}],
 			}
 			if (levelItemTypes.includes(type))
-				items[type].counts = [{},{},{},{},{},{},{},{}];
+				this.items[type].counts = [{},{},{},{},{},{},{},{}];
 		}
 	}
 
@@ -269,6 +271,7 @@ const parseMedia = function (media) {
 		type: media.resourceWithLevels.resourceType,
 		mediaId: media.storyItem.mediaId,
 		name: media.storyItem.shortDescription,
+		level: media.resourceWithLevels.level
 	}
 }
 
