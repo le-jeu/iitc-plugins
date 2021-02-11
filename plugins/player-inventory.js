@@ -456,11 +456,11 @@ const updateLayer = function () {
 	plugin.layer.clearLayers();
 
 	for (const [guid, key] of plugin.inventory.keys) {
-		const marker = L.marker(key.latLng, {
-			title: key.title,
+		const marker = L.circleMarker(key.latLng, {
+			color: "red",
+			radius: 14
 		});
-		window.registerMarkerForOMS(marker);
-		marker.on('spiderfiedclick', function() {
+		marker.on('click', function() {
 			marker.openPopup();
 			renderPortalDetails(guid);
 		});
@@ -482,6 +482,6 @@ var setup = function () {
 	plugin.updateLayer = updateLayer;
 	plugin.parseInventory = parseInventory;
 
-  window.addHook('mapDataEntityInject', injectKeys);
+  //window.addHook('mapDataEntityInject', injectKeys);
 	setTimeout(getSubscriptionStatus, 10000);
 };
