@@ -408,10 +408,13 @@ const displayInventory = function (inventory) {
 
 }
 
-const plugin = window.plugin.playerInventory = {};
+const plugin = {};
+
+// for local testing
+if (window && window.plugin) window.plugin.playerInventory = plugin;
 
 const handleInventory = function (data) {
-	plugin.inventory = parseInventory("☺", data.result);
+	plugin.inventory = parseInventory("⌂", data.result);
 	plugin.updateLayer();
 }
 
