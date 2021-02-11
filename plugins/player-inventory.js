@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Player Inventory
 // @category       Info
-// @version        0.1.1
+// @version        0.2.1
 // @description    View inventory (atm keys only)
 
 // stock intel
@@ -65,14 +65,20 @@ const levelItemTypes = [
 	"MEDIA",
 ];
 
-const rarityToInt = {
-	VERY_COMMON: 0,
-  COMMON: 1,
-  LESS_COMMON: 2,
-  RARE: 3,
-  VERY_RARE: 4,
-  EXTREMELY_RARE: 5,
-}
+const rarity = [
+	"VERY_COMMON",
+  "COMMON",
+  "LESS_COMMON",
+  "RARE",
+  "VERY_RARE",
+  "EXTREMELY_RARE",
+];
+
+const rarityShort = rarity.map((v) => v.split('_').map((a) => a[0]).join(''));
+
+const rarityToInt = {}
+for (const i in rarity)
+	rarityToInt[rarity[i]] = i;
 
 class Inventory {
 	constructor(name) {
@@ -119,8 +125,31 @@ class Inventory {
 		}
 	}
 
+	countType(type, levelRarity) {
+		const counts = this.items[type].counts;
+		if (levelRarity !== undefined) {
+			const count = counts[levelRarity];
+			let total = 0;
+			for (const capsule in count) total += count[capsule];
+			return total;
+		}
+		let total = 0;
+		for (const count of counts) {
+			for (const capsule in count) total += count[capsule];
+		}
+		return total;
+	}
+
 	addMedia(media) {
 		//XXX
+	}
+
+	countKey(guid) {
+		if (!this.keys.has(guid)) return 0;
+		const count = this.keys.get(guid).count;
+		let total = 0;
+		for (const v of count.values()) total += v;
+		return total;
 	}
 
 	addKey(key) {
@@ -271,7 +300,8 @@ const parseMedia = function (media) {
 		type: media.resourceWithLevels.resourceType,
 		mediaId: media.storyItem.mediaId,
 		name: media.storyItem.shortDescription,
-		level: media.resourceWithLevels.level
+		level: media.resourceWithLevels.level,
+		count: 1,
 	}
 }
 
@@ -355,7 +385,7 @@ const parseContainer = function (container) {
 		const item = parseItem(stackableItem.exampleGameEntity);
 		if (item) {
 			item.count *= stackableItem.itemGuids.length;
-			item.capsule = data.containerName;
+			item.capsule = data.name;
 			data.content.push(item);
 		}
 	}
@@ -407,14 +437,38 @@ const parseInventory = function (name, data) {
 	return inventory;
 };
 
-const displayInventory = function (inventory) {
-
-}
-
 const plugin = {};
 
 // for local testing
+if (!window || !window.plugin) {
+	const fs = require('fs');
+	const json = fs.readFileSync("./json_examples/inventory.json")
+	const data = JSON.parse(json);
+	const inventory = parseInventory("Inventory", data.result);
+	console.log(inventory);
+	console.log(inventory.keys);
+	console.log(inventory.capsules);
+}
 if (window && window.plugin) window.plugin.playerInventory = plugin;
+
+// again...
+const getPortalLink = function(key) {
+	const a = L.DomUtil.create('a', 'text-overflow-ellipsis');
+	a.textContent = key.title;
+	a.href = window.makePermalink(key.latLng);
+	L.DomEvent.on(a, 'click', function(event) {
+      window.selectPortalByLatLng(key.latLng);
+      event.preventDefault();
+      return false;
+  })
+  L.DomEvent.on(a, 'dblclick', function(event) {
+      map.setView(key.latLng, DEFAULT_ZOOM);
+      window.selectPortalByLatLng(key.latLng);
+      event.preventDefault();
+      return false;
+  });
+  return a;
+}
 
 const handleInventory = function (data) {
 	plugin.inventory = parseInventory("⌂", data.result);
@@ -458,7 +512,7 @@ const updateLayer = function () {
 	for (const [guid, key] of plugin.inventory.keys) {
 		const marker = L.circleMarker(key.latLng, {
 			color: "red",
-			radius: 14
+			radius: 3,
 		});
 		marker.on('click', function() {
 			marker.openPopup();
@@ -471,17 +525,106 @@ const updateLayer = function () {
 	}
 }
 
+
+const createAllTable = function (inventory) {
+	const table = L.DomUtil.create("table");
+	for (const type in inventory.items) {
+		const total = inventory.countType(type);
+		if (total == 0)
+			continue;
+		const item = inventory.items[type];
+		const leveled = levelItemTypes.includes(type);
+		for (const i in item.counts) {
+			const num = inventory.countType(type, i);
+			if (num > 0) {
+				const lr = (leveled) ? "L" + (+i+1) : rarityShort[i];
+				const row = L.DomUtil.create('tr', ((leveled) ? "level_" : "rarity_") + lr, table);
+				row.innerHTML = `<td>${item.name}</td><td>${lr}</td><td>x${num}</td>`;
+			}
+		}
+	}
+	return table;
+}
+
+const createKeysTable = function (inventory) {
+	const table = L.DomUtil.create("table");
+	for (const [guid,key] of inventory.keys) {
+		const a = getPortalLink(key);
+		const total = inventory.countKey(guid);
+		const counts = Array.from(key.count).map(([name, count]) => `${count}(${name})`).join(', ');
+
+		const row = L.DomUtil.create('tr', null, table);
+		L.DomUtil.create('td', null, row).appendChild(a);
+		L.DomUtil.create('td', null, row).textContent = total;
+		L.DomUtil.create('td', null, row).textContent = counts;
+	}
+	return table;
+}
+
+const displayInventory = function (inventory) {
+	const container = L.DomUtil.create("div", "container");
+	const allHeader = L.DomUtil.create("b", null, container);
+	allHeader.textContent = "All";
+	const all = L.DomUtil.create("div", "all", container);
+	all.appendChild(createAllTable(inventory));
+	const keysHeader = L.DomUtil.create("b", null, container);
+	keysHeader.textContent = "Keys";
+	const keys = L.DomUtil.create("div", "keys", container);
+	keys.appendChild(createKeysTable(inventory));
+
+	$(container).accordion({
+      header: 'b',
+      heightStyle: 'fill'
+  });
+
+  dialog({
+    title: 'Inventory',
+    id: 'inventory',
+    html: container,
+    width: 'auto',
+    height: 500,
+  });
+}
+
 var setup = function () {
+	$('<style>').html('@include_string:player-inventory.css@').appendTo('head');
+  let colorStyle = "";
+	window.COLORS_LVL.forEach((c,i) => {
+		colorStyle += `.level_L${i}{ color: ${c} }`;
+	});
+	window.COLORS_MOD.for
+  $('<style>').html()
 	plugin.hasActiveSubscription = false;
+
 
 	plugin.inventory = new Inventory();
 	plugin.layer = new L.LayerGroup();
 
+	window.addHook('mapDataRefreshEnd', updateLayer);
+
 	window.addLayerGroup('Inventory Keys', plugin.layer, true);
+
+	window.addHook('portalDetailsUpdated', (data) => {
+		//{guid: guid, portal: portal, portalDetails: details, portalData: data}
+		const total = plugin.inventory.countKey(data.guid);
+		if (total > 0) {
+			const count = plugin.inventory.keys.get(data.guid).count;
+			const text = Array.from(count).map(([name, count]) => `<strong>${name}</strong>: ${count}`).join('<br/>');
+
+			window.portals[data.guid].bindPopup(text).openPopup();
+		}
+	});
 
 	plugin.updateLayer = updateLayer;
 	plugin.parseInventory = parseInventory;
+	plugin.displayInventory = displayInventory;
 
   //window.addHook('mapDataEntityInject', injectKeys);
 	setTimeout(getSubscriptionStatus, 10000);
+
+	$('<a>')
+        .html('Inventory')
+        .attr('title','Show inventory')
+        .click(() => displayInventory(plugin.inventory))
+        .appendTo('#toolbox');
 };
