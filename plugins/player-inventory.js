@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Player Inventory
 // @category       Info
-// @version        0.2.1
+// @version        0.2.2
 // @description    View inventory
 
 // stock intel
@@ -623,7 +623,7 @@ var setup = function () {
 	plugin.displayInventory = displayInventory;
 
   //window.addHook('mapDataEntityInject', injectKeys);
-	setTimeout(getSubscriptionStatus, 10000);
+	window.addHook('iitcLoaded', getSubscriptionStatus);
 
 	$('<a>')
         .html('Inventory')
