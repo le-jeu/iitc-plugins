@@ -592,10 +592,13 @@ var setup = function () {
 	window.COLORS_LVL.forEach((c,i) => {
 		colorStyle += `.level_L${i}{ color: ${c} }`;
 	});
-	window.COLORS_MOD.for
-  $('<style>').html()
-	plugin.hasActiveSubscription = false;
+	rarity.forEach((r,i) => {
+		if (window.COLORS_MOD[r])
+			colorStyle += `.rarity_${rarityShort[i]} { color: ${window.COLORS_MOD[r]}}`;
+	});
+  $('<style>').html(colorStyle).appendTo('head');
 
+	plugin.hasActiveSubscription = false;
 
 	plugin.inventory = new Inventory();
 	plugin.layer = new L.LayerGroup();
