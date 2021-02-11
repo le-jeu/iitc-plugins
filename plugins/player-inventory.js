@@ -2,7 +2,7 @@
 // @name           Player Inventory
 // @category       Info
 // @version        0.2.1
-// @description    View inventory (atm keys only)
+// @description    View inventory
 
 // stock intel
 const itemTypes = {
