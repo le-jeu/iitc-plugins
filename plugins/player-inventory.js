@@ -5,7 +5,7 @@
 // @description    View inventory (atm keys only)
 
 // stock intel
-var en = {
+const itemTypes = {
   BOOSTED_POWER_CUBE: 'Hypercube',
   BOOSTED_POWER_CUBE_K: 'Hypercube',
   CAPSULE: 'Capsule',
@@ -57,28 +57,68 @@ var en = {
   ULTRA_LINK_AMP: 'Ultra Link'
 };
 
+const levelItemTypes = [
+	"EMITTER_A",
+	"EMP_BURSTER",
+	"POWER_CUBE",
+	"ULTRA_STRIKE",
+];
+
+const rarityToInt = {
+  COMMON: 0,
+  LESS_COMMON: 1,
+  RARE: 2,
+  VERY_RARE: 3,
+  EXTREMELY_RARE: 4,
+}
+
 class Inventory {
 	constructor(name) {
 		this.name = name;
 		this.keys = new Map(); // guid => {counts: caps => count}
-		this.items = [];
+		this.clear();
 	}
 
 	clear() {
 		this.keys.clear();
-		this.items = [];
+		this.capsules = {}
+		this.items = {};
+		for (const type in itemTypes) {
+			items[type] = {
+				type: type,
+				name: itemTypes[type],
+				counts: [{},{},{},{},{}],
+			}
+			if (levelItemTypes.includes(type))
+				items[type].counts = [{},{},{},{},{},{},{},{}];
+		}
+	}
+
+	addCapsule(capsule) {
+		this.capsules[capsule.name] = capsule;
+		for (const item of capsule.content) {
+				this.addItem(item);
+		}
 	}
 
 	addItem(item) {
+		const cat = this.items[item.type];
+		const count =
+			(levelItemTypes.includes(item.type))
+			? cat.counts[item.level-1]
+			: cat.counts[rarityToInt[item.rarity]];
 		if (!item.capsule) item.capsule = this.name;
-		this.items.push(item);
-		if (item.type.includes("CAPSULE")) {
-			for (const entry of item.content.items) {
-				this.addItem(entry);
-			}
-		} else if (item.type === "PORTAL_LINK_KEY") {
+		count[item.capsule] = (count[item.capsule] || 0) + item.count
+
+		if (item.type === "PORTAL_LINK_KEY") {
 			this.addKey(item);
+		} else if (item.type === "MEDIA") {
+			this.addMedia(item);
 		}
+	}
+
+	addMedia(media) {
+		//XXX
 	}
 
 	addKey(key) {
@@ -98,8 +138,6 @@ class Inventory {
 const isKey = function (obj) {
 	return obj.resource && obj.resource.resourceType == "PORTAL_LINK_KEY";
 }
-
-const is
 
 const parsePortalLocation = function (location) {
 	return [lat, lng] = location.split(',').map(a => (Number.parseInt(a,16)&(-1))*1e-6);
@@ -130,6 +168,7 @@ const parsePortalKey = function (key) {
 		portalGuid: key.portalCoupler.portalGuid,
 		portalTitle: key.portalCoupler.portalTitle,
 		latLng: parsePortalLocation(key.portalCoupler.portalLocation),
+		rarity: key.resource.resourceRarity,
 		count: 1,
 	};
 	return data;
@@ -196,6 +235,7 @@ const parseFlipCard = function (flipcard) {
 	return {
 		type: flipcard.resource.resourceType + ':' + flipcard.flipCard.flipCardType,
 		count: 1,
+		rarity: flipcard.resource.resourceRarity,
 	}
 }
 
@@ -250,6 +290,7 @@ const parseMedia = function (media) {
 const parsePlayerPowerUp = function (powerup) {
 	return {
 		type: powerup.resource.resourceType + ':' + powerup.playerPowerupResource.playerPowerupEnum,
+		rarity: powerup.resource.resourceRarity,
 	}
 }
 
@@ -269,6 +310,7 @@ const parsePlayerPowerUp = function (powerup) {
 const parsePortalPowerUp = function (powerup) {
 	return {
 		type: powerup.resource.resourceType + ':' + powerup.timedPowerupResource.designation,
+		rarity: powerup.resource.resourceRarity,
 	}
 }
 /*
@@ -303,13 +345,15 @@ const parseContainer = function (container) {
 	const data = {
 		type: container.resource.resourceType,
 		name: containerName,
-		content: new Inventory(containerName),
+		content: [],
+		rarity: container.resource.resourceRarity,
 	};
 	for (const stackableItem of container.container.stackableItems) {
 		const item = parseItem(stackableItem.exampleGameEntity);
 		if (item) {
 			item.count *= stackableItem.itemGuids.length;
-			data.content.addItem(item);
+			item.capsule = data.containerName;
+			data.content.push(item);
 		}
 	}
 	return data;
@@ -340,6 +384,7 @@ const parseItem = function (item) {
 	if (obj.resource)
 		return {
 			type: obj.resource.resourceType,
+			rarity: obj.resource.resourceRarity,
 			count: 1
 		}
 	// xxx: other types
@@ -349,11 +394,19 @@ const parseInventory = function (name, data) {
 	const inventory = new Inventory(name);
 	for (const entry of data) {
 		const item = parseItem(entry);
-		if (item)
-			inventory.addItem(item);
+		if (item) {
+			if (item.type.includes("CAPSULE"))
+				inventory.addCapsule(item);
+			else
+				inventory.addItem(item);
+		}
 	}
 	return inventory;
 };
+
+const displayInventory = function (inventory) {
+
+}
 
 const plugin = window.plugin.playerInventory = {};
 
