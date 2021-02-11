@@ -166,5 +166,5 @@ var setup = function () {
 	plugin.parseInventory = parseInventory;
 
   window.addHook('mapDataEntityInject', injectKeys);
-	getSubscriptionStatus();
+	setTimeout(getSubscriptionStatus, 10000);
 };
