@@ -1,0 +1,21 @@
+#dialog-inventory .ui-accordion-header, #inventory .ui-accordion-content {
+	border: 1px solid rgba(255,255,255,.2);
+	margin-top: -1px;
+	display: block;
+  background: rgba(0, 0, 0, 0.7);
+}
+#dialog-inventory .ui-accordion-header:before {
+	font-size: 18px;
+	margin-right: 2px;
+	content: "⊞";
+}
+#dialog-inventory .ui-accordion-header-active:before {
+	content: "⊟";
+}
+#dialog-inventory table tr {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+#dialog-inventory table tr:nth-child(2n + 1) {
+  background: rgba(0, 0, 0, 0.3);
+}
