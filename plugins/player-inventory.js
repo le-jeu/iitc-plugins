@@ -142,7 +142,11 @@ const updateLayer = function () {
 		const marker = L.marker(key.latLng, {
 			title: key.title,
 		});
-		marker.on('spiderfiedclick', function() { renderPortalDetails(guid); });
+		window.registerMarkerForOMS(marker);
+		marker.on('spiderfiedclick', function() {
+			marker.openPopup();
+			renderPortalDetails(guid);
+		});
 
 		const count = Array.from(key.count).map(([name, count]) => `<strong>${name}</strong>: ${count}`).join('<br/>');
 		marker.bindPopup(count);
