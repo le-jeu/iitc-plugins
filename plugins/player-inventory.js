@@ -541,7 +541,7 @@ const createAllTable = function (inventory) {
       if (num > 0) {
         const lr = (leveled) ? "L" + (+i+1) : rarityShort[i];
         const row = L.DomUtil.create('tr', ((leveled) ? "level_" : "rarity_") + lr, table);
-        row.innerHTML = `<td>${item.name}</td><td>${lr}</td><td>x${num}</td>`;
+        row.innerHTML = `<td>${item.name}</td><td>${lr}</td><td>${num}</td>`;
       }
     }
   }
@@ -581,7 +581,7 @@ const createKeysTable = function (inventory) {
   for (const key of keys) {
     const a = getPortalLink(key);
     const total = inventory.countKey(key.guid);
-    const counts = Array.from(key.count).map(([name, count]) => `${count}(${name})`).join(', ');
+    const counts = Array.from(key.count).map(([name, count]) => `${name}: ${count}`).join(', ');
 
     const row = L.DomUtil.create('tr', null, table);
     L.DomUtil.create('td', null, row).appendChild(a);

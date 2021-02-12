@@ -19,3 +19,11 @@
 #dialog-inventory table tr:nth-child(2n + 1) {
   background: rgba(0, 0, 0, 0.3);
 }
+
+#dialog-inventory tr td:nth-child(2) {
+  text-align: right;
+}
+
+#dialog-inventory .all tr td:nth-child(3) {
+  text-align: right;
+}
