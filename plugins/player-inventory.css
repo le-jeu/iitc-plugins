@@ -27,3 +27,6 @@
 #dialog-inventory .all tr td:nth-child(3) {
   text-align: right;
 }
+#dialog-inventory table {
+  width: 100%
+}
