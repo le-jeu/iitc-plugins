@@ -168,10 +168,6 @@ class Inventory {
   }
 }
 
-const isKey = function (obj) {
-  return obj.resource && obj.resource.resourceType == "PORTAL_LINK_KEY";
-}
-
 const parsePortalLocation = function (location) {
   return [lat, lng] = location.split(',').map(a => (Number.parseInt(a,16)&(-1))*1e-6);
 }
@@ -383,7 +379,7 @@ const parseResource = function (obj) {
     return parseFlipCard(data, obj);
   if (obj.container)
     return parseContainer(data, obj);
-  if (isKey(obj))
+  if (obj.portalCoupler)
     return parsePortalKey(data, obj);
   if (obj.timedPowerupResource)
     return parsePortalPowerUp(data, obj);
