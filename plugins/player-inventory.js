@@ -240,6 +240,7 @@ const parseMod = function (mod) {
 const parseMedia = function (data, media) {
   data.mediaId = media.storyItem.mediaId;
   data.name = media.storyItem.shortDescription;
+  data.url = media.storyItem.primaryUrl;
   return data;
 }
 
@@ -560,6 +561,10 @@ const createCapsuleTable = function (inventory, capsule) {
     L.DomUtil.create('td', null, row).appendChild(a);
     L.DomUtil.create('td', null, row).textContent = total;
     L.DomUtil.create('td', null, row);
+  }
+  for (const id in capsule.medias) {
+    const item = capsule.medias[id];
+    L.DomUtil.create('tr', null, table).innerHTML = `<td><a href="${item.url}">${item.name}</a><td></td><td>${item.count}</td>`;
   }
   for (const type in capsule.items) {
     const item = capsule.items[type];
