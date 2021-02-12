@@ -116,7 +116,8 @@ class Inventory {
       ? cat.counts[item.level-1]
       : cat.counts[rarityToInt[item.rarity]];
     if (!item.capsule) item.capsule = this.name;
-    count[item.capsule] = (count[item.capsule] || 0) + item.count
+    if (!item.count) item.count = 1;
+    count[item.capsule] = (count[item.capsule] || 0) + item.count;
 
     if (item.type === "PORTAL_LINK_KEY") {
       this.addKey(item);
@@ -162,7 +163,7 @@ class Inventory {
       });
     const current = this.keys.get(key.portalGuid);
     const entry = current.count.get(key.capsule) || 0;
-    current.count.set(key.capsule, entry + key.count);
+    current.count.set(key.capsule, entry + (key.count || 1));
   }
 }
 
@@ -200,7 +201,6 @@ const parsePortalKey = function (key) {
     portalTitle: key.portalCoupler.portalTitle,
     latLng: parsePortalLocation(key.portalCoupler.portalLocation),
     rarity: key.resource.resourceRarity,
-    count: 1,
   };
   return data;
 }
@@ -215,7 +215,6 @@ const parseLevelItem = function (item) {
   return {
     type: item.resourceWithLevels.resourceType,
     level: item.resourceWithLevels.level,
-    count: 1,
   }
 }
 
@@ -247,7 +246,6 @@ const parseMod = function (mod) {
     type: mod.modResource.resourceType,
     name: mod.modResource.displayName,
     rarity: mod.modResource.rarity,
-    count: 1,
   }
 }
 
@@ -266,7 +264,6 @@ const parseFlipCard = function (flipcard) {
   return {
     type: flipcard.resource.resourceType + ':' + flipcard.flipCard.flipCardType,
     rarity: flipcard.resource.resourceRarity,
-    count: 1,
   }
 }
 
@@ -301,7 +298,6 @@ const parseMedia = function (media) {
     mediaId: media.storyItem.mediaId,
     name: media.storyItem.shortDescription,
     level: media.resourceWithLevels.level,
-    count: 1,
   }
 }
 
@@ -324,7 +320,6 @@ const parsePlayerPowerUp = function (powerup) {
   return {
     type: powerup.resource.resourceType + ':' + powerup.playerPowerupResource.playerPowerupEnum,
     rarity: powerup.resource.resourceRarity,
-    count: 1,
   }
 }
 
@@ -345,7 +340,6 @@ const parsePortalPowerUp = function (powerup) {
   return {
     type: powerup.resource.resourceType + ':' + powerup.timedPowerupResource.designation,
     rarity: powerup.resource.resourceRarity,
-    count: 1,
   }
 }
 /*
@@ -387,7 +381,7 @@ const parseContainer = function (container) {
   for (const stackableItem of container.container.stackableItems) {
     const item = parseItem(stackableItem.exampleGameEntity);
     if (item) {
-      item.count *= stackableItem.itemGuids.length;
+      item.count = stackableItem.itemGuids.length;
       item.capsule = data.name;
       data.content.push(item);
     }
@@ -421,7 +415,6 @@ const parseItem = function (item) {
     return {
       type: obj.resource.resourceType,
       rarity: obj.resource.resourceRarity,
-      count: 1
     }
   // xxx: other types
 };
