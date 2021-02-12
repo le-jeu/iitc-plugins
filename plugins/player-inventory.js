@@ -550,9 +550,10 @@ const createAllTable = function (inventory) {
 
 const createKeysTable = function (inventory) {
   const table = L.DomUtil.create("table");
-  for (const [guid,key] of inventory.keys) {
+  const keys = [...inventory.keys.values()].sort((a,b) => a.title.localeCompare(b.title));
+  for (const key of keys) {
     const a = getPortalLink(key);
-    const total = inventory.countKey(guid);
+    const total = inventory.countKey(key.guid);
     const counts = Array.from(key.count).map(([name, count]) => `${count}(${name})`).join(', ');
 
     const row = L.DomUtil.create('tr', null, table);
