@@ -95,30 +95,46 @@ class Inventory {
       this.items[type] = {
         type: type,
         name: itemTypes[type],
-        counts: [{},{},{},{},{},{}],
+        counts: {},
+        total: 0,
       }
-      if (levelItemTypes.includes(type))
-        this.items[type].counts = [{},{},{},{},{},{},{},{}];
     }
   }
 
   addCapsule(capsule) {
-    this.capsules[capsule.name] = capsule;
+    const data = {
+      name: capsule.name,
+      size: capsule.size,
+      type: capsule.type,
+      keys: {},
+      medias: {},
+      items: {},
+    }
+    this.capsules[capsule.name] = data;
     this.addItem(capsule);
     for (const item of capsule.content) {
-        this.addItem(item);
+      this.addItem(item);
+      if (item.type === "PORTAL_LINK_KEY")
+        data.keys[item.guid] = item;
+      else if (item.type === "MEDIA")
+        data.medias[item.mediaId] = item;
+      else {
+        if (!data.items[item.type]) data.items[item.type] = {repr: item, leveled: levelItemTypes.includes(item.type), count:{}};
+        data.items[item.type].count[item.rarity || item.level] = item.count;
+      }
     }
   }
 
   addItem(item) {
     const cat = this.items[item.type];
-    const count =
-      (levelItemTypes.includes(item.type))
-      ? cat.counts[item.level-1]
-      : cat.counts[rarityToInt[item.rarity]];
+    const lr = levelItemTypes.includes(item.type) ? item.level : item.rarity;
+    if (!cat.counts[lr]) cat.counts[lr] = {};
+    const count = cat.counts[lr];
     if (!item.capsule) item.capsule = this.name;
     if (!item.count) item.count = 1;
     count[item.capsule] = (count[item.capsule] || 0) + item.count;
+    count.total = (count.total || 0) + item.count;
+    cat.total += item.count;
 
     if (item.type === "PORTAL_LINK_KEY") {
       this.addKey(item);
@@ -128,18 +144,11 @@ class Inventory {
   }
 
   countType(type, levelRarity) {
-    const counts = this.items[type].counts;
+    const cat = this.items[type];
     if (levelRarity !== undefined) {
-      const count = counts[levelRarity];
-      let total = 0;
-      for (const capsule in count) total += count[capsule];
-      return total;
+      return cat.counts[levelRarity] ? cat.counts[levelRarity].total : 0;
     }
-    let total = 0;
-    for (const count of counts) {
-      for (const capsule in count) total += count[capsule];
-    }
-    return total;
+    return cat.total;
   }
 
   addMedia(media) {
@@ -490,7 +499,7 @@ const createAllTable = function (inventory) {
     for (const i in item.counts) {
       const num = inventory.countType(type, i);
       if (num > 0) {
-        const lr = (leveled) ? "L" + (+i+1) : rarityShort[i];
+        const lr = (leveled) ? "L" + i : rarityShort[rarityToInt[i]];
         const row = L.DomUtil.create('tr', ((leveled) ? "level_" : "rarity_") + lr, table);
         row.innerHTML = `<td>${item.name}</td><td>${lr}</td><td>${num}</td>`;
       }
@@ -510,18 +519,17 @@ const createAllSumTable = function (inventory) {
 
     const row = L.DomUtil.create('tr', null, table);
 
-    const nums = item.counts
-      .map((_,i) => inventory.countType(type, i))
-      .map((num,i) => {
-        const lr = (leveled) ? "L" + (+i+1) : rarityShort[i];
+    const nums = [];
+    for (const k in item.counts) {
+      const num = inventory.countType(type, k);
+      if (num > 0) {
+        const lr = (leveled) ? "L" + k : rarityShort[rarityToInt[k]];
         const className = (leveled ? "level_" : "rarity_") + lr;
-        return [num, `<span class="${className}">${num} ${lr}</span>`];
-      })
-      .filter(t => t[0] > 0)
-      .map(t => t[1])
-      .join(', ');
+        nums.push(`<span class="${className}">${num} ${lr}</span>`);
+      }
+    }
 
-    row.innerHTML = `<td>${item.name}</td><td>${total}</td><td>${nums}</td>`;
+    row.innerHTML = `<td>${item.name}</td><td>${total}</td><td>${nums.join(', ')}</td>`;
   }
   return table;
 }
@@ -544,9 +552,8 @@ const createKeysTable = function (inventory) {
 
 const createCapsuleTable = function (inventory, capsule) {
   const table = L.DomUtil.create("table");
-  for (const item of capsule.content) {
-    if (item.type !== "PORTAL_LINK_KEY")
-      continue;
+  for (const guid in capsule.keys) {
+    const item = capsule.keys[guid];
     const a = getPortalLink(item);
     const total = item.count;
 
@@ -555,14 +562,14 @@ const createCapsuleTable = function (inventory, capsule) {
     L.DomUtil.create('td', null, row).textContent = total;
     L.DomUtil.create('td', null, row);
   }
-  for (const item of capsule.content) {
-    if (item.type === "PORTAL_LINK_KEY")
-      continue;
-    const name = itemTypes[item.type];
-    const leveled = levelItemTypes.includes(item.type);
-    const lr = (leveled) ? "L" + (item.level) : rarityShort[rarityToInt[item.rarity]];
-    const row = L.DomUtil.create('tr', ((leveled) ? "level_" : "rarity_") + lr, table);
-    row.innerHTML = `<td>${name}</td><td>${lr}</td><td>${item.count}</td>`;
+  for (const type in capsule.items) {
+    const item = capsule.items[type];
+    const name = itemTypes[type];
+    for (const k in item.count) {
+      const lr = (item.leveled) ? "L" + k : rarityShort[rarityToInt[k]];
+      const row = L.DomUtil.create('tr', ((item.leveled) ? "level_" : "rarity_") + lr, table);
+      row.innerHTML = `<td>${name}</td><td>${lr}</td><td>${item.count[k]}</td>`;
+    }
   }
   return table;
 }
