@@ -588,7 +588,7 @@ const displayInventory = function (inventory) {
   for (const name in inventory.capsules) {
     const capsule = inventory.capsules[name];
     if (capsule.size > 0) {
-      L.DomUtil.create("b", null, container).textContent = `${name} (${capsule.size})`;
+      L.DomUtil.create("b", null, container).textContent = `${itemTypes[capsule.type]}: ${name} (${capsule.size})`;
       L.DomUtil.create("div", "capsule", container).appendChild(createCapsuleTable(inventory, capsule));
     }
   }
