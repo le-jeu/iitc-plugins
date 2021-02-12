@@ -6,24 +6,32 @@
 
 // stock intel
 const itemTypes = {
-  BOOSTED_POWER_CUBE: 'Hypercube',
-  BOOSTED_POWER_CUBE_K: 'Hypercube',
-  CAPSULE: 'Capsule',
-  DRONE: 'Drone',
+  PORTAL_LINK_KEY: 'Portal Key',
   EMITTER_A: 'Resonator',
   EMP_BURSTER: 'Xmp Burster',
-  EXTRA_SHIELD: 'Aegis Shield',
+  ULTRA_STRIKE: 'Ultra Strike',
   FLIP_CARD: 'Alignment Virus',
   'FLIP_CARD:ADA': 'ADA Refactor',
   'FLIP_CARD:JARVIS': 'JARVIS Virus',
+  POWER_CUBE: 'Power Cube',
+  BOOSTED_POWER_CUBE: 'Hypercube',
+  BOOSTED_POWER_CUBE_K: 'Hypercube',
+  RES_SHIELD: 'Portal Shield',
+  EXTRA_SHIELD: 'Aegis Shield',
+  TURRET: 'Turret',
   FORCE_AMP: 'Force Amp',
+  LINK_AMPLIFIER: 'Link Amp',
+  ULTRA_LINK_AMP: 'Ultra Link',
   HEATSINK: 'Heat Sink',
+  MULTIHACK: 'Multi-hack',
+  TRANSMUTER_ATTACK: 'Ito En Transmuter (-)',
+  TRANSMUTER_DEFENSE: 'Ito En Transmuter (+)',
+  MEDIA: 'Media',
+  CAPSULE: 'Capsule',
   INTEREST_CAPSULE: 'Quantum Capsule',
   KEY_CAPSULE: 'Key Capsule',
   KINETIC_CAPSULE: 'Kinetic Capsule',
-  LINK_AMPLIFIER: 'Link Amp',
-  MEDIA: 'Media',
-  MULTIHACK: 'Multi-hack',
+  DRONE: 'Drone',
   MYSTERIOUS_ITEM_PLACEHOLDER: 'Mysterious item',
   PLAYER_POWERUP: 'Player Powerup',
   'PLAYER_POWERUP:APEX': 'Apex Mod',
@@ -47,14 +55,6 @@ const itemTypes = {
   'PORTAL_POWERUP:FW_ENL': 'Enlightened Fireworks',
   'PORTAL_POWERUP:FW_RES': 'Resistance Fireworks',
   'PORTAL_POWERUP:BN_BLM': 'Beacon - Black Lives Matter',
-  PORTAL_LINK_KEY: 'Portal Key',
-  POWER_CUBE: 'Power Cube',
-  RES_SHIELD: 'Portal Shield',
-  TRANSMUTER_ATTACK: 'Ito En Transmuter (-)',
-  TRANSMUTER_DEFENSE: 'Ito En Transmuter (+)',
-  TURRET: 'Turret',
-  ULTRA_STRIKE: 'Ultra Strike',
-  ULTRA_LINK_AMP: 'Ultra Link'
 };
 
 const levelItemTypes = [
@@ -265,8 +265,8 @@ const parseMod = function (mod) {
 const parseFlipCard = function (flipcard) {
   return {
     type: flipcard.resource.resourceType + ':' + flipcard.flipCard.flipCardType,
-    count: 1,
     rarity: flipcard.resource.resourceRarity,
+    count: 1,
   }
 }
 
@@ -324,6 +324,7 @@ const parsePlayerPowerUp = function (powerup) {
   return {
     type: powerup.resource.resourceType + ':' + powerup.playerPowerupResource.playerPowerupEnum,
     rarity: powerup.resource.resourceRarity,
+    count: 1,
   }
 }
 
@@ -344,6 +345,7 @@ const parsePortalPowerUp = function (powerup) {
   return {
     type: powerup.resource.resourceType + ':' + powerup.timedPowerupResource.designation,
     rarity: powerup.resource.resourceRarity,
+    count: 1,
   }
 }
 /*
