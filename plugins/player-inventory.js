@@ -154,14 +154,14 @@ class Inventory {
   }
 
   addKey(key) {
-    if (!this.keys.has(key.portalGuid))
-      this.keys.set(key.portalGuid, {
-        guid: key.portalGuid,
-        title: key.portalTitle,
+    if (!this.keys.has(key.guid))
+      this.keys.set(key.guid, {
+        guid: key.guid,
+        title: key.title,
         latLng: key.latLng,
         count: new Map(),
       });
-    const current = this.keys.get(key.portalGuid);
+    const current = this.keys.get(key.guid);
     const entry = current.count.get(key.capsule) || 0;
     current.count.set(key.capsule, entry + (key.count || 1));
   }
@@ -197,8 +197,8 @@ const parsePortalLocation = function (location) {
 const parsePortalKey = function (key) {
   const data = {
     type: "PORTAL_LINK_KEY",
-    portalGuid: key.portalCoupler.portalGuid,
-    portalTitle: key.portalCoupler.portalTitle,
+    guid: key.portalCoupler.portalGuid,
+    title: key.portalCoupler.portalTitle,
     latLng: parsePortalLocation(key.portalCoupler.portalLocation),
     rarity: key.resource.resourceRarity,
   };
@@ -579,7 +579,7 @@ const createCapsuleTable = function (inventory, capsule) {
   for (const item of capsule.content) {
     if (item.type !== "PORTAL_LINK_KEY")
       continue;
-    const a = getPortalLink({title: item.portalTitle, latLng: item.latLng});
+    const a = getPortalLink(item);
     const total = item.count;
 
     const row = L.DomUtil.create('tr', null, table);
