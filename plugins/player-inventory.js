@@ -459,22 +459,6 @@ const getSubscriptionStatus = function () {
   window.postAjax('getHasActiveSubscription', {}, handleSubscription, handleError);
 };
 
-const injectKeys = function(data) {
-  const bounds = window.map.getBounds();
-  const entities = [];
-  for (const [guid, key] of plugin.inventory.keys) {
-    if (bounds.contains(key.latLng) && !window.portals[guid]) {
-      const ent = [
-        guid,
-        0,
-        ['p', null, Math.round(key.latLng[0]*1e6), Math.round(key.latLng[1]*1e6)]
-      ];
-      entities.push(ent);
-    }
-  }
-  data.callback(entities);
-}
-
 const updateLayer = function () {
   plugin.layer.clearLayers();
 
@@ -659,7 +643,6 @@ var setup = function () {
   plugin.parseInventory = parseInventory;
   plugin.displayInventory = displayInventory;
 
-  //window.addHook('mapDataEntityInject', injectKeys);
   window.addHook('iitcLoaded', getSubscriptionStatus);
 
   $('<a>')
