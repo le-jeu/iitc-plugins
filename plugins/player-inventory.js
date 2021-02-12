@@ -441,18 +441,7 @@ const parseInventory = function (name, data) {
 };
 
 const plugin = {};
-
-// for local testing
-if (!window || !window.plugin) {
-  const fs = require('fs');
-  const json = fs.readFileSync("./json_examples/inventory.json")
-  const data = JSON.parse(json);
-  const inventory = parseInventory("Inventory", data.result);
-  console.log(inventory);
-  console.log(inventory.keys);
-  console.log(inventory.capsules);
-}
-if (window && window.plugin) window.plugin.playerInventory = plugin;
+window.plugin.playerInventory = plugin;
 
 // again...
 const getPortalLink = function(key) {
