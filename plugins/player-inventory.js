@@ -608,13 +608,19 @@ const displayInventory = function (inventory) {
       heightStyle: 'fill'
   });
 
-  dialog({
-    title: 'Inventory',
-    id: 'inventory',
-    html: container,
-    width: 'auto',
-    height: 500,
-  });
+  if (window.useAndroidPanes()) {
+    plugin.dialog = L.DomUtil.create('div', 'mobile', document.body)
+    plugin.dialog.appendChild(container);
+    plugin.dialog.id = 'dialog-inventory';
+  } else {
+    plugin.dialog = dialog({
+      title: 'Inventory',
+      id: 'inventory',
+      html: container,
+      width: 'auto',
+      height: 500,
+    });
+  }
 }
 
 var setup = function () {
@@ -653,11 +659,25 @@ var setup = function () {
   plugin.parseInventory = parseInventory;
   plugin.displayInventory = displayInventory;
 
+  plugin.dialog = null;
+
+  if (window.useAndroidPanes()) {
+    android.addPane('playerInventory', 'Inventory', 'ic_action_view_as_list');
+    addHook('paneChanged', function (pane) {
+      if (pane === 'playerInventory') {
+        displayInventory(plugin.inventory);
+      } else if (plugin.dialog) {
+        plugin.dialog.remove();
+      }
+    });
+  } else {
+    $('<a>')
+      .html('Inventory')
+      .attr('title','Show inventory')
+      .click(() => displayInventory(plugin.inventory))
+      .appendTo('#toolbox');
+  }
+
   window.addHook('iitcLoaded', getSubscriptionStatus);
 
-  $('<a>')
-        .html('Inventory')
-        .attr('title','Show inventory')
-        .click(() => displayInventory(plugin.inventory))
-        .appendTo('#toolbox');
 };

@@ -30,3 +30,12 @@
 #dialog-inventory table {
   width: 100%
 }
+
+#dialog-inventory.mobile {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+}
