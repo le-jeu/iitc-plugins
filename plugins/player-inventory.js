@@ -548,6 +548,33 @@ const createAllTable = function (inventory) {
   return table;
 }
 
+const createAllSumTable = function (inventory) {
+  const table = L.DomUtil.create("table");
+  for (const type in inventory.items) {
+    const total = inventory.countType(type);
+    if (total == 0)
+      continue;
+    const item = inventory.items[type];
+    const leveled = levelItemTypes.includes(type);
+
+    const row = L.DomUtil.create('tr', null, table);
+
+    const nums = item.counts
+      .map((_,i) => inventory.countType(type, i))
+      .map((num,i) => {
+        const lr = (leveled) ? "L" + (+i+1) : rarityShort[i];
+        const className = (leveled ? "level_" : "rarity_") + lr;
+        return [num, `<span class="${className}">${num} ${lr}</span>`];
+      })
+      .filter(t => t[0] > 0)
+      .map(t => t[1])
+      .join(', ');
+
+    row.innerHTML = `<td>${item.name}</td><td>${total}</td><td>${nums}</td>`;
+  }
+  return table;
+}
+
 const createKeysTable = function (inventory) {
   const table = L.DomUtil.create("table");
   const keys = [...inventory.keys.values()].sort((a,b) => a.title.localeCompare(b.title));
@@ -566,10 +593,17 @@ const createKeysTable = function (inventory) {
 
 const displayInventory = function (inventory) {
   const container = L.DomUtil.create("div", "container");
+
+  const sumHeader = L.DomUtil.create("b", null, container);
+  sumHeader.textContent = "Summary";
+  const sum = L.DomUtil.create("div", "sum", container);
+  sum.appendChild(createAllSumTable(inventory));
+
   const allHeader = L.DomUtil.create("b", null, container);
-  allHeader.textContent = "All";
+  allHeader.textContent = "Details";
   const all = L.DomUtil.create("div", "all", container);
   all.appendChild(createAllTable(inventory));
+
   const keysHeader = L.DomUtil.create("b", null, container);
   keysHeader.textContent = "Keys";
   const keys = L.DomUtil.create("div", "keys", container);
