@@ -104,6 +104,7 @@ class Inventory {
 
   addCapsule(capsule) {
     this.capsules[capsule.name] = capsule;
+    this.addItem(capsule);
     for (const item of capsule.content) {
         this.addItem(item);
     }
