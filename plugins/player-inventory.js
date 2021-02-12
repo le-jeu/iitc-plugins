@@ -177,49 +177,6 @@ const parsePortalLocation = function (location) {
 
 /*
 {
-  "resource": {
-    "resourceType": "PORTAL_LINK_KEY",
-    "resourceRarity": "VERY_COMMON"
-  },
-  "portalCoupler": {
-    "portalGuid": "...",
-    "portalLocation": "int32 hex,int32 hex",
-    "portalImageUrl": "...",
-    "portalTitle": "...",
-    "portalAddress": "..."
-  },
-  "inInventory": {
-    "playerId": "...",
-    "acquisitionTimestampMs": "..."
-  }
-}
-*/
-const parsePortalKey = function (key) {
-  const data = {
-    type: "PORTAL_LINK_KEY",
-    guid: key.portalCoupler.portalGuid,
-    title: key.portalCoupler.portalTitle,
-    latLng: parsePortalLocation(key.portalCoupler.portalLocation),
-    rarity: key.resource.resourceRarity,
-  };
-  return data;
-}
-
-// {
-//   "resourceWithLevels": {
-//     "resourceType": "EMITTER_A",
-//     "level": 7
-//   }
-// }
-const parseLevelItem = function (item) {
-  return {
-    type: item.resourceWithLevels.resourceType,
-    level: item.resourceWithLevels.level,
-  }
-}
-
-/*
-{
   "modResource": {
     "displayName": "SoftBank Ultra Link",
     "stats": {
@@ -251,25 +208,6 @@ const parseMod = function (mod) {
 
 /*
 {
-  "resource": {
-    "resourceType": "FLIP_CARD",
-    "resourceRarity": "VERY_RARE"
-  },
-  "flipCard": {
-    "flipCardType": "JARVIS"
-  }
-}
-*/
-const parseFlipCard = function (flipcard) {
-  return {
-    type: flipcard.resource.resourceType + ':' + flipcard.flipCard.flipCardType,
-    rarity: flipcard.resource.resourceRarity,
-  }
-}
-
-
-/*
-{
   "resourceWithLevels": {
     "resourceType": "MEDIA",
     "level": 1
@@ -292,13 +230,68 @@ const parseFlipCard = function (flipcard) {
     "releaseDate": "1571122800000"
   }
 */
-const parseMedia = function (media) {
-  return {
-    type: media.resourceWithLevels.resourceType,
-    mediaId: media.storyItem.mediaId,
-    name: media.storyItem.shortDescription,
-    level: media.resourceWithLevels.level,
+const parseMedia = function (data, media) {
+  data.mediaId = media.storyItem.mediaId;
+  data.name = media.storyItem.shortDescription;
+  return data;
+}
+
+// {
+//   "resourceWithLevels": {
+//     "resourceType": "EMITTER_A",
+//     "level": 7
+//   }
+// }
+const parseLevelItem = function (obj) {
+  const data = {
+    type: obj.resourceWithLevels.resourceType,
+    level: obj.resourceWithLevels.level,
+  };
+  if (obj.storyItem)
+    return parseMedia(data, obj);
+  return data;
+}
+
+/*
+{
+  "resource": {
+    "resourceType": "PORTAL_LINK_KEY",
+    "resourceRarity": "VERY_COMMON"
+  },
+  "portalCoupler": {
+    "portalGuid": "...",
+    "portalLocation": "int32 hex,int32 hex",
+    "portalImageUrl": "...",
+    "portalTitle": "...",
+    "portalAddress": "..."
+  },
+  "inInventory": {
+    "playerId": "...",
+    "acquisitionTimestampMs": "..."
   }
+}
+*/
+const parsePortalKey = function (data, key) {
+  data.guid = key.portalCoupler.portalGuid;
+  data.title = key.portalCoupler.portalTitle;
+  data.latLng = parsePortalLocation(key.portalCoupler.portalLocation);
+  return data;
+}
+
+/*
+{
+  "resource": {
+    "resourceType": "FLIP_CARD",
+    "resourceRarity": "VERY_RARE"
+  },
+  "flipCard": {
+    "flipCardType": "JARVIS"
+  }
+}
+*/
+const parseFlipCard = function (data, flipcard) {
+  data.type += ':' + flipcard.flipCard.flipCardType;
+  return data;
 }
 
 /*
@@ -316,11 +309,9 @@ const parseMedia = function (media) {
   }
 }
 */
-const parsePlayerPowerUp = function (powerup) {
-  return {
-    type: powerup.resource.resourceType + ':' + powerup.playerPowerupResource.playerPowerupEnum,
-    rarity: powerup.resource.resourceRarity,
-  }
+const parsePlayerPowerUp = function (data, powerup) {
+  data.type += ':' + powerup.playerPowerupResource.playerPowerupEnum;
+  return data;
 }
 
 /*
@@ -336,11 +327,9 @@ const parsePlayerPowerUp = function (powerup) {
   }
 }
 */
-const parsePortalPowerUp = function (powerup) {
-  return {
-    type: powerup.resource.resourceType + ':' + powerup.timedPowerupResource.designation,
-    rarity: powerup.resource.resourceRarity,
-  }
+const parsePortalPowerUp = function (data, powerup) {
+  data.type += ':' + powerup.timedPowerupResource.designation;
+  return data;
 }
 /*
 {
@@ -369,15 +358,10 @@ const parsePortalPowerUp = function (powerup) {
   }
 }
 */
-const parseContainer = function (container) {
-  const containerName = container.moniker.differentiator;
-  const data = {
-    type: container.resource.resourceType,
-    name: containerName,
-    size: container.container.currentCount,
-    content: [],
-    rarity: container.resource.resourceRarity,
-  };
+const parseContainer = function (data, container) {
+  data.name = container.moniker.differentiator;
+  data.size = container.container.currentCount;
+  data.content = [];
   for (const stackableItem of container.container.stackableItems) {
     const item = parseItem(stackableItem.exampleGameEntity);
     if (item) {
@@ -388,6 +372,24 @@ const parseContainer = function (container) {
   }
   return data;
 };
+
+const parseResource = function (obj) {
+  const data = {
+    type: obj.resource.resourceType,
+    rarity: obj.resource.resourceRarity,
+  };
+  if (obj.flipCard)
+    return parseFlipCard(data, obj);
+  if (obj.container)
+    return parseContainer(data, obj);
+  if (isKey(obj))
+    return parsePortalKey(data, obj);
+  if (obj.timedPowerupResource)
+    return parsePortalPowerUp(data, obj);
+  if (obj.playerPowerupResource)
+    return parsePlayerPowerUp(data, obj);
+  return data;
+}
 /*
 [
   guid, timestamp?, item object
@@ -395,27 +397,12 @@ const parseContainer = function (container) {
 */
 const parseItem = function (item) {
   const [id, ts, obj] = item;
-  if (obj.storyItem)
-    return parseMedia(obj);
+  if (obj.resource)
+    return parseResource(obj);
   if (obj.resourceWithLevels)
     return parseLevelItem(obj);
   if (obj.modResource)
     return parseMod(obj);
-  if (obj.flipCard)
-    return parseFlipCard(obj);
-  if (obj.container)
-    return parseContainer(obj);
-  if (isKey(obj))
-    return parsePortalKey(obj);
-  if (obj.timedPowerupResource)
-    return parsePortalPowerUp(obj);
-  if (obj.playerPowerupResource)
-    return parsePlayerPowerUp(obj);
-  if (obj.resource)
-    return {
-      type: obj.resource.resourceType,
-      rarity: obj.resource.resourceRarity,
-    }
   // xxx: other types
 };
 
