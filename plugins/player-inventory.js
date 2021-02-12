@@ -95,6 +95,7 @@ class Inventory {
       this.items[type] = {
         type: type,
         name: itemTypes[type],
+        leveled: levelItemTypes.includes(type),
         counts: {},
         total: 0,
       }
@@ -127,7 +128,7 @@ class Inventory {
 
   addItem(item) {
     const cat = this.items[item.type];
-    const lr = levelItemTypes.includes(item.type) ? item.level : item.rarity;
+    const lr = cat.leveled ? item.level : item.rarity;
     if (!cat.counts[lr]) cat.counts[lr] = {};
     const count = cat.counts[lr];
     if (!item.capsule) item.capsule = this.name;
@@ -495,12 +496,11 @@ const createAllTable = function (inventory) {
     if (total == 0)
       continue;
     const item = inventory.items[type];
-    const leveled = levelItemTypes.includes(type);
     for (const i in item.counts) {
       const num = inventory.countType(type, i);
       if (num > 0) {
-        const lr = (leveled) ? "L" + i : rarityShort[rarityToInt[i]];
-        const row = L.DomUtil.create('tr', ((leveled) ? "level_" : "rarity_") + lr, table);
+        const lr = item.leveled ? "L" + i : rarityShort[rarityToInt[i]];
+        const row = L.DomUtil.create('tr', (item.leveled ? "level_" : "rarity_") + lr, table);
         row.innerHTML = `<td>${item.name}</td><td>${lr}</td><td>${num}</td>`;
       }
     }
@@ -515,7 +515,6 @@ const createAllSumTable = function (inventory) {
     if (total == 0)
       continue;
     const item = inventory.items[type];
-    const leveled = levelItemTypes.includes(type);
 
     const row = L.DomUtil.create('tr', null, table);
 
@@ -523,8 +522,8 @@ const createAllSumTable = function (inventory) {
     for (const k in item.counts) {
       const num = inventory.countType(type, k);
       if (num > 0) {
-        const lr = (leveled) ? "L" + k : rarityShort[rarityToInt[k]];
-        const className = (leveled ? "level_" : "rarity_") + lr;
+        const lr = item.leveled ? "L" + k : rarityShort[rarityToInt[k]];
+        const className = (item.leveled ? "level_" : "rarity_") + lr;
         nums.push(`<span class="${className}">${num} ${lr}</span>`);
       }
     }
@@ -566,8 +565,8 @@ const createCapsuleTable = function (inventory, capsule) {
     const item = capsule.items[type];
     const name = itemTypes[type];
     for (const k in item.count) {
-      const lr = (item.leveled) ? "L" + k : rarityShort[rarityToInt[k]];
-      const row = L.DomUtil.create('tr', ((item.leveled) ? "level_" : "rarity_") + lr, table);
+      const lr = item.leveled ? "L" + k : rarityShort[rarityToInt[k]];
+      const row = L.DomUtil.create('tr', (item.leveled ? "level_" : "rarity_") + lr, table);
       row.innerHTML = `<td>${name}</td><td>${lr}</td><td>${item.count[k]}</td>`;
     }
   }
