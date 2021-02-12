@@ -158,10 +158,7 @@ class Inventory {
 
   countKey(guid) {
     if (!this.keys.has(guid)) return 0;
-    const count = this.keys.get(guid).count;
-    let total = 0;
-    for (const v of count.values()) total += v;
-    return total;
+    return this.keys.get(guid).total;
   }
 
   addKey(key) {
@@ -171,10 +168,12 @@ class Inventory {
         title: key.title,
         latLng: key.latLng,
         count: new Map(),
+        total: 0,
       });
     const current = this.keys.get(key.guid);
     const entry = current.count.get(key.capsule) || 0;
     current.count.set(key.capsule, entry + (key.count || 1));
+    current.total += (key.count || 1);
   }
 }
 
