@@ -380,6 +380,7 @@ const parseContainer = function (container) {
   const data = {
     type: container.resource.resourceType,
     name: containerName,
+    size: container.container.currentCount,
     content: [],
     rarity: container.resource.resourceRarity,
   };
@@ -591,6 +592,31 @@ const createKeysTable = function (inventory) {
   return table;
 }
 
+const createCapsuleTable = function (inventory, capsule) {
+  const table = L.DomUtil.create("table");
+  for (const item of capsule.content) {
+    if (item.type !== "PORTAL_LINK_KEY")
+      continue;
+    const a = getPortalLink({title: item.portalTitle, latLng: item.latLng});
+    const total = item.count;
+
+    const row = L.DomUtil.create('tr', null, table);
+    L.DomUtil.create('td', null, row).appendChild(a);
+    L.DomUtil.create('td', null, row).textContent = total;
+    L.DomUtil.create('td', null, row);
+  }
+  for (const item of capsule.content) {
+    if (item.type === "PORTAL_LINK_KEY")
+      continue;
+    const name = itemTypes[item.type];
+    const leveled = levelItemTypes.includes(item.type);
+    const lr = (leveled) ? "L" + (item.level) : rarityShort[rarityToInt[item.rarity]];
+    const row = L.DomUtil.create('tr', ((leveled) ? "level_" : "rarity_") + lr, table);
+    row.innerHTML = `<td>${name}</td><td>${lr}</td><td>${item.count}</td>`;
+  }
+  return table;
+}
+
 const displayInventory = function (inventory) {
   const container = L.DomUtil.create("div", "container");
 
@@ -608,6 +634,14 @@ const displayInventory = function (inventory) {
   keysHeader.textContent = "Keys";
   const keys = L.DomUtil.create("div", "keys", container);
   keys.appendChild(createKeysTable(inventory));
+
+  for (const name in inventory.capsules) {
+    const capsule = inventory.capsules[name];
+    if (capsule.size > 0) {
+      L.DomUtil.create("b", null, container).textContent = `${name} (${capsule.size})`;
+      L.DomUtil.create("div", "capsule", container).appendChild(createCapsuleTable(inventory, capsule));
+    }
+  }
 
   $(container).accordion({
       header: 'b',
