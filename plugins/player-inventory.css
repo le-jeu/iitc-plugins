@@ -39,3 +39,7 @@
 	height: 100%;
 	overflow: auto;
 }
+/* popup */
+.inventory-keys {
+  width: max-content;
+}

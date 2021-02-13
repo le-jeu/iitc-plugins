@@ -508,6 +508,20 @@ const portalKeyHighlight = function(data) {
   }
 }
 
+const createPopup = function (guid) {
+  const portal = window.portals[guid];
+  const latLng = portal.getLatLng();
+  // create popup only if the portal is in view
+  if (window.map.getBounds().contains(latLng)) {
+    const count = plugin.inventory.keys.get(guid).count;
+    const text = Array.from(count).map(([name, count]) => `<strong>${name}</strong>: ${count}`).join('<br/>');
+
+    const popup = L.popup()
+      .setLatLng(latLng)
+      .setContent('<div class="inventory-keys">' + text + '</div>').openOn(window.map);
+  }
+}
+
 const updateLayer = function () {
   plugin.layer.clearLayers();
 
@@ -522,7 +536,7 @@ const updateLayer = function () {
     });
 
     const count = Array.from(key.count).map(([name, count]) => `<strong>${name}</strong>: ${count}`).join('<br/>');
-    marker.bindPopup(count);
+    marker.bindPopup('<div class="inventory-keys">' + count + '</div>');
     marker.addTo(plugin.layer);
   }
 }
@@ -684,14 +698,13 @@ var setup = function () {
   //window.addLayerGroup('Inventory Keys', plugin.layer, true);
   window.addPortalHighlighter('Inventory keys', portalKeyHighlight);
 
-  window.addHook('portalDetailsUpdated', (data) => {
-    //{guid: guid, portal: portal, portalDetails: details, portalData: data}
-    const total = plugin.inventory.countKey(data.guid);
-    if (total > 0) {
-      const count = plugin.inventory.keys.get(data.guid).count;
-      const text = Array.from(count).map(([name, count]) => `<strong>${name}</strong>: ${count}`).join('<br/>');
-
-      window.portals[data.guid].bindPopup(text).openPopup();
+  window.addHook('portalSelected', (data) => {
+    //{selectedPortalGuid: guid, unselectedPortalGuid: oldPortalGuid}
+    if (data.selectedPortalGuid) {
+      const total = plugin.inventory.countKey(data.selectedPortalGuid);
+      if (total > 0) {
+        createPopup(data.selectedPortalGuid);
+      }
     }
   });
 
