@@ -724,7 +724,7 @@ var setup = function () {
 
   window.addHook('portalSelected', (data) => {
     //{selectedPortalGuid: guid, unselectedPortalGuid: oldPortalGuid}
-    if (data.selectedPortalGuid) {
+    if (data.selectedPortalGuid && data.selectedPortalGuid !== data.unselectedPortalGuid) {
       const total = plugin.inventory.countKey(data.selectedPortalGuid);
       if (total > 0) {
         createPopup(data.selectedPortalGuid);
