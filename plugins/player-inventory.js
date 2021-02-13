@@ -451,7 +451,7 @@ const getPortalLink = function(key) {
 
 const handleInventory = function (data) {
   plugin.inventory = parseInventory("⌂", data.result);
-  plugin.updateLayer();
+  //plugin.updateLayer();
 }
 
 const handleError = function () {};
@@ -468,6 +468,24 @@ const handleSubscription = function (data) {
 const getSubscriptionStatus = function () {
   window.postAjax('getHasActiveSubscription', {}, handleSubscription, handleError);
 };
+
+const injectKeys = function(data) {
+  debugger;
+  const bounds = window.map.getBounds();
+  const entities = [];
+  for (const [guid, key] of plugin.inventory.keys) {
+    if (bounds.contains(key.latLng)) {
+      const team = window.portals[guid] ? window.portals[guid].options.ent[2][1] || 'N';
+      const ent = [
+        guid,
+        0,
+        ['p', team, Math.round(key.latLng[0]*1e6), Math.round(key.latLng[1]*1e6)]
+      ];
+      entities.push(ent);
+    }
+  }
+  data.callback(entities);
+}
 
 const updateLayer = function () {
   plugin.layer.clearLayers();
@@ -640,7 +658,7 @@ var setup = function () {
   plugin.inventory = new Inventory();
   plugin.layer = new L.LayerGroup();
 
-  window.addHook('mapDataRefreshEnd', updateLayer);
+  //window.addHook('mapDataRefreshEnd', updateLayer);
 
   window.addLayerGroup('Inventory Keys', plugin.layer, true);
 
@@ -678,6 +696,7 @@ var setup = function () {
       .appendTo('#toolbox');
   }
 
+  window.addHook('mapDataEntityInject', injectKeys);
   window.addHook('iitcLoaded', getSubscriptionStatus);
 
 };
