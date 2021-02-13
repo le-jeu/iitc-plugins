@@ -432,7 +432,7 @@ window.plugin.playerInventory = plugin;
 
 // again...
 const getPortalLink = function(key) {
-  const a = L.DomUtil.create('a', 'text-overflow-ellipsis');
+  const a = L.DomUtil.create('a');
   a.textContent = key.title;
   a.href = window.makePermalink(key.latLng);
   L.DomEvent.on(a, 'click', function(event) {
@@ -578,7 +578,7 @@ const createAllTable = function (inventory) {
       if (num > 0) {
         const lr = item.leveled ? "L" + i : rarityShort[rarityToInt[i]];
         const row = L.DomUtil.create('tr', (item.leveled ? "level_" : "rarity_") + lr, table);
-        row.innerHTML = `<td>${item.name}</td><td>${lr}</td><td>${num}</td>`;
+        row.innerHTML = `<td>${num}</td><td>${lr}</td><td>${item.name}</td>`;
       }
     }
   }
@@ -619,9 +619,9 @@ const createKeysTable = function (inventory) {
     const counts = Array.from(key.count).map(([name, count]) => `${name}: ${count}`).join(', ');
 
     const row = L.DomUtil.create('tr', null, table);
+    L.DomUtil.create('td', null, row).innerHTML = `<a title="${counts}">${total}</a>`;
     L.DomUtil.create('td', null, row).appendChild(a);
-    L.DomUtil.create('td', null, row).textContent = total;
-    L.DomUtil.create('td', null, row).textContent = counts;
+    // L.DomUtil.create('td', null, row).textContent = counts;
   }
   return table;
 }
@@ -634,13 +634,13 @@ const createCapsuleTable = function (inventory, capsule) {
     const total = item.count;
 
     const row = L.DomUtil.create('tr', null, table);
-    L.DomUtil.create('td', null, row).appendChild(a);
     L.DomUtil.create('td', null, row).textContent = total;
     L.DomUtil.create('td', null, row);
+    L.DomUtil.create('td', null, row).appendChild(a);
   }
   for (const id in capsule.medias) {
     const item = capsule.medias[id];
-    L.DomUtil.create('tr', null, table).innerHTML = `<td><a href="${item.url}">${item.name}</a><td></td><td>${item.count}</td>`;
+    L.DomUtil.create('tr', 'level_L1', table).innerHTML = `<td>${item.count}</td><td>M</td><td><a href="${item.url}">${item.name}</a>`;
   }
   for (const type in capsule.items) {
     const item = capsule.items[type];
@@ -648,7 +648,7 @@ const createCapsuleTable = function (inventory, capsule) {
     for (const k in item.count) {
       const lr = item.leveled ? "L" + k : rarityShort[rarityToInt[k]];
       const row = L.DomUtil.create('tr', (item.leveled ? "level_" : "rarity_") + lr, table);
-      row.innerHTML = `<td>${name}</td><td>${lr}</td><td>${item.count[k]}</td>`;
+      row.innerHTML = `<td>${item.count[k]}</td><td>${lr}</td><td>${name}</td>`;
     }
   }
   return table;

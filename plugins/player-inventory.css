@@ -1,17 +1,33 @@
+#dialog-inventory {
+  padding-right: 16px;
+}
+
+#dialog-inventory .container {
+	width: max-content;
+}
+
 #dialog-inventory .ui-accordion-header, #inventory .ui-accordion-content {
 	border: 1px solid rgba(255,255,255,.2);
 	margin-top: -1px;
 	display: block;
   background: rgba(0, 0, 0, 0.7);
+  line-height: 1.4rem;
 }
+
 #dialog-inventory .ui-accordion-header:before {
 	font-size: 18px;
 	margin-right: 2px;
 	content: "⊞";
 }
+
 #dialog-inventory .ui-accordion-header-active:before {
 	content: "⊟";
 }
+
+#dialog-inventory table {
+	width: 100%;
+}
+
 #dialog-inventory table tr {
   background: rgba(0, 0, 0, 0.6);
 }
@@ -20,15 +36,32 @@
   background: rgba(0, 0, 0, 0.3);
 }
 
-#dialog-inventory tr td:nth-child(2) {
+#dialog-inventory .sum tr td:nth-child(2),
+#dialog-inventory .all tr td:first-child,
+#dialog-inventory .capsule tr td:first-child,
+#dialog-inventory .keys tr td:first-child {
   text-align: right;
 }
 
-#dialog-inventory .all tr td:nth-child(3) {
-  text-align: right;
+#dialog-inventory .all tr td:nth-child(2),
+#dialog-inventory .sum tr td:nth-child(2),
+#dialog-inventory .capsule tr td:nth-child(2) {
+  text-align: center;
 }
-#dialog-inventory table {
-  width: 100%
+
+#dialog-inventory .all tr td:last-child,
+#dialog-inventory .keys tr td:last-child,
+#dialog-inventory .capsule tr td:last-child {
+  width: 100%;
+}
+
+#dialog-inventory td {
+	padding-left: .3rem;
+	padding-right: .3rem;
+}
+
+#dialog-inventory .keys td {
+	line-height: 1.2rem;
 }
 
 #dialog-inventory.mobile {
@@ -38,7 +71,12 @@
 	width: 100%;
 	height: 100%;
 	overflow: auto;
+	padding: 0;
 }
+#dialog-inventory.mobile .container {
+	width: unset;
+}
+
 /* popup */
 .inventory-keys {
   width: max-content;
