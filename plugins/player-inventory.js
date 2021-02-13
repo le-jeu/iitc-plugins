@@ -167,6 +167,7 @@ class Inventory {
         guid: key.guid,
         title: key.title,
         latLng: key.latLng,
+        address: key.address,
         count: new Map(),
         total: 0,
       });
@@ -282,6 +283,7 @@ const parsePortalKey = function (data, key) {
   data.guid = key.portalCoupler.portalGuid;
   data.title = key.portalCoupler.portalTitle;
   data.latLng = parsePortalLocation(key.portalCoupler.portalLocation);
+  data.address = key.portalCoupler.portalAddress;
   return data;
 }
 
@@ -434,6 +436,7 @@ window.plugin.playerInventory = plugin;
 const getPortalLink = function(key) {
   const a = L.DomUtil.create('a');
   a.textContent = key.title;
+  a.title = key.address;
   a.href = window.makePermalink(key.latLng);
   L.DomEvent.on(a, 'click', function(event) {
       window.selectPortalByLatLng(key.latLng);
