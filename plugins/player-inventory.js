@@ -449,9 +449,33 @@ const getPortalLink = function(key) {
   return a;
 }
 
+const STORE_KEY = "plugin-player-inventory";
+
+const loadFromLocalStorage = function () {
+  const store = localStorage[STORE_KEY];
+  if (store) {
+    try {
+      const data = JSON.parse(store);
+      plugin.inventory = parseInventory("⌂", data.raw);
+    } catch (e) {console.log(e);}
+  }
+}
+
+const storeToLocalStorage = function (data) {
+  const store = {
+    raw: data,
+    date: Date.now(),
+  }
+  localStorage[STORE_KEY] = JSON.stringify(store);
+}
+
 const handleInventory = function (data) {
-  plugin.inventory = parseInventory("⌂", data.result);
-  //plugin.updateLayer();
+  if (data.result.length > 0) {
+    plugin.inventory = parseInventory("⌂", data.result);
+    storeToLocalStorage(data.result);
+  } else {
+    console.log("Inventory empty, probably hitting rate limit");
+  }
 }
 
 const handleError = function () {};
@@ -734,4 +758,5 @@ var setup = function () {
   window.addHook('mapDataEntityInject', injectKeys);
   window.addHook('iitcLoaded', getSubscriptionStatus);
 
+  loadFromLocalStorage();
 };
