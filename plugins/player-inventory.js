@@ -470,12 +470,15 @@ const getSubscriptionStatus = function () {
 };
 
 const injectKeys = function(data) {
-  debugger;
+  if (window._current_highlighter !== "Inventory keys")
+    return;
+
   const bounds = window.map.getBounds();
   const entities = [];
   for (const [guid, key] of plugin.inventory.keys) {
     if (bounds.contains(key.latLng)) {
-      const team = window.portals[guid] ? window.portals[guid].options.ent[2][1] || 'N';
+      // keep known team
+      const team = window.portals[guid] ? window.portals[guid].options.ent[2][1] : 'N';
       const ent = [
         guid,
         0,
@@ -485,6 +488,24 @@ const injectKeys = function(data) {
     }
   }
   data.callback(entities);
+}
+
+const portalKeyHighlight = function(data) {
+  const guid = data.portal.options.guid;
+  if (plugin.inventory.keys.has(guid)) {
+    // place holder
+    if (data.portal.options.team != TEAM_NONE && data.portal.options.level === 0) {
+      data.portal.setStyle({
+        color: 'red',
+        weight: 2*Math.sqrt(window.portalMarkerScale()),
+        dashArray: '',
+      });
+    }
+    else if (window.map.getZoom() < 15 && data.portal.options.team == TEAM_NONE && !window.portalDetail.isFresh(guid))
+      // injected without intel data
+      data.portal.setStyle({color: 'red', fillColor: 'gray'});
+    else data.portal.setStyle({color: 'red'});
+  }
 }
 
 const updateLayer = function () {
@@ -660,7 +681,8 @@ var setup = function () {
 
   //window.addHook('mapDataRefreshEnd', updateLayer);
 
-  window.addLayerGroup('Inventory Keys', plugin.layer, true);
+  //window.addLayerGroup('Inventory Keys', plugin.layer, true);
+  window.addPortalHighlighter('Inventory keys', portalKeyHighlight);
 
   window.addHook('portalDetailsUpdated', (data) => {
     //{guid: guid, portal: portal, portalDetails: details, portalData: data}
