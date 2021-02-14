@@ -473,8 +473,8 @@ const loadFromLocalStorage = function () {
     try {
       const data = JSON.parse(store);
       plugin.inventory = parseInventory("⌂", data.raw);
+      plugin.lastRefresh = data.date;
     } catch (e) {console.log(e);}
-    plugin.lastRefresh = data.date;
   }
 }
 
@@ -504,8 +504,9 @@ const handleInventory = function (data) {
   if (data.result.length > 0) {
     plugin.inventory = parseInventory("⌂", data.result);
     storeToLocalStorage(data.result);
+    window.runHooks("pluginInventoryRefresh", {inventory: plugin.inventory});
   } else {
-    console.log("Inventory empty, probably hitting rate limit");
+    alert("Inventory empty, probably hitting rate limit, try again later");
   }
 }
 
@@ -679,7 +680,7 @@ const createCapsuleTable = function (inventory, capsule) {
   return table;
 }
 
-const displayInventory = function (inventory) {
+const buildInventoryHTML = function (inventory) {
   const container = L.DomUtil.create("div", "container");
 
   const sumHeader = L.DomUtil.create("b", null, container);
@@ -723,10 +724,16 @@ const displayInventory = function (inventory) {
       heightStyle: 'fill'
   });
 
+  return container;
+}
+
+const displayInventory = function (inventory) {
+  const container = buildInventoryHTML(inventory);
+
   if (window.useAndroidPanes()) {
-    plugin.dialog = L.DomUtil.create('div', 'mobile', document.body)
-    plugin.dialog.appendChild(container);
+    plugin.dialog = $('<div>').html(container).addClass('mobile').appendTo(document.body);
     plugin.dialog.id = 'dialog-inventory';
+    plugin.dialog.html(container);
   } else {
     plugin.dialog = dialog({
       title: 'Inventory',
@@ -735,6 +742,7 @@ const displayInventory = function (inventory) {
       width: 'auto',
       height: '500',
       buttons: {
+        "Refresh": getInventory,
         "Options": displayOpt,
       }
     });
@@ -841,6 +849,8 @@ var setup = function () {
 
   setupCSS();
   setupDisplay();
+
+  plugin.getSubscriptionStatus = getSubscriptionStatus;
 
   plugin.highlighter = {
     highlight: portalKeyHighlight,
