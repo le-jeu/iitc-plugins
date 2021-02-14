@@ -465,6 +465,7 @@ const getPortalLink = function(key) {
 }
 
 const STORE_KEY = "plugin-player-inventory";
+const SETTINGS_KEY = "plugin-player-inventory-settings";
 
 const loadFromLocalStorage = function () {
   const store = localStorage[STORE_KEY];
@@ -473,6 +474,7 @@ const loadFromLocalStorage = function () {
       const data = JSON.parse(store);
       plugin.inventory = parseInventory("⌂", data.raw);
     } catch (e) {console.log(e);}
+    plugin.lastRefresh = data.date;
   }
 }
 
@@ -482,6 +484,20 @@ const storeToLocalStorage = function (data) {
     date: Date.now(),
   }
   localStorage[STORE_KEY] = JSON.stringify(store);
+}
+
+const loadSettings = function () {
+  const settings = localStorage[SETTINGS_KEY];
+  if (settings) {
+    try {
+      const data = JSON.parse(settings);
+      $.extend(plugin.settings, data);
+    } catch (e) {console.log(e);}
+  }
+}
+
+const storeSettings = function () {
+  localStorage[SETTINGS_KEY] = JSON.stringify(plugin.settings);
 }
 
 const handleInventory = function (data) {
@@ -802,6 +818,13 @@ var setup = function () {
 
   plugin.hasActiveSubscription = false;
   plugin.isHighlighActive = false;
+
+  plugin.lastRefresh = 0;
+  plugin.autoRefreshTimer = null;
+
+  plugin.settings = {
+    autoRefreshActive: false,
+  }
 
   setupCSS();
   setupDisplay();
