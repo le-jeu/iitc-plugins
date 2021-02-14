@@ -509,7 +509,7 @@ const getSubscriptionStatus = function () {
 };
 
 const injectKeys = function(data) {
-  if (window._current_highlighter !== "Inventory keys")
+  if (!plugin.isHighlighActive)
     return;
 
   const bounds = window.map.getBounds();
@@ -560,26 +560,6 @@ const createPopup = function (guid) {
       .setContent('<div class="inventory-keys">' + text + '</div>').openOn(window.map);
   }
 }
-
-const updateLayer = function () {
-  plugin.layer.clearLayers();
-
-  for (const [guid, key] of plugin.inventory.keys) {
-    const marker = L.circleMarker(key.latLng, {
-      color: "red",
-      radius: 3,
-    });
-    marker.on('click', function() {
-      marker.openPopup();
-      renderPortalDetails(guid);
-    });
-
-    const count = Array.from(key.count).map(([name, count]) => `<strong>${name}</strong>: ${count}`).join('<br/>');
-    marker.bindPopup('<div class="inventory-keys">' + count + '</div>');
-    marker.addTo(plugin.layer);
-  }
-}
-
 
 const createAllTable = function (inventory) {
   const table = L.DomUtil.create("table");
@@ -759,10 +739,14 @@ var setup = function () {
   plugin.inventory = new Inventory();
   plugin.layer = new L.LayerGroup();
 
-  //window.addHook('mapDataRefreshEnd', updateLayer);
+  plugin.highlighter = {
+    highlight: portalKeyHighlight,
+    setSelected: function (selected) {
+      plugin.isHighlighActive = selected;
+    },
+  }
 
-  //window.addLayerGroup('Inventory Keys', plugin.layer, true);
-  window.addPortalHighlighter('Inventory keys', portalKeyHighlight);
+  window.addPortalHighlighter('Inventory keys', plugin.highlighter);
 
   window.addHook('portalSelected', (data) => {
     //{selectedPortalGuid: guid, unselectedPortalGuid: oldPortalGuid}
@@ -774,7 +758,6 @@ var setup = function () {
     }
   });
 
-  plugin.updateLayer = updateLayer;
   plugin.parseInventory = parseInventory;
   plugin.displayInventory = displayInventory;
 
