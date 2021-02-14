@@ -757,7 +757,7 @@ const displayOpt = function () {
   });
 }
 
-var setup = function () {
+const setupCSS = function () {
   $('<style>').html('@include_string:player-inventory.css@').appendTo('head');
   let colorStyle = "";
   window.COLORS_LVL.forEach((c,i) => {
@@ -768,34 +768,9 @@ var setup = function () {
       colorStyle += `.rarity_${rarityShort[i]} { color: ${window.COLORS_MOD[r]}}`;
   });
   $('<style>').html(colorStyle).appendTo('head');
+}
 
-  plugin.hasActiveSubscription = false;
-
-  plugin.inventory = new Inventory();
-  plugin.layer = new L.LayerGroup();
-
-  plugin.highlighter = {
-    highlight: portalKeyHighlight,
-    setSelected: function (selected) {
-      plugin.isHighlighActive = selected;
-    },
-  }
-
-  window.addPortalHighlighter('Inventory keys', plugin.highlighter);
-
-  window.addHook('portalSelected', (data) => {
-    //{selectedPortalGuid: guid, unselectedPortalGuid: oldPortalGuid}
-    if (data.selectedPortalGuid && data.selectedPortalGuid !== data.unselectedPortalGuid) {
-      const total = plugin.inventory.countKey(data.selectedPortalGuid);
-      if (total > 0) {
-        createPopup(data.selectedPortalGuid);
-      }
-    }
-  });
-
-  plugin.parseInventory = parseInventory;
-  plugin.displayInventory = displayInventory;
-
+const setupDisplay = function () {
   plugin.dialog = null;
 
   if (window.useAndroidPanes()) {
@@ -819,9 +794,37 @@ var setup = function () {
       .click(() => displayInventory(plugin.inventory))
       .appendTo('#toolbox');
   }
+}
+
+var setup = function () {
+  // Dummy inventory
+  plugin.inventory = new Inventory();
+
+  plugin.hasActiveSubscription = false;
+  plugin.isHighlighActive = false;
+
+  setupCSS();
+  setupDisplay();
+
+  plugin.highlighter = {
+    highlight: portalKeyHighlight,
+    setSelected: function (selected) {
+      plugin.isHighlighActive = selected;
+    },
+  }
+  window.addPortalHighlighter('Inventory keys', plugin.highlighter);
 
   window.addHook('mapDataEntityInject', injectKeys);
   window.addHook('iitcLoaded', getSubscriptionStatus);
+  window.addHook('portalSelected', (data) => {
+    //{selectedPortalGuid: guid, unselectedPortalGuid: oldPortalGuid}
+    if (data.selectedPortalGuid && data.selectedPortalGuid !== data.unselectedPortalGuid) {
+      const total = plugin.inventory.countKey(data.selectedPortalGuid);
+      if (total > 0) {
+        createPopup(data.selectedPortalGuid);
+      }
+    }
+  });
 
   loadFromLocalStorage();
 };
