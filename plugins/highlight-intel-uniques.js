@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Highlight uniques captured/visited/scanned
 // @category       Highlighter
-// @version        1.5.2
+// @version        1.5.3
 // @description    Highlighter for unique visited/captured/scout controlled portals
 
 let plugin = window.plugin.portalHighlighterVisited = function () { };
