@@ -8,7 +8,7 @@ let plugin = window.plugin.portalHighlighterVisited = function () { };
 
 let [VISITED, CAPTURED, SCANNED] = [1,2,4];
 
-let hidden = {opacity: 0, fillOpacity:0};
+let hidden = {opacity: 0, fillOpacity:0, interactive: false};
 
 plugin.styles = {
     "Uniques ": {
