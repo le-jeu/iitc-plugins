@@ -675,11 +675,17 @@ const displayInventory = function (inventory) {
   const keys = L.DomUtil.create("div", "keys", container);
   keys.appendChild(createKeysTable(inventory));
 
-  for (const name in inventory.capsules) {
-    const capsule = inventory.capsules[name];
-    if (capsule.size > 0) {
-      L.DomUtil.create("b", null, container).textContent = `${itemTypes[capsule.type]}: ${name} (${capsule.size})`;
-      L.DomUtil.create("div", "capsule", container).appendChild(createCapsuleTable(inventory, capsule));
+  const capsulesName = Object.keys(inventory.capsules).sort();
+  const keyLockers = capsulesName.filter((name) => inventory.capsules[name].type === "KEY_CAPSULE");
+  const quantums = capsulesName.filter((name) => inventory.capsules[name].type === "INTEREST_CAPSULE");
+  const commonCapsules = capsulesName.filter((name) => inventory.capsules[name].type === "CAPSULE");
+  for (const names of [keyLockers, quantums, commonCapsules]) {
+    for (const name of names) {
+      const capsule = inventory.capsules[name];
+      if (capsule.size > 0) {
+        L.DomUtil.create("b", null, container).textContent = `${itemTypes[capsule.type]}: ${name} (${capsule.size})`;
+        L.DomUtil.create("div", "capsule", container).appendChild(createCapsuleTable(inventory, capsule));
+      }
     }
   }
 
