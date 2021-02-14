@@ -85,8 +85,8 @@ plugin.highlighter = function (data, style) {
 };
 
 var setup = function () {
-    for (let name in plugin.styles) {
-        let style = plugin.styles[name];
+    for (const name in plugin.styles) {
+        const style = plugin.styles[name];
         window.addPortalHighlighter(name, function (data) {
             return plugin.highlighter(data, style);
         });
