@@ -631,8 +631,8 @@ const createKeysTable = function (inventory) {
 
 const createCapsuleTable = function (inventory, capsule) {
   const table = L.DomUtil.create("table");
-  for (const guid in capsule.keys) {
-    const item = capsule.keys[guid];
+  const keys = Object.values(capsule.keys).sort((a,b) => a.title.localeCompare(b.title));
+  for (const item of keys) {
     const a = getPortalLink(item);
     const total = item.count;
 
@@ -641,12 +641,13 @@ const createCapsuleTable = function (inventory, capsule) {
     L.DomUtil.create('td', null, row);
     L.DomUtil.create('td', null, row).appendChild(a);
   }
-  for (const id in capsule.medias) {
-    const item = capsule.medias[id];
+  const medias = Object.values(capsule.medias).sort((a,b) => a.name.localeCompare(b.name));
+  for (const item of medias) {
     L.DomUtil.create('tr', 'level_L1', table).innerHTML = `<td>${item.count}</td><td>M</td><td><a href="${item.url}">${item.name}</a>`;
   }
-  for (const type in capsule.items) {
+  for (const type in itemTypes) {
     const item = capsule.items[type];
+    if (!item) continue;
     const name = itemTypes[type];
     for (const k in item.count) {
       const lr = item.leveled ? "L" + k : rarityShort[rarityToInt[k]];
