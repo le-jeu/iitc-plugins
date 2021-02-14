@@ -67,7 +67,8 @@ plugin.styles = {
 };
 
 plugin.highlighter = function (data, style) {
-    let visited = data.portal.options.ent[2][18];
+    const history = data.portal.options.data.history;
+    const visited = history ? history._raw : data.portal.options.ent[2][18];
 
     if (visited == null) {
         data.portal.setStyle(style.default);
