@@ -86,3 +86,18 @@
 .inventory-keys {
   width: max-content;
 }
+
+#dialog-inventory-opt .container {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-gap: .5em
+}
+
+#dialog-inventory-opt button {
+  grid-column: 1/3;
+  padding: .3rem 1em;
+}
+
+#dialog-inventory-opt input {
+  margin: auto;
+}

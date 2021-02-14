@@ -758,12 +758,24 @@ const exportToKeys = function () {
 const displayOpt = function () {
   const container = L.DomUtil.create("div", "container");
 
+  const labelPopup = L.DomUtil.create('label', null, container);
+  labelPopup.textContent = "Keys popups";
+  const checkPopup = L.DomUtil.create('input', null, container);
+  checkPopup.type = 'checkbox';
+  checkPopup.checked = plugin.settings.popupEnable;
+  L.DomEvent.on(checkPopup, "change", (ev) => {
+      L.DomEvent.stop(ev);
+      plugin.settings.popupEnable = checkPopup.checked;
+      storeSettings();
+    });
+
   // sync keys with the keys plugin
   if (window.plugin.keys) {
     const button = L.DomUtil.create("button", null, container);
     button.textContent = "Export to keys plugin";
     L.DomEvent.on(button, 'click', exportToKeys);
   }
+
   dialog({
     title: 'Inventory Opt',
     id: 'inventory-opt',
@@ -824,6 +836,7 @@ var setup = function () {
 
   plugin.settings = {
     autoRefreshActive: false,
+    popupEnable: true,
   }
 
   setupCSS();
@@ -837,10 +850,17 @@ var setup = function () {
   }
   window.addPortalHighlighter('Inventory keys', plugin.highlighter);
 
+  window.addHook('pluginInventoryRefresh', (data) => {
+    if (plugin.dialog) {
+      plugin.dialog.html(buildInventoryHTML(data.inventory));
+    }
+  })
+
   window.addHook('mapDataEntityInject', injectKeys);
   window.addHook('iitcLoaded', getSubscriptionStatus);
   window.addHook('portalSelected', (data) => {
     //{selectedPortalGuid: guid, unselectedPortalGuid: oldPortalGuid}
+    if (!plugin.settings.popupEnable) return;
     if (data.selectedPortalGuid && data.selectedPortalGuid !== data.unselectedPortalGuid) {
       const total = plugin.inventory.countKey(data.selectedPortalGuid);
       if (total > 0) {
