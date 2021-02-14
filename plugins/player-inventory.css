@@ -36,21 +36,26 @@
   background: rgba(0, 0, 0, 0.3);
 }
 
-#dialog-inventory .sum tr td:nth-child(2),
-#dialog-inventory .all tr td:first-child,
-#dialog-inventory .capsule tr td:first-child,
-#dialog-inventory .keys tr td:first-child {
+#dialog-inventory tr td:first-child {
   text-align: right;
 }
 
-#dialog-inventory .all tr td:nth-child(2),
-#dialog-inventory .sum tr td:nth-child(2),
-#dialog-inventory .capsule tr td:nth-child(2) {
+#dialog-inventory .sum tr td:first-child {
+  text-align: left;
+}
+
+#dialog-inventory tr td:nth-child(2) {
   text-align: center;
+}
+
+#dialog-inventory .medias tr td:last-child,
+#dialog-inventory .keys tr td:last-child {
+  text-align: left;
 }
 
 #dialog-inventory .all tr td:last-child,
 #dialog-inventory .keys tr td:last-child,
+#dialog-inventory .medias tr td:last-child,
 #dialog-inventory .capsule tr td:last-child {
   width: 100%;
 }

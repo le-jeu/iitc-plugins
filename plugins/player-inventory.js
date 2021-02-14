@@ -84,6 +84,7 @@ class Inventory {
   constructor(name) {
     this.name = name;
     this.keys = new Map(); // guid => {counts: caps => count}
+    this.medias = new Map();
     this.clear();
   }
 
@@ -153,7 +154,18 @@ class Inventory {
   }
 
   addMedia(media) {
-    //XXX
+    if (!this.medias.has(media.mediaId))
+      this.medias.set(media.mediaId, {
+        mediaId: media.mediaId,
+        name: media.name,
+        url: media.url,
+        count: new Map(),
+        total: 0,
+      });
+    const current = this.medias.get(media.mediaId);
+    const entry = current.count.get(media.capsule) || 0;
+    current.count.set(media.capsule, entry + (media.count || 1));
+    current.total += (media.count || 1);
   }
 
   countKey(guid) {
@@ -629,6 +641,19 @@ const createKeysTable = function (inventory) {
   return table;
 }
 
+const createMediaTable = function (inventory) {
+  const table = L.DomUtil.create("table");
+  const medias = [...inventory.medias.values()].sort((a,b) => a.name.localeCompare(b.name));
+  for (const media of medias) {
+    const counts = Array.from(media.count).map(([name, count]) => `${name}: ${count}`).join(', ');
+
+    L.DomUtil.create('tr', 'level_L1', table).innerHTML =
+        `<td><a title="${counts}">${media.total}</a></td>`
+      + `<td><a href="${media.url}">${media.name}</a>`;
+  }
+  return table;
+}
+
 const createCapsuleTable = function (inventory, capsule) {
   const table = L.DomUtil.create("table");
   const keys = Object.values(capsule.keys).sort((a,b) => a.title.localeCompare(b.title));
@@ -675,6 +700,13 @@ const displayInventory = function (inventory) {
   keysHeader.textContent = "Keys";
   const keys = L.DomUtil.create("div", "keys", container);
   keys.appendChild(createKeysTable(inventory));
+
+  if (inventory.medias.size > 0) {
+    const mediasHeader = L.DomUtil.create("b", null, container);
+    mediasHeader.textContent = "Medias";
+    const medias = L.DomUtil.create("div", "medias", container);
+    medias.appendChild(createMediaTable(inventory));
+  }
 
   const capsulesName = Object.keys(inventory.capsules).sort();
   const keyLockers = capsulesName.filter((name) => inventory.capsules[name].type === "KEY_CAPSULE");
