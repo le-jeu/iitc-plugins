@@ -717,9 +717,44 @@ const displayInventory = function (inventory) {
       id: 'inventory',
       html: container,
       width: 'auto',
-      height: 500,
+      height: '500',
+      buttons: {
+        "Options": displayOpt,
+      }
     });
   }
+}
+
+const exportToKeys = function () {
+  if (!window.plugin.keys) return;
+  [window.plugin.keys.KEY, window.plugin.keys.UPDATE_QUEUE].forEach((mapping) => {
+    const data = {};
+    for (const [guid, key] of plugin.inventory.keys) {
+      data[guid] = key.total;
+    }
+    window.plugin.keys[mapping.field] = data;
+    window.plugin.keys.storeLocal(mapping);
+  });
+  window.runHooks('pluginKeysRefreshAll');
+  window.plugin.keys.delaySync();
+}
+
+const displayOpt = function () {
+  const container = L.DomUtil.create("div", "container");
+
+  // sync keys with the keys plugin
+  if (window.plugin.keys) {
+    const button = L.DomUtil.create("button", null, container);
+    button.textContent = "Export to keys plugin";
+    L.DomEvent.on(button, 'click', exportToKeys);
+  }
+  dialog({
+    title: 'Inventory Opt',
+    id: 'inventory-opt',
+    html: container,
+    width: 'auto',
+    height: 'auto',
+  });
 }
 
 var setup = function () {
@@ -772,6 +807,11 @@ var setup = function () {
         plugin.dialog.remove();
       }
     });
+    $('<a>')
+      .html('Inventory Opt')
+      .attr('title','Inventory options')
+      .click(displayOpt)
+      .appendTo('#toolbox');
   } else {
     $('<a>')
       .html('Inventory')
