@@ -42,6 +42,8 @@
 
 .inventory-box .sum tr td:first-child {
   text-align: left;
+  white-space: nowrap;
+  width: max-content;
 }
 
 .inventory-box tr td:nth-child(2) {
@@ -63,6 +65,10 @@
 .inventory-box td {
 	padding-left: .3rem;
 	padding-right: .3rem;
+}
+
+.inventory-box .sum tr td span {
+    white-space: nowrap;
 }
 
 #dialog-inventory.inventory-box {

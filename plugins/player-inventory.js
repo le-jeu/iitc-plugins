@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Player Inventory
 // @category       Info
-// @version        0.2.13
+// @version        0.2.14
 // @description    View inventory
 
 // stock intel
