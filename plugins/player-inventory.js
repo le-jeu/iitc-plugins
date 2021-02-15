@@ -508,9 +508,12 @@ const handleInventory = function (data) {
   } else {
     alert("Inventory empty, probably hitting rate limit, try again later");
   }
+  autoRefresh();
 }
 
-const handleError = function () {};
+const handleError = function () {
+  autoRefresh();
+};
 
 const getInventory = function () {
   window.postAjax('getInventory', {lastQueryTimestamp:0}, handleInventory, handleError);
@@ -742,11 +745,25 @@ const displayInventory = function (inventory) {
       width: 'auto',
       height: '500',
       buttons: {
-        "Refresh": getInventory,
+        "Refresh": refreshInventory,
         "Options": displayOpt,
       }
     });
   }
+}
+
+const refreshInventory = function () {
+  clearTimeout(plugin.autoRefreshTimer);
+  getSubscriptionStatus();
+}
+
+const autoRefresh = function () {
+  if (!plugin.settings.autoRefreshActive) return;
+  plugin.autoRefreshTimer = setTimeout(refreshInventory, plugin.settings.autoRefreshDelay * 60 * 1000);
+}
+
+const stopAutoRefresh = function () {
+  clearTimeout(plugin.autoRefreshTimer);
 }
 
 const exportToKeys = function () {
@@ -774,7 +791,35 @@ const displayOpt = function () {
   popupCheck.checked = plugin.settings.popupEnable;
   popupCheck.id = 'plugin-player-inventory-popup-enable';
   L.DomEvent.on(popupCheck, "change", (ev) => {
-    plugin.settings.popupEnable = popupCheck.checked;
+    plugin.settings.popupEnable = popupCheck.checked === 'true' || (popupCheck.checked === 'false' ? false : popupCheck.checked);
+    storeSettings();
+  });
+
+  const refreshLabel = L.DomUtil.create('label', null, container);
+  refreshLabel.textContent = "Auto-refresh";
+  refreshLabel.htmlFor = "plugin-player-inventory-autorefresh-enable"
+  const refreshCheck = L.DomUtil.create('input', null, container);
+  refreshCheck.type = 'checkbox';
+  refreshCheck.checked = plugin.settings.autoRefreshActive;
+  refreshCheck.id = 'plugin-player-inventory-autorefresh-enable';
+  L.DomEvent.on(refreshCheck, "change", (ev) => {
+    plugin.settings.autoRefreshActive = refreshCheck.checked === 'true' || (refreshCheck.checked === 'false' ? false : refreshCheck.checked);
+    if (plugin.settings.autoRefreshActive) {
+      autoRefresh();
+    } else {
+      stopAutoRefresh();
+    }
+    storeSettings();
+  });
+
+  const refreshDelayLabel = L.DomUtil.create('label', null, container);
+  refreshDelayLabel.textContent = "Refresh delay (min)";
+  const refreshDelay = L.DomUtil.create('input', null, container);
+  refreshDelay.type = 'number';
+  refreshDelay.value = plugin.settings.autoRefreshDelay;
+  L.DomEvent.on(refreshDelay, "change", (ev) => {
+    plugin.settings.autoRefreshDelay = +refreshDelay.value > 0 ? +refreshDelay.value : 1;
+    refreshDelay.value = plugin.settings.autoRefreshDelay;
     storeSettings();
   });
 
@@ -846,7 +891,10 @@ var setup = function () {
   plugin.settings = {
     autoRefreshActive: false,
     popupEnable: true,
+    autoRefreshDelay: 10,
   }
+
+  loadSettings();
 
   setupCSS();
   setupDisplay();
@@ -868,7 +916,7 @@ var setup = function () {
   })
 
   window.addHook('mapDataEntityInject', injectKeys);
-  window.addHook('iitcLoaded', getSubscriptionStatus);
+  window.addHook('iitcLoaded', refreshInventory);
   window.addHook('portalSelected', (data) => {
     //{selectedPortalGuid: guid, unselectedPortalGuid: oldPortalGuid}
     if (!plugin.settings.popupEnable) return;
