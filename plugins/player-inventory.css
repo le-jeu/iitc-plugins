@@ -1,75 +1,79 @@
-#dialog-inventory {
+.inventory-box {
   padding-right: 16px;
 }
 
-#dialog-inventory .container {
+.inventory-box .container {
 	width: max-content;
 }
 
-#dialog-inventory .ui-accordion-header, #inventory .ui-accordion-content {
+.inventory-box .ui-accordion-header {
+	color: #ffce00;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.inventory-box .ui-accordion-header, .inventory-box .ui-accordion-content {
 	border: 1px solid rgba(255,255,255,.2);
 	margin-top: -1px;
 	display: block;
-  background: rgba(0, 0, 0, 0.7);
   line-height: 1.4rem;
 }
 
-#dialog-inventory .ui-accordion-header:before {
+.inventory-box .ui-accordion-header:before {
 	font-size: 18px;
 	margin-right: 2px;
 	content: "⊞";
 }
 
-#dialog-inventory .ui-accordion-header-active:before {
+.inventory-box .ui-accordion-header-active:before {
 	content: "⊟";
 }
 
-#dialog-inventory table {
+.inventory-box table {
 	width: 100%;
 }
 
-#dialog-inventory table tr {
+.inventory-box table tr {
   background: rgba(0, 0, 0, 0.6);
 }
 
-#dialog-inventory table tr:nth-child(2n + 1) {
+.inventory-box table tr:nth-child(2n + 1) {
   background: rgba(0, 0, 0, 0.3);
 }
 
-#dialog-inventory tr td:first-child {
+.inventory-box tr td:first-child {
   text-align: right;
 }
 
-#dialog-inventory .sum tr td:first-child {
+.inventory-box .sum tr td:first-child {
   text-align: left;
 }
 
-#dialog-inventory tr td:nth-child(2) {
+.inventory-box tr td:nth-child(2) {
   text-align: center;
 }
 
-#dialog-inventory .medias tr td:last-child,
-#dialog-inventory .keys tr td:last-child {
+.inventory-box .medias tr td:last-child,
+.inventory-box .keys tr td:last-child {
   text-align: left;
 }
 
-#dialog-inventory .all tr td:last-child,
-#dialog-inventory .keys tr td:last-child,
-#dialog-inventory .medias tr td:last-child,
-#dialog-inventory .capsule tr td:last-child {
+.inventory-box .all tr td:last-child,
+.inventory-box .keys tr td:last-child,
+.inventory-box .medias tr td:last-child,
+.inventory-box .capsule tr td:last-child {
   width: 100%;
 }
 
-#dialog-inventory td {
+.inventory-box td {
 	padding-left: .3rem;
 	padding-right: .3rem;
 }
 
-#dialog-inventory .keys td {
+/*.inventory-box .keys td {
 	line-height: 1.2rem;
-}
+}*/
 
-#dialog-inventory.mobile {
+.inventory-box.mobile {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -78,7 +82,7 @@
 	overflow: auto;
 	padding: 0;
 }
-#dialog-inventory.mobile .container {
+.inventory-box.mobile .container {
 	width: unset;
 }
 
@@ -87,18 +91,18 @@
   width: max-content;
 }
 
-#dialog-inventory-opt .container {
+.inventory-box-opt .container {
   display: grid;
   grid-template-columns: auto auto;
   grid-gap: .5em
 }
 
-#dialog-inventory-opt button {
+.inventory-box-opt button {
   grid-column: 1/3;
   padding: .3rem 1em;
 }
 
-#dialog-inventory-opt input {
+.inventory-box-opt input {
   margin-left: auto;
   margin-top: auto;
   margin-bottom: auto;

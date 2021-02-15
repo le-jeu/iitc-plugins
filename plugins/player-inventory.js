@@ -474,6 +474,7 @@ const loadFromLocalStorage = function () {
       const data = JSON.parse(store);
       plugin.inventory = parseInventory("⌂", data.raw);
       plugin.lastRefresh = data.date;
+      window.runHooks("pluginInventoryRefresh", {inventory: plugin.inventory});
     } catch (e) {console.log(e);}
   }
 }
@@ -724,32 +725,36 @@ const buildInventoryHTML = function (inventory) {
 
   $(container).accordion({
       header: 'b',
-      heightStyle: 'fill'
+      heightStyle: 'fill',
+      collapsible: true,
   });
 
   return container;
 }
 
+const fillPane = function (inventory) {
+  const oldContainer = plugin.pane.querySelector('.container');
+  if (oldContainer) plugin.pane.removeChild(oldContainer);
+  plugin.pane.appendChild(buildInventoryHTML(inventory));
+}
+
 const displayInventory = function (inventory) {
   const container = buildInventoryHTML(inventory);
 
-  if (window.useAndroidPanes()) {
-    plugin.dialog = $('<div>').html(container).addClass('mobile').appendTo(document.body);
-    plugin.dialog.id = 'dialog-inventory';
-    plugin.dialog.html(container);
-  } else {
-    plugin.dialog = dialog({
-      title: 'Inventory',
-      id: 'inventory',
-      html: container,
-      width: 'auto',
-      height: '500',
-      buttons: {
-        "Refresh": refreshInventory,
-        "Options": displayOpt,
-      }
-    });
-  }
+  plugin.dialog = dialog({
+    title: 'Inventory',
+    id: 'inventory',
+    html: container,
+    width: 'auto',
+    height: '500',
+    classes: {
+      'ui-dialog-content': 'inventory-box',
+    },
+    buttons: {
+      "Refresh": refreshInventory,
+      "Options": displayOpt,
+    }
+  });
 }
 
 const refreshInventory = function () {
@@ -859,11 +864,19 @@ const setupDisplay = function () {
     android.addPane('playerInventory', 'Inventory', 'ic_action_view_as_list');
     addHook('paneChanged', function (pane) {
       if (pane === 'playerInventory') {
-        displayInventory(plugin.inventory);
-      } else if (plugin.dialog) {
-        plugin.dialog.remove();
+        plugin.pane.style.display = "";
+      } else if (plugin.pane) {
+        plugin.pane.style.display = "none";
       }
     });
+    plugin.pane = L.DomUtil.create('div', 'inventory-box mobile', document.body);
+    plugin.pane.id = 'pane-inventory';
+    plugin.pane.style.display = "none";
+
+    const refreshButton = L.DomUtil.create('button', null, plugin.pane);
+    refreshButton.textContent = 'Refresh';
+    L.DomEvent.on(refreshButton, 'click', refreshInventory);
+
     $('<a>')
       .html('Inventory Opt')
       .attr('title','Inventory options')
@@ -913,10 +926,16 @@ var setup = function () {
     if (plugin.dialog) {
       plugin.dialog.html(buildInventoryHTML(data.inventory));
     }
+    if (plugin.pane) {
+      fillPane(data.inventory);
+    }
   })
 
   window.addHook('mapDataEntityInject', injectKeys);
-  window.addHook('iitcLoaded', refreshInventory);
+  window.addHook('iitcLoaded', () => {
+    if (plugin.lastRefresh + plugin.settings.autoRefreshDelay * 60 * 1000 < Date.now())
+      refreshInventory();
+  });
   window.addHook('portalSelected', (data) => {
     //{selectedPortalGuid: guid, unselectedPortalGuid: oldPortalGuid}
     if (!plugin.settings.popupEnable) return;
