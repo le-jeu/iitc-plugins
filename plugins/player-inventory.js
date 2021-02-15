@@ -766,16 +766,17 @@ const exportToKeys = function () {
 const displayOpt = function () {
   const container = L.DomUtil.create("div", "container");
 
-  const labelPopup = L.DomUtil.create('label', null, container);
-  labelPopup.textContent = "Keys popups";
-  const checkPopup = L.DomUtil.create('input', null, container);
-  checkPopup.type = 'checkbox';
-  checkPopup.checked = plugin.settings.popupEnable;
-  L.DomEvent.on(checkPopup, "change", (ev) => {
-      L.DomEvent.stop(ev);
-      plugin.settings.popupEnable = checkPopup.checked;
-      storeSettings();
-    });
+  const popupLabel = L.DomUtil.create('label', null, container);
+  popupLabel.textContent = "Keys popups";
+  popupLabel.htmlFor = "plugin-player-inventory-popup-enable"
+  const popupCheck = L.DomUtil.create('input', null, container);
+  popupCheck.type = 'checkbox';
+  popupCheck.checked = plugin.settings.popupEnable;
+  popupCheck.id = 'plugin-player-inventory-popup-enable';
+  L.DomEvent.on(popupCheck, "change", (ev) => {
+    plugin.settings.popupEnable = popupCheck.checked;
+    storeSettings();
+  });
 
   // sync keys with the keys plugin
   if (window.plugin.keys) {
