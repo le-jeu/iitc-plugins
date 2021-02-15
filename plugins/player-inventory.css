@@ -91,18 +91,18 @@
   width: max-content;
 }
 
-.inventory-box-opt .container {
+#dialog-inventory-opt .container {
   display: grid;
   grid-template-columns: auto auto;
   grid-gap: .5em
 }
 
-.inventory-box-opt button {
+#dialog-inventory-opt button {
   grid-column: 1/3;
   padding: .3rem 1em;
 }
 
-.inventory-box-opt input {
+#dialog-inventory-opt input {
   margin-left: auto;
   margin-top: auto;
   margin-bottom: auto;
