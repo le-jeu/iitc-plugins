@@ -948,8 +948,11 @@ var setup = function () {
 
   window.addHook('mapDataEntityInject', injectKeys);
   window.addHook('iitcLoaded', () => {
-    if (plugin.lastRefresh + plugin.settings.autoRefreshDelay * 60 * 1000 < Date.now())
+    const delay = plugin.lastRefresh + plugin.settings.autoRefreshDelay * 60 * 1000 - Date.now();
+    if (delay < 0)
       refreshInventory();
+    else
+      plugin.autoRefreshTimer = setTimeout(refreshInventory, delay);
   });
   window.addHook('portalSelected', (data) => {
     //{selectedPortalGuid: guid, unselectedPortalGuid: oldPortalGuid}
