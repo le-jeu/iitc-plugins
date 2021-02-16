@@ -90,6 +90,7 @@ class Inventory {
 
   clear() {
     this.keys.clear();
+    this.medias.clear();
     this.capsules = {}
     this.items = {};
     for (const type in itemTypes) {
@@ -101,6 +102,8 @@ class Inventory {
         total: 0,
       }
     }
+    this.count = 0;
+    this.keyLockersCount = 0;
   }
 
   addCapsule(capsule) {
@@ -113,6 +116,10 @@ class Inventory {
       items: {},
     }
     this.capsules[capsule.name] = data;
+
+    if (capsule.type === "KEY_CAPSULE")
+      this.keyLockersCount += capsule.size;
+
     this.addItem(capsule);
     for (const item of capsule.content) {
       this.addItem(item);
@@ -137,6 +144,7 @@ class Inventory {
     count[item.capsule] = (count[item.capsule] || 0) + item.count;
     count.total = (count.total || 0) + item.count;
     cat.total += item.count;
+    this.count += item.count;
 
     if (item.type === "PORTAL_LINK_KEY") {
       this.addKey(item);
@@ -615,15 +623,9 @@ const createAllSumTable = function (inventory) {
 
     if (type === "PORTAL_LINK_KEY") {
       const inventoryCount = item.counts["VERY_COMMON"][inventory.name] || 0;
-      let keyLockerCount = 0;
-      for (const name in inventory.capsules) {
-        const capsule = inventory.capsules[name];
-        if (capsule.type === "KEY_CAPSULE")
-          keyLockerCount += capsule.size;
-      }
-      const otherCount = total - inventoryCount - keyLockerCount;
+      const otherCount = total - inventoryCount - inventory.keyLockersCount;
       nums.push(`<span class="level_L1">${inventory.name}: ${inventoryCount}</span>`);
-      nums.push(`<span class="level_L1">Key Lockers: ${keyLockerCount}</span>`);
+      nums.push(`<span class="level_L1">Key Lockers: ${inventory.keyLockersCount}</span>`);
       nums.push(`<span class="level_L1">Other: ${otherCount}</span>`);
     } else {
       for (const k in item.counts) {
@@ -703,7 +705,11 @@ const buildInventoryHTML = function (inventory) {
   const container = L.DomUtil.create("div", "container");
 
   const sumHeader = L.DomUtil.create("b", null, container);
-  sumHeader.textContent = "Summary";
+  {
+    const inventoryCount = inventory.count - inventory.keyLockersCount;
+    const keyInInventory = (inventory.keys.size > 0) ? inventory.items["PORTAL_LINK_KEY"].counts["VERY_COMMON"][inventory.name] || 0 : 0;
+    sumHeader.textContent = `Summary I:${inventoryCount - keyInInventory} K:${keyInInventory} T:${inventoryCount}/2500 KL:${inventory.keyLockersCount}`;
+  }
   const sum = L.DomUtil.create("div", "sum", container);
   sum.appendChild(createAllSumTable(inventory));
 
