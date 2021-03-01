@@ -1,0 +1,15 @@
+.highlighters-list {
+  border: 1px solid #eee;
+  min-height: 20px;
+  padding-left: 0
+}
+
+ul.highlighters-list {
+  list-style-type: none
+}
+
+.highlighters-list li {
+  padding: 6px;
+  list-style-position: inside;
+  border-bottom: 1px solid grey;
+}
