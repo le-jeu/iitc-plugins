@@ -76,6 +76,9 @@ const PortalStyler = L.Class.extend({
   setRadius: function (radius) {
     L.setOptions(this, {radius: radius});
   },
+  getRadius: function (radius) {
+    return this.options.radius;
+  },
   getOptions: function () {
     return this.options;
   }
