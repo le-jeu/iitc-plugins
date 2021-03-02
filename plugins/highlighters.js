@@ -1,9 +1,11 @@
 // @author         jaiperdu
 // @name           Highlighters selection
 // @category       Highlighter
-// @version        0.0.1
+// @version        0.0.3
 // @description    Allow multiple highlighter to work concurrently
 
+/* global L */
+/* eslint-env es6 */
 
 // use own namespace for plugin
 const highlighters = {};
@@ -11,13 +13,15 @@ const highlighters = {};
 highlighters.settings = {
   highlighters_enabled: [],
 };
-highlighters.SETTINGS_KEY = "plugin-highlighters-settings";
+highlighters.SETTINGS_KEY = 'plugin-highlighters-settings';
 
 function loadSettings() {
   try {
     const settings = JSON.parse(localStorage[highlighters.SETTINGS_KEY]);
     Object.assign(highlighters.settings, settings);
-  } catch {}
+  } finally {
+    // nothing to do
+  }
 }
 
 function storeSettings() {
@@ -47,7 +51,7 @@ function displayDialog() {
     connectWith: '.highlighters-list',
     placeholder: 'sortable-placeholder',
     forcePlaceholderSize:true,
-    update: function (event, ui) {
+    update: function () {
       const list = [];
       highlighters.settings.highlighters_enabled = [];
       for (const li of enabledList.children) {
@@ -55,15 +59,15 @@ function displayDialog() {
       }
       highlighters.settings.highlighters_enabled = list;
       storeSettings();
-      resetHighlightedPortals();
+      window.resetHighlightedPortals();
     }
   }).disableSelection();
 
-  dialog({
+  window.dialog({
     html: html,
     id: 'plugin-highlighters',
     title: 'Highlighters',
-  })
+  });
 }
 
 const PortalStyler = L.Class.extend({
@@ -76,7 +80,7 @@ const PortalStyler = L.Class.extend({
   setRadius: function (radius) {
     L.setOptions(this, {radius: radius});
   },
-  getRadius: function (radius) {
+  getRadius: function () {
     return this.options.radius;
   },
   getOptions: function () {
@@ -87,8 +91,8 @@ const PortalStyler = L.Class.extend({
 function highlightPortal(p) {
   const styler = new PortalStyler(p);
   for (const hl of highlighters.settings.highlighters_enabled) {
-    const highlighter = window._highlighters[hl]
-    if(highlighter !== undefined) {
+    const highlighter = window._highlighters[hl];
+    if (highlighter !== undefined) {
       highlighter.highlight({portal: styler});
     }
   }
@@ -99,6 +103,7 @@ function highlightPortal(p) {
 
 window.plugin.highlighters = highlighters;
 
+/* eslint-disable-next-line no-unused-vars */
 const setup = function () {
   $('<style>').prop('type', 'text/css').html('@include_css:highlighters.css@').appendTo('head');
 
@@ -106,8 +111,8 @@ const setup = function () {
   if (window._highlighters === null) window._highlighters = {};
 
   const a = L.DomUtil.create('a', null, document.querySelector('#toolbox'));
-  a.textContent = "Highlighters";
+  a.textContent = 'Highlighters';
   L.DomEvent.on(a, 'click', displayDialog);
 
   loadSettings();
-}
+};
