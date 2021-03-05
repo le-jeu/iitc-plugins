@@ -345,6 +345,55 @@ const matchRule = function (data) {
   return matchChat(data);
 };
 
+const reParseData = function (data) {
+  let parse = {};
+  let markup = data.markup;
+  let portals = markup.filter(ent => ent[0] === 'PORTAL').map(ent => ent[1]);
+  let numbers = markup.filter(ent => ent[0] === 'TEXT' && !isNaN(ent[1].plain)).map(ent => parseInt(ent[1].plain));
+  let atPlayers = markup.filter(ent => ent[0] === 'AT_PLAYER').map(ent =>
+    ({
+      name: ent[1].plain.slice(1),
+      team: ent[1].team === 'RESISTANCE' ? TEAM_RES : TEAM_ENL
+    })
+  );
+
+  parse.type = matchRule(data);
+
+  switch (parse.type) {
+  case 'field':
+  case 'destroy field':
+    parse.mus = numbers[0];
+  case 'capture':
+  case 'beacon':
+  case 'battle':
+  case 'fracker':
+  case 'resonator':
+  case 'destroy resonator':
+  case 'battle result':
+  case 'neutralize':
+  case 'attack':
+    parse.portal = portals[0];
+    break;
+  case 'link':
+  case 'destroy link':
+    parse.from = portals[0];
+    parse.to = portals[1];
+    break;
+  default:
+    if (portals.length > 0) parse.portals = portals;
+  }
+
+  if (parse.type === 'battle result')
+    parse.faction = markup[0][1].team;
+
+  if (parse.type === 'chat' || parse.type === 'chat faction') {
+    parse.mentions = atPlayers;
+    parse.message = markup.slice(1 + data.secure).map(ent => ent[1].plain).join('').trim();
+  }
+
+  data['comm-filter'] = parse;
+};
+
 commFilter.viruses = new Map();
 
 const findVirus = function (guids, data) {
@@ -409,55 +458,6 @@ const computeMUs = function (guids, data) {
   }
 };
 
-const reParseData = function (data) {
-  let parse = {};
-  let markup = data.markup;
-  let portals = markup.filter(ent => ent[0] === 'PORTAL').map(ent => ent[1]);
-  let numbers = markup.filter(ent => ent[0] === 'TEXT' && !isNaN(ent[1].plain)).map(ent => parseInt(ent[1].plain));
-  let atPlayers = markup.filter(ent => ent[0] === 'AT_PLAYER').map(ent =>
-    ({
-      name: ent[1].plain.slice(1),
-      team: ent[1].team === 'RESISTANCE' ? TEAM_RES : TEAM_ENL
-    })
-  );
-
-  parse.type = matchRule(data);
-
-  switch (parse.type) {
-  case 'field':
-  case 'destroy field':
-    parse.mus = numbers[0];
-  case 'capture':
-  case 'beacon':
-  case 'battle':
-  case 'fracker':
-  case 'resonator':
-  case 'destroy resonator':
-  case 'battle result':
-  case 'neutralize':
-  case 'attack':
-    parse.portal = portals[0];
-    break;
-  case 'link':
-  case 'destroy link':
-    parse.from = portals[0];
-    parse.to = portals[1];
-    break;
-  default:
-    if (portals.length > 0) parse.portals = portals;
-  }
-
-  if (parse.type === 'battle result')
-    parse.faction = markup[0][1].team;
-
-  if (parse.type === 'chat' || parse.type === 'chat faction') {
-    parse.mentions = atPlayers;
-    parse.message = markup.slice(1 + data.secure).map(ent => ent[1].plain).join('').trim();
-  }
-
-  data['comm-filter'] = parse;
-};
-
 const updateCSS = function () {
   let elm = document.getElementById('comm-filter-css');
   if (!elm) {
@@ -508,7 +508,6 @@ const reparsePublicData = function () {
 
   updateCSS();
 };
-
 
 // setup
 
