@@ -13,448 +13,227 @@ Re-write from https://github.com/udnp/iitc-plugins/
 //3) add virus  filter
 //4) add checkable filtering for all/faction/alert
 
-let renderPortal = function (portal) {
-  const lat = portal.latE6/1E6, lng = portal.lngE6/1E6;
-  const perma = window.makePermalink([lat,lng]);
-  const js = 'window.selectPortalByLatLng('+lat+', '+lng+');return false';
+// ==============
+// chat injection
+// ==============
+
+const renderText = function (text) {
+  return $('<div/>').text(text.plain).html().autoLink();
+};
+
+const renderPortal = function (portal) {
+  var lat = portal.latE6/1E6, lng = portal.lngE6/1E6;
+  var perma = window.makePermalink([lat,lng]);
+  var js = 'window.selectPortalByLatLng('+lat+', '+lng+');return false';
   return '<a onclick="'+js+'"'
     + ' title="'+portal.address+'"'
     + ' href="'+perma+'" class="help">'
-    + portal.name
+    + window.chat.getChatPortalName(portal)
     + '</a>';
-}
-
-let renderFaction = function (faction) {
-  const name = faction.team == "ENLIGHTENED" ? "Enlightened" : "Resistance";
-  const spanClass = faction.team == "ENLIGHTENED" ? TEAM_ENL : TEAM_RES;
-  return $('<div/>').html($('<span/>')
-                    .attr('class', spanClass)
-                    .text(name)).html();
-}
-
-let renderPlayer = function (player, at) {
-  const name = player.plain.slice(1);
-  const thisToPlayer = name == window.PLAYER.nickname;
-  const spanClass = thisToPlayer ? "pl_nudge_me" : (player.team + " pl_nudge_player");
-  return $('<div/>').html($('<span/>')
-                    .attr('class', spanClass)
-                    .attr('onclick',"window.chat.nicknameClicked(event, '"+name+"')")
-                    .text((at ? '@' : '') + name)).html();
-}
-
-let renderMarkupEntity = function (ent) {
-  if (ent[0] == 'PORTAL')
-    return renderPortal(ent[1]);
-  if (ent[0] == 'FACTION')
-    return renderFaction(ent[1]);
-  if (ent[0] == 'PLAYER')
-    return renderPlayer(ent[1]);
-  if (ent[0] == 'AT_PLAYER')
-    return renderPlayer(ent[1], true);
-  if (ent[0] == 'TEXT')
-    return $('<div/>').text(ent[1].plain).html().autoLink();
-  return $('<div/>').text(ent[0]+':<'+ent[1].plain+'>').html();
-}
-
-let compareLog = function (l1, l2) {
-  let d1 = l1[4];
-  let d2 = l2[4];
-  return compareLogData(d1, d2);
 };
 
-let compareLogData = function (d1, d2) {
-  if (d1.time != d2.time)
-    return d1.time - d2.time;
-  if (d1.player.name != d2.player.name)
-    return d1.player.name.localeCompare(d2.player.name);
-  if (d1.type != d2.type)
-    return d1.type.localeCompare(d2.type);
-  if (d1.portal) {
-    if (d1.portal.latE6 != d2.portal.latE6)
-      return d1.portal.latE6 - d2.portal.latE6;
-    return d1.portal.lngE6 - d2.portal.lngE6;
-  }
-  if (d1.from) {
-    if (d1.from.latE6 != d2.from.latE6)
-      return d1.from.latE6 - d2.from.latE6;
-    if (d1.from.lngE6 != d2.from.lngE6)
-      return d1.from.lngE6 - d2.from.lngE6;
-    if (d1.to.latE6 != d2.to.latE6)
-      return d1.to.latE6 - d2.to.latE6;
-    return d1.to.lngE6 - d2.to.lngE6;
-  }
-  return 0;
-}
+const renderFactionEnt = function (faction) {
+  var name = faction.team === 'ENLIGHTENED' ? 'Enlightened' : 'Resistance';
+  var spanClass = faction.team === 'ENLIGHTENED' ? TEAM_ENL : TEAM_RES;
+  return $('<div/>').html($('<span/>')
+    .attr('class', spanClass)
+    .text(name)).html();
+};
 
-let renderVirus = function (virus) {
-  return '<span style=\"color: #f88; background-color: #500;\">[virus]<\/span> destroyed ' + virus.virusCount + ' resonators on ' + renderPortal(virus.portal);
-}
+const renderPlayer = function (player, at, sender) {
+  var name = (sender) ? player.plain.slice(0, -2) : (at) ? player.plain.slice(1) : player.plain;
+  var thisToPlayer = name === window.PLAYER.nickname;
+  var spanClass = thisToPlayer ? 'pl_nudge_me' : (player.team + ' pl_nudge_player');
+  return $('<div/>').html($('<span/>')
+    .attr('class', spanClass)
+    .attr('onclick',"window.chat.nicknameClicked(event, '"+name+"')")
+    .text((at ? '@' : '') + name)).html();
+};
 
-let findVirus = function (logs) {
-  let virus = new Map();
-  let hide = new Set();
-  let last_data = {};
-  let amount = 0;
-  for (const log of logs) {
-    if (log.type != 'destroy resonator')
-      continue;
-    if (log.time != last_data.time
-        || compareLogData(log, last_data) != 0) {
-      last_data = log;
-      log.virus = false;
-      amount = 1;
+const renderMarkupEntity = function (ent) {
+  switch (ent[0]) {
+  case 'TEXT':
+    return renderText(ent[1]);
+  case 'PORTAL':
+    return renderPortal(ent[1]);
+  case 'FACTION':
+    return renderFactionEnt(ent[1]);
+  case 'SENDER':
+    return renderPlayer(ent[1], false, true);
+  case 'PLAYER':
+    return renderPlayer(ent[1]);
+  case 'AT_PLAYER':
+    return renderPlayer(ent[1], true);
+  default:
+  }
+  return $('<div/>').text(ent[0]+':<'+ent[1].plain+'>').html();
+};
+
+const renderMarkup = function (markup) {
+  var msg = '';
+  markup.forEach(function(ent, ind) {
+    switch (ent[0]) {
+    case 'SENDER':
+    case 'SECURE':
+      // skip as already handled
+      break;
+
+    case 'PLAYER': // automatically generated messages
+      if (ind > 0) msg += renderMarkupEntity(ent); // don’t repeat nick directly
+      break;
+
+    default:
+      // add other enitities whatever the type
+      msg += renderMarkupEntity(ent);
+      break;
     }
-    else {
-      amount += 1;
-      log.virus = last_data.hash;
-      last_data.virus = true;
-      last_data.virusCount = amount;
-      last_data.virusMsg = window.chat.renderMsg(
-        renderVirus(last_data),
-        last_data.player.name,
-        last_data.time,
-        last_data.player.team === 'RESISTANCE' ? TEAM_RES : TEAM_ENL,
-        last_data.alert,
-        false
-      );
-    }
-  }
-}
+  });
+  return msg;
+};
 
-let computeMUs = function (logs) {
-  let agents = new Map();
-  let sum = 0;
-  for (const log of logs) {
-    if (log.type == 'field') {
-      let tot = agents.get(log.player.name) || 0;
-      tot += log.mus;
-      agents.set(log.player.name, tot);
-      sum += log.mus;
-      log.totalMUs = {
-        agent: tot,
-        all: sum
-      }
-      log.MUMsg = window.chat.renderMsg(
-        'created a field from '+ renderPortal(log.portal) + ' +' + log.mus + 'MUs'
-        + ' (' + tot.toLocaleString('en-US') + '/' + sum.toLocaleString('en-US') + ')',
-        log.player.name,
-        log.time,
-        log.player.team === 'RESISTANCE' ? TEAM_RES : TEAM_ENL,
-        log.alert,
-        false
-      );
-    }
-  }
-}
+const renderTimeCell = function(time, classNames) {
+  var ta = unixTimeToHHmm(time);
+  var tb = unixTimeToDateTimeString(time, true);
+  // add <small> tags around the milliseconds
+  tb = (tb.slice(0,19)+'<small class="milliseconds">'+tb.slice(19)+'</small>').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return '<td><time class="' + classNames + '" title="'+tb+'" data-timestamp="'+time+'">'+ta+'</time></td>';
+};
 
-window.chat.writeDataToHash = function(newData, storageHash, isPublicChannel, isOlderMsgs) {
-  $.each(newData.result, function(ind, json) {
-    // avoid duplicates
-    if(json[0] in storageHash.data) return true;
+const renderNickCell = function(nick, classNames) {
+  var i = ['<span class="invisep">&lt;</span>', '<span class="invisep">&gt;</span>'];
+  return '<td>'+i[0]+'<mark class="' + classNames + '">'+ nick+'</mark>'+i[1]+'</td>';
+};
 
-    var categories = json[2].plext.categories;
-    var isPublic = (categories & 1) == 1;
-    var isSecure = (categories & 2) == 2;
-    var msgAlert = (categories & 4) == 4;
+const renderMsgCell = function(msg, classNames) {
+  return '<td class="' + classNames + '">'+msg+'</td>';
+};
 
-    var time = json[1];
-    var systemNarrowcast = json[2].plext.plextType === 'SYSTEM_NARROWCAST';
+const renderMsgRow = function(data) {
+  var timeClass = (data.msgToPlayer) ? 'pl_nudge_date' : '';
+  var timeCell = renderTimeCell(data.time, timeClass);
 
-    //track oldest + newest timestamps
-    if (storageHash.oldestTimestamp === -1 || storageHash.oldestTimestamp > time) storageHash.oldestTimestamp = time;
-    if (storageHash.newestTimestamp === -1 || storageHash.newestTimestamp < time) storageHash.newestTimestamp = time;
+  var nickClasses = ['nickname'];
+  if (data.player.team === TEAM_ENL || data.player.team === TEAM_RES) nickClasses.push(TEAM_TO_CSS[data.player.team]);
+  // highlight things said/done by the player in a unique colour (similar to @player mentions from others in the chat text itself)
+  if (data.player.name === window.PLAYER.nickname) nickClasses.push('pl_nudge_me');
+  var nickCell = renderNickCell(data.player.name, nickClasses.join(' '));
 
-    let data = {
-      hash: json[0],
-      public: isPublic,
-      secure: isSecure,
-      alert: msgAlert,
-      time: time,
-      player: {
-        name: '',
-        team: ''
-      }
+  var msg = renderMarkup(data.markup);
+  var msgClass = (data.narrowcast) ? 'system_narrowcast' : '';
+  var msgCell = renderMsgCell(msg, msgClass);
+
+  var className = '';
+  if (!data.auto && data.public)
+    className = 'public';
+  else if (!data.auto && data.secure)
+    className = 'faction';
+  return '<tr data-guid="' + data.guid + '" class="' + className + '">' + timeCell + nickCell + msgCell + '</tr>';
+};
+
+const updateOldNewHash = function(newData, storageHash, isOlderMsgs, isAscendingOrder) {
+  // handle guids reset before refactored chat
+  if (storageHash.oldestGUID === undefined)
+    storageHash.guids = [];
+  // track oldest + newest timestamps/GUID
+  if (newData.result.length > 0) {
+    var first = {
+      guid: newData.result[0][0],
+      time: newData.result[0][1]
     };
-    let markup = json[2].plext.markup;
-    let withSender = markup.some(ent => ent[0] == 'SENDER');
-    let portals = markup.filter(ent => ent[0] == 'PORTAL').map(ent => ent[1]);
-    let numbers = markup.filter(ent => ent[0] == 'TEXT' && !isNaN(ent[1].plain)).map(ent => parseInt(ent[1].plain));
-    let atPlayers = markup.filter(ent => ent[0] == 'AT_PLAYER').map(ent =>
-      ({
-        name: ent[1].plain.slice(1),
-        team: ent[1].team
-      })
-    );
-
-    let plainSub = markup.map(ent =>
-      (ent[0] == 'TEXT' && !withSender)
-      ? isNaN(ent[1].plain)
-        ? ent[1].plain
-        : 'NUMBER'
-      : ent[0]
-    ).join('|');
-
-    if (markup[0][0] == 'PLAYER') {
-      // <PLAYER| captured |PORTAL (ADDRESS)>
-      // <PLAYER| created a Control Field @|PORTAL (ADDRESS)| +|NUMBER| MUs>
-      // <PLAYER| deployed a Beacon on |PORTAL (ADDRESS)>
-      // <PLAYER| deployed a Battle Beacon on |PORTAL (ADDRESS)>
-      // <PLAYER| deployed a Fracker on |PORTAL (ADDRESS)>
-      // <PLAYER| deployed a Resonator on |PORTAL (ADDRESS)>
-      // <PLAYER| destroyed a Control Field @|PORTAL (ADDRESS)| -|NUMBER| MUs>
-      // <PLAYER| destroyed a Resonator on |PORTAL (ADDRESS)>
-      // <PLAYER| destroyed the Link |PORTAL (ADDRESS)| to |PORTAL (ADDRESS)>
-      // <PLAYER| linked |PORTAL (ADDRESS)| to |PORTAL (ADDRESS)>
-      data.player = {
-        name: markup[0][1].plain,
-        team: markup[0][1].team
-      }
-
-      data.type = "unknown player action";
-      if (markup[1][1].plain.search('captured') != -1) {
-        data.type = 'capture';
-        data.portal = portals[0];
-      }
-      else if (markup[1][1].plain.search('created') != -1) {
-        data.type = 'field';
-        data.portal = portals[0];
-        if (numbers.length > 0)
-          data.mus = numbers[0];
-      }
-      else if (markup[1][1].plain.search('deployed a Beacon') != -1) {
-        data.type = 'beacon';
-        data.portal = portals[0];
-      }
-      else if (markup[1][1].plain.search('deployed a Battle Beacon') != -1) {
-        data.type = 'battle';
-        data.portal = portals[0];
-      }
-      else if (markup[1][1].plain.search('deployed a Fracker') != -1) {
-        data.type = 'fracker';
-        data.portal = portals[0];
-      }
-      else if (markup[1][1].plain.search('deployed a Resonator') != -1) {
-        data.type = 'deploy';
-        data.portal = portals[0];
-      }
-      else if (markup[1][1].plain.search('destroyed a Control Field') != -1) {
-        data.type = 'destroy field';
-        data.portal = portals[0];
-        if (numbers.length > 0)
-          data.mus = numbers[0];
-      }
-      else if (markup[1][1].plain.search('destroyed a Resonator') != -1) {
-        data.type = 'destroy resonator';
-        data.portal = portals[0];
-      }
-      else if (markup[1][1].plain.search('destroyed the Link') != -1) {
-        data.type = 'destroy link';
-        data.from = portals[0];
-        data.to = portals[1];
-      }
-      else if (markup[1][1].plain.search('linked') != -1) {
-        data.type = 'link';
-        data.from = portals[0];
-        data.to = portals[1];
-      } else {
-        data.portals = portals;
+    var last = {
+      guid: newData.result[newData.result.length-1][0],
+      time: newData.result[newData.result.length-1][1]
+    };
+    if (isAscendingOrder) {
+      var temp = first;
+      first = last;
+      last = temp;
+    }
+    if (storageHash.oldestTimestamp === -1 || storageHash.oldestTimestamp >= last.time) {
+      if (isOlderMsgs || storageHash.oldestTimestamp !== last.time) {
+        storageHash.oldestTimestamp = last.time;
+        storageHash.oldestGUID = last.guid;
       }
     }
-
-    if (markup[0][0] == 'FACTION') {
-      // <FACTION| won a Battle Beacon on |PORTAL (ADDRESS)>
-      data.faction = markup[0][1].team;
-      data.type = "unknown faction action";
-      if (markup[1][1].plain.search('won a Battle Beacon on') != -1) {
-        data.type = 'battle won';
-        data.portal = portals[0];
-        data.player = {
-          name: data.factio == "RESISTANCE" ? "Resistance" : "Enlightened",
-          team: data.faction,
-        }
+    if (storageHash.newestTimestamp === -1 || storageHash.newestTimestamp <= first.time) {
+      if (!isOlderMsgs || storageHash.newestTimestamp !== first.time) {
+        storageHash.newestTimestamp = first.time;
+        storageHash.newestGUID = first.guid;
       }
     }
+  }
+};
 
-    if (systemNarrowcast) {
-      // <Your Link |PORTAL (ADDRESS)| to |PORTAL (ADDRESS)| destroyed by |PLAYER>
-      // <Your Portal |PORTAL (ADDRESS)| is under attack by |PLAYER>
-      // <Your Portal |PORTAL (ADDRESS)| neutralized by |PLAYER>
-      let players = markup.filter(ent => ent[0] == 'PLAYER').map(ent => ent[1]);
-      data.player = {
-        name: (players.length > 0) ? players[0].plain : 'unknown',
-        team: (players.length > 0) ? players[0].team : 'unknown'
-      };
-      if (markup[0][1].plain.search("Link") != -1) {
-        data.type = 'destroy link';
-        data.from = portals[0];
-        data.to = portals[1];
-      }
-      else if (markup[2] && markup[2][1].plain.search("neutralized") != -1) {
-        data.type = 'destroy portal';
-        data.portal = portals[0];
-      }
-      else if (markup[2] && markup[2][1].plain.search("attack") != -1) {
-        data.type = 'attack portal';
-        data.portal = portals[0];
-      }
-      else if (markup[0][1].plain.search("kinetic")) {
-        data.type = 'kinetic';
-        data.player.name = '';
-      }
-      else {
-        data.type = 'unknown';
-        data.portal = portals[0];
-      }
+const parseMsgData = function(data) {
+  var categories = data[2].plext.categories;
+  var isPublic = (categories & 1) === 1;
+  var isSecure = (categories & 2) === 2;
+  var msgAlert = (categories & 4) === 4;
+
+  var msgToPlayer = msgAlert && (isPublic || isSecure);
+
+  var time = data[1];
+  var team = data[2].plext.team === 'RESISTANCE' ? TEAM_RES : TEAM_ENL;
+  var auto = data[2].plext.plextType !== 'PLAYER_GENERATED';
+  var systemNarrowcast = data[2].plext.plextType === 'SYSTEM_NARROWCAST';
+
+  var markup = data[2].plext.markup;
+
+  var nick = '';
+  markup.forEach(function(ent) {
+    switch (ent[0]) {
+    case 'SENDER': // user generated messages
+      nick = ent[1].plain.slice(0, -2); // cut “: ” at end
+      break;
+
+    case 'PLAYER': // automatically generated messages
+      nick = ent[1].plain;
+      team = ent[1].team === 'RESISTANCE' ? TEAM_RES : TEAM_ENL;
+      break;
+
+    default:
+      break;
     }
-    // drop secure entity
-    if (isSecure)
-      markup = markup.slice(1);
-
-    if (markup[0][0] == 'SENDER') {
-      // <SENDER| blah |@PLAYER| blah |@PLAYER| blah >
-      // <[secure] |SENDER| blah |@PLAYER| blah |@PLAYER| blah >
-      data.type = "chat";
-      data.player = {
-        name: markup[0][1].plain.slice(0, -2),
-        team: markup[0][1].team
-      };
-      data.mentions = atPlayers;
-      data.markup = markup.slice(1);
-      data.message = data.markup.map(ent => ent[1].plain).join('').trim();
-    }
-    else if (!data.type) {
-      // <[secure] | |PLAYER| captured their first Portal.>
-      // <[secure] | |PLAYER| created their first Control Field>
-      // <[secure] | |PLAYER| created their first Link.>
-      let players = markup.filter(ent => ent[0] == 'PLAYER').map(ent => ent[1]);
-      data.player = {
-        name: (players.length > 0) ? players[0].plain : 'unknown',
-        team: (players.length > 0) ? players[0].team : 'unknown'
-      };
-      if (plainSub.search('first Portal') != -1)
-        data.type = 'first capture';
-      else if (plainSub.search('first Control') != -1)
-        data.type = 'first field';
-      else if (plainSub.search('first Link') != -1)
-        data.type = 'first link';
-      else
-        data.markup = markup;
-    }
-
-    //NOTE: these two are redundant with the above two tests in place - but things have changed...
-    //from the server, private channel messages are flagged with a SECURE string '[secure] ', and appear in
-    //both the public and private channels
-    //we don't include this '[secure]' text above, as it's redundant in the faction-only channel
-    //let's add it here though if we have a secure message in the public channel, or the reverse if a non-secure in the faction one
-    let prefix = '';
-    if (data.type == 'chat' && !(isPublicChannel===false) && isSecure) prefix = '<span style="color: #f88; background-color: #500;">[faction]</span> ';
-    //and, add the reverse - a 'public' marker to messages in the private channel
-    if (data.type == 'chat' && !(isPublicChannel===true) && (!isSecure)) prefix = '<span style="color: #ff6; background-color: #550">[public]</span> ';
-
-    let msg;
-    if (data.type == 'chat')
-      msg = data.markup.map(renderMarkupEntity).join(' ');
-    else if (data.type == 'capture')
-      msg = '⧬ captured ' + renderPortal(data.portal);
-    else if (data.type == 'beacon')
-      msg = '∸ deployed a Beacon on ' + renderPortal(data.portal);
-    else if (data.type == 'battle')
-      msg = '∸ deployed a Battle Beacon on ' + renderPortal(data.portal);
-    else if (data.type == 'battle won')
-      msg = '∸ won a Battle on ' + renderPortal(data.portal);
-    else if (data.type == 'fracker')
-      msg = '∗ deployed a Fracker on ' + renderPortal(data.portal);
-    else if (data.type == 'deploy')
-      msg = '∙ deployed a resonator on ' + renderPortal(data.portal);
-    else if (data.type == 'destroy resonator')
-      msg = '⊙ destroyed a resonator on ' + renderPortal(data.portal);
-    else if (data.type == 'field')
-      msg = '△ created a field from ' + renderPortal(data.portal) + ' +' + data.mus + 'MUs';
-    else if (data.type == 'destroy field')
-      msg = '∴ destroyed a field from ' + renderPortal(data.portal) + ' -' + data.mus + 'MUs';
-    else if (data.type == 'link')
-      msg = '⊶ linked ' + renderPortal(data.from) + ' to ' + renderPortal(data.to);
-    else if (data.type == 'destroy link')
-      msg = '↮ destroyed the link from ' + renderPortal(data.from) + ' to ' + renderPortal(data.to);
-    else if (data.type == 'attack portal')
-      msg = '⊹ attacked ' + renderPortal(data.portal);
-    else if (data.type == 'destroy portal')
-      msg = '⊘ neutralized ' + renderPortal(data.portal);
-    else if (data.type == 'first capture')
-      msg = '⧬ captured first portal';
-    else if (data.type == 'first link')
-      msg = '⊶ created first link';
-    else if (data.type == 'first field')
-      msg = '△ created first field';
-    else if (data.type == "unknown player action")
-      msg = (data.markup || markup).slice(1).map(renderMarkupEntity).join(' ');
-    else msg = (data.markup || markup).map(renderMarkupEntity).join(' ');
-
-    // format: timestamp, autogenerated, HTML message
-    storageHash.data[json[0]] = [
-      json[1],
-      data.type == 'chat',
-      chat.renderMsg(prefix + msg, data.player.name, data.time, data.player.team === 'RESISTANCE' ? TEAM_RES : TEAM_ENL, data.type == 'chat' && data.alert, systemNarrowcast),
-      data.player.name,
-      data
-    ];
-
   });
 
-  let vals = $.map(storageHash.data, function(v, k) { return [v]; });
-  vals = vals.sort(compareLog);
-
-  let sortedData = vals.map(e => e[4]);
-  findVirus(sortedData);
-  computeMUs(sortedData);
-}
-
-window.unixTimeToHHmmss = function(time) {
-  if(!time) return null;
-  var d = new Date(typeof time === 'string' ? parseInt(time) : time);
-  var h = '' + d.getHours(); h = h.length === 1 ? '0' + h : h;
-  var m = '' + d.getMinutes(); m = m.length === 1 ? '0' + m : m;
-  var s = '' + d.getSeconds(); s = s.length === 1 ? '0' + s : s;
-  return  h + ':' + m + ':' + s;
-}
-
-
-const overlayStyle = {
-  color: "#C33",
-  opacity: 1,
-  weight: 5,
-  fill: false,
-  dashArray: "1,6",
-  radius: 12,
+  return {
+    guid: data[0],
+    time: time,
+    public: isPublic,
+    secure: isSecure,
+    alert: msgAlert,
+    msgToPlayer: msgToPlayer,
+    type: data[2].plext.plextType,
+    narrowcast: systemNarrowcast,
+    auto: auto,
+    player: {
+      name: nick,
+      team: team,
+    },
+    markup: markup,
+  };
 };
 
-const onChatMouseOver = function() {
-  plugin.commFilter.overlay.clearLayers();
-  const element = $(this);
-  const json = element.attr("data-json");
+const writeDataToHash = function(newData, storageHash, isPublicChannel, isOlderMsgs, isAscendingOrder) {
+  updateOldNewHash(newData, storageHash, isOlderMsgs, isAscendingOrder);
 
-  if (!json) return;
+  newData.result.forEach(function(json) {
+    // avoid duplicates
+    if (json[0] in storageHash.data) return true;
 
-  const data = JSON.parse(json);
+    var parsedData = parseMsgData(json);
 
-  if (
-    data.type == "link"
-    || data.type == "destroy link"
-    ) {
-    const fromLatLng = L.latLng(data.from.latE6/1E6, data.from.lngE6/1E6);
-    const toLatLng = L.latLng(data.to.latE6/1E6, data.to.lngE6/1E6);
+    // format: timestamp, autogenerated, HTML message, nick, additional data (parsed, plugin specific data...)
+    storageHash.data[parsedData.guid] = [parsedData.time, parsedData.auto, renderMsgRow(parsedData), parsedData.player.name, parsedData];
 
-    L.circleMarker(fromLatLng, overlayStyle).addTo(plugin.commFilter.overlay);
-    L.circleMarker(toLatLng, overlayStyle).addTo(plugin.commFilter.overlay);
-
-    L.geodesicPolyline([fromLatLng, toLatLng], overlayStyle).addTo(plugin.commFilter.overlay);
-  } else if (data.portal) {
-    const latLng = L.latLng(data.portal.latE6/1E6, data.portal.lngE6/1E6);
-    L.circleMarker(latLng, overlayStyle).addTo(plugin.commFilter.overlay);
-  }
+    if (isAscendingOrder)
+      storageHash.guids.push(parsedData.guid);
+    else
+      storageHash.guids.unshift(parsedData.guid);
+  });
 };
 
-window.chat.renderMsg = function(msg, nick, time, team, msgToPlayer, systemNarrowcast) {
+const renderMsg = function(msg, nick, time, team, msgToPlayer, systemNarrowcast) {
   var ta = unixTimeToHHmmss(time);
   var tb = unixTimeToDateTimeString(time, true);
   //add <small> tags around the milliseconds
@@ -475,53 +254,277 @@ window.chat.renderMsg = function(msg, nick, time, team, msgToPlayer, systemNarro
   var s = 'style="cursor:pointer; color:'+color+'"';
   var i = ['<span class="invisep">&lt;</span>', '<span class="invisep">&gt;</span>'];
   return '<tr><td>'+t+'</td><td>'+i[0]+'<mark class="nickname" ' + s + '>'+ nick+'</mark>'+i[1]+'</td><td>'+msg+'</td></tr>';
-}
+};
 
-window.chat.renderData = function(data, element, likelyWereOldMsgs) {
-  var elm = $('#'+element);
-  if(elm.is(':hidden')) return;
+// =============
+// chat analysis
+// =============
 
-  // discard guids and sort old to new
-//TODO? stable sort, to preserve server message ordering? or sort by GUID if timestamps equal?
-  var vals = $.map(data, function(v, k) { return [v]; });
-  vals = vals.sort(compareLog);
+const commFilter = {};
 
-  // render to string with date separators inserted
-  var msgs = '';
-  var prevTime = null;
-  for (const msg of vals) {
-    var nextTime = new Date(msg[0]).toLocaleDateString();
-    if(prevTime && prevTime !== nextTime)
-      msgs += chat.renderDivider(nextTime);
-    let value = '';
-    if (msg[4].virus) {
-      if (msg[4].virusMsg)
-        value = msg[4].virusMsg
+commFilter.rules = [
+  { type: 'capture', plain: 'PLAYER| captured |PORTAL' },
+  { type: 'field', plain: 'PLAYER| created a Control Field @|PORTAL| +|NUMBER| MUs' },
+  { type: 'beacon', plain: 'PLAYER| deployed a Beacon on |PORTAL' },
+  { type: 'battle', plain: 'PLAYER| deployed a Battle Beacon on |PORTAL' },
+  { type: 'fracker', plain: 'PLAYER| deployed a Fracker on |PORTAL' },
+  { type: 'resonator', plain: 'PLAYER| deployed a Resonator on |PORTAL' },
+  { type: 'destroy field', plain: 'PLAYER| destroyed a Control Field @|PORTAL| -|NUMBER| MUs' },
+  { type: 'destroy resonator', plain: 'PLAYER| destroyed a Resonator on |PORTAL' },
+  { type: 'destroy link', plain: 'PLAYER| destroyed the Link |PORTAL| to |PORTAL' },
+  { type: 'link', plain: 'PLAYER| linked |PORTAL| to |PORTAL' },
+  { type: 'recurse', plain: 'PLAYER| Recursed' },
+  { type: 'battle result', plain: 'FACTION| won a Battle Beacon on |PORTAL' },
+  { type: 'destroy link', plain: 'Your Link |PORTAL| to |PORTAL| destroyed by |PLAYER' },
+  { type: 'attack', plain: 'Your Portal |PORTAL| is under attack by |PLAYER' },
+  { type: 'neutralize', plain: 'Your Portal |PORTAL| neutralized by |PLAYER' },
+  { type: 'kinetic', plain: 'Your Kinetic Capsule is now ready.' },
+  { type: 'first capture', plain: '[secure] | |PLAYER| captured their first Portal.' },
+  { type: 'first field', plain: '[secure] | |PLAYER| created their first Control Field' },
+  { type: 'first link', plain: '[secure] | |PLAYER| created their first Link.' },
+  // { type: 'chat', plain: 'SENDER| blah |AT_PLAYER| blah |AT_PLAYER| blah ' },
+  // { type: 'faction chat', plain: '[secure] |SENDER| blah |AT_PLAYER| blah |AT_PLAYER| blah ' },
+];
+
+const markupType = new Set(['TEXT', 'PLAYER', 'PORTAL', 'FACTION', 'NUMBER', 'AT_PLAYER', 'SENDER']);
+
+const buildRules = function () {
+  for (const r of commFilter.rules) {
+    const items = r.plain.split('|');
+    const markup = [];
+    const text = new Map();
+    r.portals = 0;
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (markupType.has(item)) {
+        markup.push(item);
+        if (item === 'PORTAL') r.portals++;
+        if (item === 'PLAYER') r.player = true;
+        if (item === 'FACTION') r.faction = true;
+      } else {
+        markup.push('TEXT');
+        text.set(i, item);
+      }
     }
-    else {
-      if (msg[4].type == 'field')
-        value = msg[4].MUMsg;
-      else
-        value = msg[2];
+    r.markup = markup;
+    r.text = text;
+  }
+};
 
-      value = $(value).attr('data-json', JSON.stringify(msg[4])).get(0).outerHTML;
+const matchChat = function (data) {
+  if (data.markup.some((ent) => ent[0] === 'SENDER')) {
+    if (data.markup[0][0] === 'SECURE')
+      return 'chat faction';
+    return 'chat';
+  }
+  return 'unknown';
+};
+
+const matchRule = function (data) {
+  for (const r of commFilter.rules) {
+    if (r.markup.length !== data.markup.length)
+      continue;
+    let match = true;
+    for (let i = 0; i < r.markup.length; i++) {
+      if (r.markup[i] === 'NUMBER') {
+        if (data.markup[i][0] !== 'TEXT' || isNaN(data.markup[i][1].plain)) {
+          match = false;
+          break;
+        }
+      } else if (r.markup[i] !== data.markup[i][0]) {
+        match = false;
+        break;
+      } else if (r.markup[i] === 'TEXT' && r.text.has(i) && r.text.get(i) !== data.markup[i][1].plain) {
+        match = false;
+        break;
+      }
     }
-
-    msgs += value;
-    prevTime = nextTime;
+    if (match) return r.type;
   }
 
-  var scrollBefore = scrollBottom(elm);
-  elm.html('<table>' + msgs + '</table>');
-  chat.keepScrollPosition(elm, scrollBefore, likelyWereOldMsgs);
+  return matchChat(data);
+};
 
-  elm
-    .on('mouseover', 'table tr', onChatMouseOver)
-    .on('mouseout', 'table tr', () => window.plugin.commFilter.overlay.clearLayers());
-}
+commFilter.viruses = new Map();
 
-window.plugin.commFilter = function () {};
+const findVirus = function (guids, data) {
+  commFilter.viruses.clear();
+  let last_data = {};
+  for (const guid of guids) {
+    const parseData = data[guid][4];
+    const log = parseData['comm-filter'];
+    if (log.type !== 'destroy resonator')
+      continue;
+    if (parseData.time !== last_data.time
+      || parseData.player.name !== last_data.player.name
+      || log.portal.latE6 !== last_data['comm-filter'].portal.latE6
+      || log.portal.lngE6 !== last_data['comm-filter'].portal.lngE6) {
+      last_data = parseData;
+      log.virus = log.portal.team === parseData.player.team;
+    } else {
+      log.virus = last_data.guid;
+      last_data['comm-filter'].virus = true;
+    }
+  }
+  for (const guid of guids) {
+    const log = data[guid][4]['comm-filter'];
+    if (log.virus === true)
+      commFilter.viruses.set(guid, {
+        guids: [],
+        type: (log.portal.team === 'RESISTANCE') ? 'jarvis' : 'ada'
+      });
+    else if (log.virus)
+      commFilter.viruses.get(log.virus).guids.push(guid);
+  }
+  for (const [guid, prop] of commFilter.viruses) {
+    const parseData = data[guid][4];
+    parseData.markup[1][1].plain = 'destroyed ' + (prop.guids.length+1) + ' Resonators on ';
+    data[guid][2] = renderMsgRow(parseData);
+  }
+};
+
+const computeMUs = function (guids, data) {
+  let agents = new Map();
+  let sum = 0;
+  for (const guid of guids) {
+    const parseData = data[guid][4];
+    const log = parseData['comm-filter'];
+    if (log.type === 'field') {
+      let tot = agents.get(parseData.player.name) || 0;
+      tot += log.mus;
+      agents.set(parseData.player.name, tot);
+      sum += log.mus;
+      log.totalMUs = {
+        agent: tot,
+        all: sum
+      };
+      if (parseData.markup.length === 6)
+        parseData.markup.push('');
+      parseData.markup[6] = [
+        'TEXT',
+        { plain: ' (' + tot.toLocaleString('en-US') + '/' + sum.toLocaleString('en-US') + ')' }
+      ];
+      data[guid][2] = renderMsgRow(parseData);
+    }
+  }
+};
+
+const reParseData = function (data) {
+  let parse = {};
+  let markup = data.markup;
+  let portals = markup.filter(ent => ent[0] === 'PORTAL').map(ent => ent[1]);
+  let numbers = markup.filter(ent => ent[0] === 'TEXT' && !isNaN(ent[1].plain)).map(ent => parseInt(ent[1].plain));
+  let atPlayers = markup.filter(ent => ent[0] === 'AT_PLAYER').map(ent =>
+    ({
+      name: ent[1].plain.slice(1),
+      team: ent[1].team === 'RESISTANCE' ? TEAM_RES : TEAM_ENL
+    })
+  );
+
+  parse.type = matchRule(data);
+
+  switch (parse.type) {
+  case 'field':
+  case 'destroy field':
+    parse.mus = numbers[0];
+  case 'capture':
+  case 'beacon':
+  case 'battle':
+  case 'fracker':
+  case 'resonator':
+  case 'destroy resonator':
+  case 'battle result':
+  case 'neutralize':
+  case 'attack':
+    parse.portal = portals[0];
+    break;
+  case 'link':
+  case 'destroy link':
+    parse.from = portals[0];
+    parse.to = portals[1];
+    break;
+  default:
+    if (portals.length > 0) parse.portals = portals;
+  }
+
+  if (parse.type === 'battle result')
+    parse.faction = markup[0][1].team;
+
+  if (parse.type === 'chat' || parse.type === 'chat faction') {
+    parse.mentions = atPlayers;
+    parse.message = markup.slice(1 + data.secure).map(ent => ent[1].plain).join('').trim();
+  }
+
+  data['comm-filter'] = parse;
+};
+
+const updateCSS = function () {
+  let elm = document.getElementById('comm-filter-css');
+  if (!elm) {
+    elm = document.createElement('style');
+    document.body.appendChild(elm);
+    elm.id = 'comm-filter-css';
+  }
+
+  elm.textContent = '';
+
+  const ada = [];
+  const jarvis = [];
+  let hidden = [];
+  for (const [guid, prop] of commFilter.viruses) {
+    if (prop.type === 'jarvis')
+      jarvis.push(guid);
+    else
+      ada.push(guid);
+    hidden = hidden.concat(prop.guids);
+  }
+
+  let content = '#chat td:first-child { width: max-content }\n';
+  if (ada.length > 0) {
+    content += ada.map((guid) => '#chat tr[data-guid="' + guid + '"] td:nth-child(3):before').join(',\n')
+      + '{ content: "[JARVIS]"; color: #f88; background-color: #500; margin-right: .5rem; }\n';
+  }
+  if (jarvis.length > 0) {
+    content += jarvis.map((guid) => '#chat tr[data-guid="' + guid + '"] td:nth-child(3):before').join(',\n')
+      + '{ content: "[ADA]"; color: #f88; background-color: #500; margin-right: .5rem; }\n';
+  }
+  if (hidden.length > 0) {
+    content += hidden.map((guid) => '#chat tr[data-guid="' + guid + '"]').join(',\n')
+      + '{ display: none; }\n';
+  }
+
+  elm.textContent = content;
+};
+
+const reparsePublicData = function () {
+  const public = window.chat._public;
+  $.each(public.data, function(ind, msg) {
+    if (msg[4]['comm-filter'] === undefined)
+      reParseData(msg[4]);
+  });
+
+  computeMUs(public.guids, public.data);
+  findVirus(public.guids, public.data);
+
+  updateCSS();
+};
+
+
+// setup
+
+window.plugin.commFilter = commFilter;
 
 var setup = function() {
-  window.plugin.commFilter.overlay = L.layerGroup().addTo(map);
+  $("<style>")
+    .prop("type", "text/css")
+    .html('@include_string:comm-filter.css@')
+    .appendTo("head");
+
+  // injection
+  window.chat.renderMsg = renderMsg;
+  window.chat.writeDataToHash = writeDataToHash;
+
+  // overlay
+  buildRules();
+  window.addHook('publicChatDataAvailable', reparsePublicData);
 };
