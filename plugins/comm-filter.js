@@ -572,7 +572,7 @@ const tabCreate = function () {
 
   commFilter.filtersDiv = document.querySelector('#chat-filters');
   commFilter.filtersDiv.innerHTML =
-    '<input id="filter-text" plaholder="Portal or Agent">'
+    '<input id="filter-text" placeholder="Portal or Agent">'
     + '<select id="filter-type">'
     + Array.from(events).map((s) => '<option value="'+s+'">'+s+'</option>')
     + '</select>';
