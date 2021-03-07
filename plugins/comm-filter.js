@@ -1,16 +1,11 @@
 // @author         jaiperdu
-// @name           COMM Filter
+// @name           COMM Filter Tab
 // @category       COMM
-// @version        0.1.1
-// @description    COMM Filter
+// @version        0.1.2
+// @description    Show virus in the regular Comm and add a new tab with portal/player name filter and event type filter.
 
-/*
-Re-write from https://github.com/udnp/iitc-plugins/
-*/
 
 //todo list
-//2) add fracker as a filter
-//3) add virus  filter
 //4) add checkable filtering for all/faction/alert
 
 // ==============
