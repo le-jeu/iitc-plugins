@@ -3,7 +3,8 @@
 }
 
 #chatall tr.faction td:nth-child(3):before,
-#chatalerts tr.faction td:nth-child(3):before {
+#chatalerts tr.faction td:nth-child(3):before,
+#chatfilter tr.faction td:nth-child(3):before {
   content: '[faction]';
   color: #f88;
   background-color: #500;
@@ -11,7 +12,8 @@
 }
 
 #chatall tr.public td:nth-child(3):before,
-#chatalerts tr.public td:nth-child(3):before {
+#chatalerts tr.public td:nth-child(3):before,
+#chatfilter tr.public td:nth-child(3):before {
  content: '[public]';
   color: #ff6;
   background-color: #550;
