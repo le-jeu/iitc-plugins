@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           COMM Filter
 // @category       COMM
-// @version        0.1.0
+// @version        0.1.1
 // @description    COMM Filter
 
 /*
@@ -379,9 +379,8 @@ const reParseData = function (data) {
     parse.from = portals[0];
     parse.to = portals[1];
     break;
-  default:
-    if (portals.length > 0) parse.portals = portals;
   }
+  if (portals.length > 0) parse.portals = portals;
 
   if (parse.type === 'battle result')
     parse.faction = markup[0][1].team;
@@ -479,7 +478,31 @@ const updateCSS = function () {
     hidden = hidden.concat(prop.guids);
   }
 
-  let content = '#chat td:first-child { width: max-content }\n';
+  const filtered = new Set();
+  for (const guid of window.chat._public.guids) {
+    const n = window.chat._public.data[guid][3];
+    const d = window.chat._public.data[guid][4]['comm-filter'];
+    let show = commFilter.filters.type == d.type;
+
+    // special type
+    if (commFilter.filters.type == 'all') show = true;
+    if (commFilter.filters.type == 'chat' && d.type == 'chat faction') show = true;
+    if (commFilter.filters.type == 'virus' && d.virus) show = true;
+
+    let match = false;
+    if (n.includes(commFilter.filters.text)) match = true;
+    if (d.portals) {
+      if (d.portals.some((p) => p.name.includes(commFilter.filters.text)))
+        match = true;
+    }
+    if (d.mentions) {
+      if (d.mentions.some((p) => p.name.includes(commFilter.filters.text)))
+        match = true;
+    }
+    if (!show || !match) filtered.add(guid);
+  }
+
+  let content = '';
   if (ada.length > 0) {
     content += ada.map((guid) => '#chat tr[data-guid="' + guid + '"] td:nth-child(3):before').join(',\n')
       + '{ content: "[JARVIS]"; color: #f88; background-color: #500; margin-right: .5rem; }\n';
@@ -490,6 +513,10 @@ const updateCSS = function () {
   }
   if (hidden.length > 0) {
     content += hidden.map((guid) => '#chat tr[data-guid="' + guid + '"]').join(',\n')
+      + '{ display: none; }\n';
+  }
+  if (filtered.size > 0) {
+    content += Array.from(filtered).map((guid) => '#chatfilter tr[data-guid="' + guid + '"]').join(',\n')
       + '{ display: none; }\n';
   }
 
@@ -507,7 +534,59 @@ const reparsePublicData = function () {
   findVirus(public.guids, public.data);
 
   updateCSS();
+
+  window.chat.renderData(window.chat._public.data, 'chatfilter', true);
 };
+
+// filter tab
+const tabToogle = function () {
+  $('#chat, #chatinput').show();
+  $('#chatinput mark').css('cssText', 'color: #bbb !important').text('');
+  $('#chat > div').hide();
+  $('#chat-filters').show();
+  $('#chatfilter').show();
+  $('#chatcontrols .active').removeClass('active');
+  $("#chatcontrols a:contains('Filter')").addClass('active');
+  window.chat.renderData(window.chat._public.data, 'chatfilter', true);
+};
+
+const tabCreate = function () {
+  $('#chatcontrols').append('<a>Filter</a>');
+  $('#chatcontrols a:last').click(tabToogle);
+  $('#chat')
+    .append('<div id="chat-filters"></div>')
+    .append('<div style="display: none" id="chatfilter"><table></table></div>');
+
+  $('#chatfilter').scroll(function() {
+    var t = $(this);
+    if(t.data('ignoreNextScroll')) return t.data('ignoreNextScroll', false);
+    if(t.scrollTop() < CHAT_REQUEST_SCROLL_TOP) window.chat.requestPublic(true);
+    if(scrollBottom(t) === 0) window.chat.requestPublic(false);
+  });
+
+  const events = new Set(['all', 'chat', 'chat faction', 'virus']);
+  for (const rule of commFilter.rules) {
+    events.add(rule.type);
+  }
+  events.add('unknown');
+
+  commFilter.filtersDiv = document.querySelector('#chat-filters');
+  commFilter.filtersDiv.innerHTML =
+    '<input id="filter-text" plaholder="Portal or Agent">'
+    + '<select id="filter-type">'
+    + Array.from(events).map((s) => '<option value="'+s+'">'+s+'</option>')
+    + '</select>';
+  $('#filter-text').on('change', function (ev) {
+    commFilter.filters.text = ev.target.value;
+    updateCSS();
+  });
+  $('#filter-type').on('change', function (ev) {
+    commFilter.filters.type = ev.target.value;
+    updateCSS();
+  });
+
+};
+
 
 // setup
 
@@ -523,7 +602,22 @@ var setup = function() {
   window.chat.renderMsg = renderMsg;
   window.chat.writeDataToHash = writeDataToHash;
 
-  // overlay
+  // plugin
+  commFilter.filters = {
+    text: '',
+    type: 'all',
+  };
   buildRules();
+  tabCreate();
+
+  if (useAndroidPanes()) {
+    android.addPane('comm-filter-tab', 'Comm Filter', 'ic_action_view_as_list');
+    window.addHook('paneChanged', function (id) {
+      if (id == 'comm-filter-tab') {
+        tabToogle();
+      }
+    })
+  }
+
   window.addHook('publicChatDataAvailable', reparsePublicData);
 };
