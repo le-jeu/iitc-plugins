@@ -1,14 +1,14 @@
 // @author         jaiperdu
 // @name           Highlight uniques captured/visited/scanned
 // @category       Highlighter
-// @version        1.5.3
+// @version        1.5.4
 // @description    Highlighter for unique visited/captured/scout controlled portals
 
-let plugin = window.plugin.portalHighlighterVisited = function () { };
+const plugin = window.plugin.portalHighlighterVisited = function () { };
 
-let [VISITED, CAPTURED, SCANNED] = [1,2,4];
+const [VISITED, CAPTURED, SCANNED] = [1,2,4];
 
-let hidden = {opacity: 0, fillOpacity:0, interactive: false};
+const hidden = {radius:0};
 
 plugin.styles = {
     "Uniques ": {
@@ -66,22 +66,27 @@ plugin.styles = {
     },
 };
 
+const applyStyle = function (portal, style) {
+    portal.setStyle(style);
+    if (style.radius === 0) portal.setRadius(0);
+};
+
 plugin.highlighter = function (data, style) {
     const history = data.portal.options.data.history;
     const visited = history ? history._raw : data.portal.options.ent[2][18];
 
     if (visited == null) {
-        data.portal.setStyle(style.default);
+        applyStyle(data.portal,style.default);
         return;
     }
 
     for (let i=0; i < style.order.length; i++) {
         if (visited & style.order[i]) {
-            data.portal.setStyle(style.styles[i]);
+            applyStyle(data.portal, style.styles[i]);
             return;
         }
     }
-    data.portal.setStyle(style.default);
+    applyStyle(data.portal, style.default);
 };
 
 var setup = function () {
