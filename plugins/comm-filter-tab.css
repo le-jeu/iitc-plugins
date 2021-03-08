@@ -45,3 +45,15 @@
 	height: unset;
 	padding: unset;
 }
+
+#chatfilter table {
+  margin-bottom: 2.5rem;
+}
+
+#chat .divider {
+  color: #bbb;
+}
+
+#chat .divider td:nth-child(2) {
+  text-align: center;
+}

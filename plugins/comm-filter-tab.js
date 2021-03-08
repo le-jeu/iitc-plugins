@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           COMM Filter Tab
 // @category       COMM
-// @version        0.1.2
+// @version        0.1.3
 // @description    Show virus in the regular Comm and add a new tab with portal/player name filter and event type filter.
 
 
@@ -250,6 +250,11 @@ const renderMsg = function(msg, nick, time, team, msgToPlayer, systemNarrowcast)
   var i = ['<span class="invisep">&lt;</span>', '<span class="invisep">&gt;</span>'];
   return '<tr><td>'+t+'</td><td>'+i[0]+'<mark class="nickname" ' + s + '>'+ nick+'</mark>'+i[1]+'</td><td>'+msg+'</td></tr>';
 };
+
+
+const renderDivider = function(text) {
+  return '<tr class="divider"><td><hr></td><td>' + text + '</td><td><hr></td></tr>';
+}
 
 // =============
 // chat analysis
@@ -595,6 +600,7 @@ var setup = function() {
 
   // injection
   window.chat.renderMsg = renderMsg;
+  window.chat.renderDivider = renderDivider;
   window.chat.writeDataToHash = writeDataToHash;
 
   // plugin
