@@ -198,7 +198,7 @@ class Inventory {
   }
 }
 
-const parsePortalLocation = function (location) {
+function parsePortalLocation(location) {
   return [lat, lng] = location.split(',').map(a => (Number.parseInt(a,16)&(-1))*1e-6);
 }
 
@@ -225,7 +225,7 @@ const parsePortalLocation = function (location) {
   }
 }
 */
-const parseMod = function (mod) {
+function parseMod(mod) {
   return {
     type: mod.modResource.resourceType,
     name: mod.modResource.displayName,
@@ -257,7 +257,7 @@ const parseMod = function (mod) {
     "releaseDate": "1571122800000"
   }
 */
-const parseMedia = function (data, media) {
+function parseMedia(data, media) {
   data.mediaId = media.storyItem.mediaId;
   data.name = media.storyItem.shortDescription || '[MISSING DESC]';
   data.url = media.storyItem.primaryUrl;
@@ -270,7 +270,7 @@ const parseMedia = function (data, media) {
 //     "level": 7
 //   }
 // }
-const parseLevelItem = function (obj) {
+function parseLevelItem(obj) {
   const data = {
     type: obj.resourceWithLevels.resourceType,
     level: obj.resourceWithLevels.level,
@@ -299,7 +299,7 @@ const parseLevelItem = function (obj) {
   }
 }
 */
-const parsePortalKey = function (data, key) {
+function parsePortalKey(data, key) {
   data.guid = key.portalCoupler.portalGuid;
   data.title = key.portalCoupler.portalTitle || '[MISSING TITLE]';
   data.latLng = parsePortalLocation(key.portalCoupler.portalLocation);
@@ -318,7 +318,7 @@ const parsePortalKey = function (data, key) {
   }
 }
 */
-const parseFlipCard = function (data, flipcard) {
+function parseFlipCard(data, flipcard) {
   data.type += ':' + flipcard.flipCard.flipCardType;
   return data;
 }
@@ -338,7 +338,7 @@ const parseFlipCard = function (data, flipcard) {
   }
 }
 */
-const parsePlayerPowerUp = function (data, powerup) {
+function parsePlayerPowerUp(data, powerup) {
   data.type += ':' + powerup.playerPowerupResource.playerPowerupEnum;
   return data;
 }
@@ -356,7 +356,7 @@ const parsePlayerPowerUp = function (data, powerup) {
   }
 }
 */
-const parsePortalPowerUp = function (data, powerup) {
+function parsePortalPowerUp(data, powerup) {
   data.type += ':' + powerup.timedPowerupResource.designation;
   return data;
 }
@@ -387,7 +387,7 @@ const parsePortalPowerUp = function (data, powerup) {
   }
 }
 */
-const parseContainer = function (data, container) {
+function parseContainer(data, container) {
   data.name = container.moniker.differentiator;
   data.size = container.container.currentCount;
   data.content = [];
@@ -400,9 +400,9 @@ const parseContainer = function (data, container) {
     }
   }
   return data;
-};
+}
 
-const parseResource = function (obj) {
+function parseResource(obj) {
   const data = {
     type: obj.resource.resourceType,
     rarity: obj.resource.resourceRarity,
@@ -424,7 +424,7 @@ const parseResource = function (obj) {
   guid, timestamp?, item object
 ]
 */
-const parseItem = function (item) {
+function parseItem(item) {
   const [id, ts, obj] = item;
   if (obj.resource)
     return parseResource(obj);
@@ -433,9 +433,9 @@ const parseItem = function (item) {
   if (obj.modResource)
     return parseMod(obj);
   // xxx: other types
-};
+}
 
-const parseInventory = function (name, data) {
+function parseInventory(name, data) {
   const inventory = new Inventory(name);
   for (const entry of data) {
     const item = parseItem(entry);
@@ -447,13 +447,13 @@ const parseInventory = function (name, data) {
     }
   }
   return inventory;
-};
+}
 
 const plugin = {};
 window.plugin.playerInventory = plugin;
 
 // again...
-const getPortalLink = function(key) {
+function getPortalLink(key) {
   const a = L.DomUtil.create('a');
   a.textContent = key.title;
   a.title = key.address;
@@ -475,7 +475,7 @@ const getPortalLink = function(key) {
 const STORE_KEY = "plugin-player-inventory";
 const SETTINGS_KEY = "plugin-player-inventory-settings";
 
-const loadFromLocalStorage = function () {
+function loadFromLocalStorage() {
   const store = localStorage[STORE_KEY];
   if (store) {
     try {
@@ -487,7 +487,7 @@ const loadFromLocalStorage = function () {
   }
 }
 
-const storeToLocalStorage = function (data) {
+function storeToLocalStorage(data) {
   const store = {
     raw: data,
     date: Date.now(),
@@ -495,7 +495,7 @@ const storeToLocalStorage = function (data) {
   localStorage[STORE_KEY] = JSON.stringify(store);
 }
 
-const loadSettings = function () {
+function loadSettings() {
   const settings = localStorage[SETTINGS_KEY];
   if (settings) {
     try {
@@ -505,11 +505,11 @@ const loadSettings = function () {
   }
 }
 
-const storeSettings = function () {
+function storeSettings() {
   localStorage[SETTINGS_KEY] = JSON.stringify(plugin.settings);
 }
 
-const handleInventory = function (data) {
+function handleInventory(data) {
   if (data.result.length > 0) {
     plugin.inventory = parseInventory("⌂", data.result);
     storeToLocalStorage(data.result);
@@ -520,24 +520,24 @@ const handleInventory = function (data) {
   autoRefresh();
 }
 
-const handleError = function () {
+function handleError() {
   autoRefresh();
-};
+}
 
-const getInventory = function () {
+function getInventory() {
   window.postAjax('getInventory', {lastQueryTimestamp:0}, handleInventory, handleError);
-};
+}
 
-const handleSubscription = function (data) {
+function handleSubscription(data) {
   plugin.hasActiveSubscription = data.result;
   if (data.result) getInventory();
 }
 
-const getSubscriptionStatus = function () {
+function getSubscriptionStatus() {
   window.postAjax('getHasActiveSubscription', {}, handleSubscription, handleError);
-};
+}
 
-const injectKeys = function(data) {
+function injectKeys(data) {
   if (!plugin.isHighlighActive)
     return;
 
@@ -558,7 +558,7 @@ const injectKeys = function(data) {
   data.callback(entities);
 }
 
-const portalKeyHighlight = function(data) {
+function portalKeyHighlight(data) {
   const guid = data.portal.options.guid;
   if (plugin.inventory.keys.has(guid)) {
     // place holder
@@ -576,7 +576,7 @@ const portalKeyHighlight = function(data) {
   }
 }
 
-const createPopup = function (guid) {
+function createPopup(guid) {
   const portal = window.portals[guid];
   const latLng = portal.getLatLng();
   // create popup only if the portal is in view
@@ -590,7 +590,7 @@ const createPopup = function (guid) {
   }
 }
 
-const createAllTable = function (inventory) {
+function createAllTable(inventory) {
   const table = L.DomUtil.create("table");
   for (const type in inventory.items) {
     const total = inventory.countType(type);
@@ -609,7 +609,7 @@ const createAllTable = function (inventory) {
   return table;
 }
 
-const createAllSumTable = function (inventory) {
+function createAllSumTable(inventory) {
   const table = L.DomUtil.create("table");
   for (const type in inventory.items) {
     const total = inventory.countType(type);
@@ -643,7 +643,7 @@ const createAllSumTable = function (inventory) {
   return table;
 }
 
-const createKeysTable = function (inventory) {
+function createKeysTable(inventory) {
   const table = L.DomUtil.create("table");
   const keys = [...inventory.keys.values()].sort((a,b) => a.title.localeCompare(b.title));
   for (const key of keys) {
@@ -659,7 +659,7 @@ const createKeysTable = function (inventory) {
   return table;
 }
 
-const createMediaTable = function (inventory) {
+function createMediaTable(inventory) {
   const table = L.DomUtil.create("table");
   const medias = [...inventory.medias.values()].sort((a,b) => a.name.localeCompare(b.name));
   for (const media of medias) {
@@ -672,7 +672,7 @@ const createMediaTable = function (inventory) {
   return table;
 }
 
-const createCapsuleTable = function (inventory, capsule) {
+function createCapsuleTable(inventory, capsule) {
   const table = L.DomUtil.create("table");
   const keys = Object.values(capsule.keys).sort((a,b) => a.title.localeCompare(b.title));
   for (const item of keys) {
@@ -701,7 +701,7 @@ const createCapsuleTable = function (inventory, capsule) {
   return table;
 }
 
-const buildInventoryHTML = function (inventory) {
+function buildInventoryHTML(inventory) {
   const container = L.DomUtil.create("div", "container");
 
   const sumHeader = L.DomUtil.create("b", null, container);
@@ -753,13 +753,13 @@ const buildInventoryHTML = function (inventory) {
   return container;
 }
 
-const fillPane = function (inventory) {
+function fillPane(inventory) {
   const oldContainer = plugin.pane.querySelector('.container');
   if (oldContainer) plugin.pane.removeChild(oldContainer);
   plugin.pane.appendChild(buildInventoryHTML(inventory));
 }
 
-const displayInventory = function (inventory) {
+function displayInventory(inventory) {
   const container = buildInventoryHTML(inventory);
 
   plugin.dialog = dialog({
@@ -778,21 +778,21 @@ const displayInventory = function (inventory) {
   });
 }
 
-const refreshInventory = function () {
+function refreshInventory() {
   clearTimeout(plugin.autoRefreshTimer);
   getSubscriptionStatus();
 }
 
-const autoRefresh = function () {
+function autoRefresh() {
   if (!plugin.settings.autoRefreshActive) return;
   plugin.autoRefreshTimer = setTimeout(refreshInventory, plugin.settings.autoRefreshDelay * 60 * 1000);
 }
 
-const stopAutoRefresh = function () {
+function stopAutoRefresh() {
   clearTimeout(plugin.autoRefreshTimer);
 }
 
-const exportToKeys = function () {
+function exportToKeys() {
   if (!window.plugin.keys) return;
   [window.plugin.keys.KEY, window.plugin.keys.UPDATE_QUEUE].forEach((mapping) => {
     const data = {};
@@ -806,7 +806,7 @@ const exportToKeys = function () {
   window.plugin.keys.delaySync();
 }
 
-const displayOpt = function () {
+function displayOpt() {
   const container = L.DomUtil.create("div", "container");
 
   const popupLabel = L.DomUtil.create('label', null, container);
@@ -877,7 +877,7 @@ const displayOpt = function () {
   });
 }
 
-const setupCSS = function () {
+function setupCSS() {
   $('<style>').html('@include_string:player-inventory.css@').appendTo('head');
   let colorStyle = "";
   window.COLORS_LVL.forEach((c,i) => {
@@ -890,7 +890,7 @@ const setupCSS = function () {
   $('<style>').html(colorStyle).appendTo('head');
 }
 
-const setupDisplay = function () {
+function setupDisplay() {
   plugin.dialog = null;
 
   if (window.useAndroidPanes()) {
@@ -924,7 +924,8 @@ const setupDisplay = function () {
   }
 }
 
-var setup = function () {
+// iitc setup
+function setup() {
   // Dummy inventory
   plugin.inventory = new Inventory();
 
@@ -988,4 +989,4 @@ var setup = function () {
   });
 
   loadFromLocalStorage();
-};
+}
