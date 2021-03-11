@@ -259,7 +259,7 @@ function parseMod(mod) {
 */
 function parseMedia(data, media) {
   data.mediaId = media.storyItem.mediaId;
-  data.name = media.storyItem.shortDescription || '[MISSING DESC]';
+  data.name = media.storyItem.shortDescription;
   data.url = media.storyItem.primaryUrl;
   return data;
 }
@@ -301,7 +301,7 @@ function parseLevelItem(obj) {
 */
 function parsePortalKey(data, key) {
   data.guid = key.portalCoupler.portalGuid;
-  data.title = key.portalCoupler.portalTitle || '[MISSING TITLE]';
+  data.title = key.portalCoupler.portalTitle;
   data.latLng = parsePortalLocation(key.portalCoupler.portalLocation);
   data.address = key.portalCoupler.portalAddress;
   return data;
@@ -470,6 +470,13 @@ function getPortalLink(key) {
       return false;
   });
   return a;
+}
+
+function localeCompare(a,b) {
+  if (!a || !b) console.trace(a,b);
+  if (typeof a !== "string") a = '';
+  if (typeof b !== "string") b = '';
+  return a.localeCompare(b)
 }
 
 const STORE_KEY = "plugin-player-inventory";
@@ -645,7 +652,7 @@ function createAllSumTable(inventory) {
 
 function createKeysTable(inventory) {
   const table = L.DomUtil.create("table");
-  const keys = [...inventory.keys.values()].sort((a,b) => a.title.localeCompare(b.title));
+  const keys = [...inventory.keys.values()].sort((a,b) => localeCompare(a.title, b.title));
   for (const key of keys) {
     const a = getPortalLink(key);
     const total = inventory.countKey(key.guid);
@@ -661,7 +668,7 @@ function createKeysTable(inventory) {
 
 function createMediaTable(inventory) {
   const table = L.DomUtil.create("table");
-  const medias = [...inventory.medias.values()].sort((a,b) => a.name.localeCompare(b.name));
+  const medias = [...inventory.medias.values()].sort((a,b) => localeCompare(a.name, b.name));
   for (const media of medias) {
     const counts = Array.from(media.count).map(([name, count]) => `${name}: ${count}`).join(', ');
 
@@ -674,7 +681,7 @@ function createMediaTable(inventory) {
 
 function createCapsuleTable(inventory, capsule) {
   const table = L.DomUtil.create("table");
-  const keys = Object.values(capsule.keys).sort((a,b) => a.title.localeCompare(b.title));
+  const keys = Object.values(capsule.keys).sort((a,b) => localeCompare(a.title, b.title));
   for (const item of keys) {
     const a = getPortalLink(item);
     const total = item.count;
@@ -684,7 +691,7 @@ function createCapsuleTable(inventory, capsule) {
     L.DomUtil.create('td', null, row);
     L.DomUtil.create('td', null, row).appendChild(a);
   }
-  const medias = Object.values(capsule.medias).sort((a,b) => a.name.localeCompare(b.name));
+  const medias = Object.values(capsule.medias).sort((a,b) => localeCompare(a.name, b.name));
   for (const item of medias) {
     L.DomUtil.create('tr', 'level_L1', table).innerHTML = `<td>${item.count}</td><td>M</td><td><a href="${item.url}">${item.name}</a>`;
   }
