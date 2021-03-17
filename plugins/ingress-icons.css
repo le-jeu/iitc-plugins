@@ -1,0 +1,80 @@
+#portaldetails .mods span {
+	background-size: cover;
+	width: 63px;
+	height: 68px;
+	margin: 0 3px;
+	background-color: inherit;
+	border: none;
+}
+
+.mods span, .mods .mod_free_slot {
+	background-image: url("https://raw.githubusercontent.com/ameba64/ingress-items/main/boxed/boxed_mod_free_slot.svg");
+}
+
+.mods .force_amp.rare {
+	background-image: url("https://raw.githubusercontent.com/ameba64/ingress-items/main/boxed/boxed_force_amp_rare.svg");
+}
+
+.mods .heat_sink.common {
+	background-image: url("https://raw.githubusercontent.com/ameba64/ingress-items/main/boxed/boxed_heat_sink_common.svg");
+}
+
+.mods .heat_sink.rare {
+	background-image: url("https://raw.githubusercontent.com/ameba64/ingress-items/main/boxed/boxed_heat_sink_rare.svg");
+}
+
+.mods .heat_sink.very_rare {
+	background-image: url("https://raw.githubusercontent.com/ameba64/ingress-items/main/boxed/boxed_heat_sink_very_rare.svg");
+}
+
+.mods .ito_en_transmuter_plus.very_rare {
+	background-image: url("https://raw.githubusercontent.com/ameba64/ingress-items/main/boxed/boxed_ito_en_transmuter_+_very_rare.svg");
+}
+
+.mods .ito_en_transmuter_minus.very_rare {
+	background-image: url("https://raw.githubusercontent.com/ameba64/ingress-items/main/boxed/boxed_ito_en_transmuter_-_very_rare.svg");
+}
+
+.mods .link_amp.rare {
+	background-image: url("https://raw.githubusercontent.com/ameba64/ingress-items/main/boxed/boxed_link_amp_rare.svg");
+}
+
+.mods .link_amp.very_rare {
+	background-image: url("https://raw.githubusercontent.com/ameba64/ingress-items/main/boxed/boxed_link_amp_very_rare.svg");
+}
+
+.mods .multi_hack.common {
+	background-image: url("https://raw.githubusercontent.com/ameba64/ingress-items/main/boxed/boxed_multi_hack_common.svg");
+}
+
+.mods .multi_hack.rare {
+	background-image: url("https://raw.githubusercontent.com/ameba64/ingress-items/main/boxed/boxed_multi_hack_rare.svg");
+}
+
+.mods .multi_hack.very_rare {
+	background-image: url("https://raw.githubusercontent.com/ameba64/ingress-items/main/boxed/boxed_multi_hack_very_rare.svg");
+}
+
+.mods .portal_shield.common {
+	background-image: url("https://raw.githubusercontent.com/ameba64/ingress-items/main/boxed/boxed_portal_shield_common.svg");
+}
+
+.mods .portal_shield.rare {
+	background-image: url("https://raw.githubusercontent.com/ameba64/ingress-items/main/boxed/boxed_portal_shield_rare.svg");
+}
+
+.mods .portal_shield.very_rare {
+	background-image: url("https://raw.githubusercontent.com/ameba64/ingress-items/main/boxed/boxed_portal_shield_very_rare.svg");
+}
+
+.mods .aegis_shield.very_rare {
+	background-image: url("https://raw.githubusercontent.com/ameba64/ingress-items/main/boxed/boxed_portal_shield_very_rare_aegis.svg");
+}
+
+.mods .softbank_ultra_link.very_rare {
+	background-image: url("https://raw.githubusercontent.com/ameba64/ingress-items/main/boxed/boxed_softbank_ultra_link_very_rare.svg");
+}
+
+.mods .turret.rare {
+	background-image: url("https://raw.githubusercontent.com/ameba64/ingress-items/main/boxed/boxed_turret_rare.svg ");
+}
