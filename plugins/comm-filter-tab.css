@@ -20,24 +20,14 @@
   margin-right: .2rem;
 }
 
-.pl_nudge_date:after {
-  background: no-repeat url(//commondatastorage.googleapis.com/ingress.com/img/nudge_pointy.png);
-  position:absolute;
-  content:"";
-  height:20px;
-  width: 5px;
-  right:-5px;
-  top:-1px
-}
-
 .pl_nudge_date {
-  display: block;
   float: unset;
-  position:relative;
   text-align: unset;
-  width: 36px;
-  padding-left: 2px;
-  left: -2px;
+  border: unset;
+  background: unset;
+  display: unset;
+  height: unset;
+  font-weight: bold;
 }
 
 #chat #chat-filters {
@@ -56,4 +46,12 @@
 
 #chat .divider td:nth-child(2) {
   text-align: center;
+}
+
+#chat tr:nth-child(odd) {
+  background-color: #0002
+}
+
+#chat tr {
+  border-bottom: 1px solid #5558;
 }

@@ -502,6 +502,12 @@ const updateCSS = function () {
     if (!show || !match) filtered.add(guid);
   }
 
+  const highlights = [];
+  for (const guid of window.chat._public.guids) {
+    const d = window.chat._public.data[guid][4];
+    if (d.msgToPlayer) highlights.push(guid);
+  }
+
   let content = '';
   if (ada.length > 0) {
     content += ada.map((guid) => '#chat tr[data-guid="' + guid + '"] td:nth-child(3):before').join(',\n')
@@ -518,6 +524,10 @@ const updateCSS = function () {
   if (filtered.size > 0) {
     content += Array.from(filtered).map((guid) => '#chatfilter tr[data-guid="' + guid + '"]').join(',\n')
       + '{ display: none; }\n';
+  }
+  if (highlights.length > 0) {
+    content += highlights.map((guid) => '#chat tr[data-guid="' + guid + '"]').join(',\n')
+      +'{ background-color: #9118 }\n';
   }
 
   elm.textContent = content;
