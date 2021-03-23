@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           COMM Filter Tab
 // @category       COMM
-// @version        0.1.3
+// @version        0.1.4
 // @description    Show virus in the regular Comm and add a new tab with portal/player name filter and event type filter.
 
 
@@ -486,7 +486,8 @@ const updateCSS = function () {
 
     // special type
     if (commFilter.filters.type == 'all') show = true;
-    if (commFilter.filters.type == 'chat' && d.type == 'chat faction') show = true;
+    if (commFilter.filters.type == 'chat all' && (d.type == 'chat' || d.type == 'chat faction')) show = true;
+    if (commFilter.filters.type == 'chat public' && d.type == 'chat') show = true;
     if (commFilter.filters.type == 'virus' && d.virus) show = true;
 
     let match = false;
@@ -574,7 +575,7 @@ const tabCreate = function () {
     if(scrollBottom(t) === 0) window.chat.requestPublic(false);
   });
 
-  const events = new Set(['all', 'chat', 'chat faction', 'virus']);
+  const events = new Set(['all', 'chat all', 'chat public', 'chat faction', 'virus']);
   for (const rule of commFilter.rules) {
     events.add(rule.type);
   }
