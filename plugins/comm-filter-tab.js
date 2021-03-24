@@ -228,30 +228,6 @@ const writeDataToHash = function(newData, storageHash, isPublicChannel, isOlderM
   });
 };
 
-const renderMsg = function(msg, nick, time, team, msgToPlayer, systemNarrowcast) {
-  var ta = unixTimeToHHmmss(time);
-  var tb = unixTimeToDateTimeString(time, true);
-  //add <small> tags around the milliseconds
-  tb = (tb.slice(0,19)+'<small class="milliseconds">'+tb.slice(19)+'</small>').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-
-  // help cursor via “#chat time”
-  var t = '<time title="'+tb+'" data-timestamp="'+time+'">'+ta+'</time>';
-  if ( msgToPlayer )
-  {
-    t = '<div class="pl_nudge_date">' + t + '</div><div class="pl_nudge_pointy_spacer"></div>';
-  }
-  if (systemNarrowcast)
-  {
-    msg = '<div class="system_narrowcast">' + msg + '</div>';
-  }
-  var color = COLORS[team];
-  if (nick === window.PLAYER.nickname) color = '#fd6';    //highlight things said/done by the player in a unique colour (similar to @player mentions from others in the chat text itself)
-  var s = 'style="cursor:pointer; color:'+color+'"';
-  var i = ['<span class="invisep">&lt;</span>', '<span class="invisep">&gt;</span>'];
-  return '<tr><td>'+t+'</td><td>'+i[0]+'<mark class="nickname" ' + s + '>'+ nick+'</mark>'+i[1]+'</td><td>'+msg+'</td></tr>';
-};
-
-
 const renderDivider = function(text) {
   return '<tr class="divider"><td><hr></td><td>' + text + '</td><td><hr></td></tr>';
 }
@@ -610,7 +586,6 @@ var setup = function() {
     .appendTo("head");
 
   // injection
-  window.chat.renderMsg = renderMsg;
   window.chat.renderDivider = renderDivider;
   window.chat.writeDataToHash = writeDataToHash;
 
