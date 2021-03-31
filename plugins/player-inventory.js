@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Player Inventory
 // @category       Info
-// @version        0.2.20
+// @version        0.2.21
 // @description    View inventory
 
 // stock intel
@@ -903,7 +903,7 @@ function displayOpt() {
 
   {
     const button = L.DomUtil.create("button", null, container);
-    button.textContent = "Export to keys to clipboard";
+    button.textContent = "Export keys to clipboard";
     L.DomEvent.on(button, 'click', exportToClipboard);
   }
 
