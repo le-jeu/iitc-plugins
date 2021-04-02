@@ -128,7 +128,10 @@ class Inventory {
       else if (item.type === "MEDIA")
         data.medias[item.mediaId] = item;
       else {
-        if (!data.items[item.type]) data.items[item.type] = {repr: item, leveled: levelItemTypes.includes(item.type), count:{}};
+        if (!data.items[item.type]) data.items[item.type] = {
+          leveled: levelItemTypes.includes(item.type),
+          count:{}
+        };
         data.items[item.type].count[item.rarity || item.level] = item.count;
       }
     }
@@ -195,6 +198,68 @@ class Inventory {
     const entry = current.count.get(key.capsule) || 0;
     current.count.set(key.capsule, entry + (key.count || 1));
     current.total += (key.count || 1);
+  }
+
+  store() {
+    const items = [];
+    for (const type in this.items) {
+      if (type == 'PORTAL_LINK_KEY') continue;
+      if (type == 'MEDIA') continue;
+      const cat = this.items[type];
+      for (const lr in cat.counts) {
+        const count = cat.counts[lr];
+        for (const capsule in count) {
+          if (capsule === 'total') continue;
+          const item = {
+            type: type,
+            count: count[capsule],
+          };
+          if (cat.leveled) item.level = lr;
+          else item.rarity = lr;
+          items.push(item);
+        }
+      }
+    }
+    for (const [guid, key] of this.keys) {
+      for (const [caps, count] of key.count) {
+        const k = Object.assign({}, key);
+        k.type = "PORTAL_LINK_KEY";
+        k.count = count;
+        k.capsule = caps;
+        k.rarity = "VERY_COMMON";
+        delete k.total;
+        items.push(k);
+      }
+    }
+    for (const [id, media] of this.medias) {
+      for (const [caps, count] of media.count) {
+        const m = Object.assign({}, media);
+        m.type = "MEDIA";
+        m.count = count;
+        m.capsule = caps;
+        m.level = 1;
+        delete m.total;
+        items.push(m);
+      }
+    }
+    return {
+      version: 1,
+      items: items,
+      capsules: this.capsules
+    };
+  }
+
+  load(obj) {
+    this.clear();
+    for (const item of obj.items) {
+      this.addItem(item);
+    }
+    this.capsules = obj.capsules;
+    for (const name in this.capsules) {
+      const capsule = this.capsules[name];
+      if (capsule.type === "KEY_CAPSULE")
+        this.keyLockersCount += capsule.size;
+    }
   }
 }
 
@@ -486,7 +551,10 @@ function loadFromLocalStorage() {
   if (store) {
     try {
       const data = JSON.parse(store);
-      plugin.inventory = parseInventory("⌂", data.raw);
+      if (data.parsed) plugin.inventory.load(data.parsed);
+      else {
+        if (data.raw) plugin.inventory = parseInventory("⌂", data.raw);
+      }
       plugin.lastRefresh = data.date;
       window.runHooks("pluginInventoryRefresh", {inventory: plugin.inventory});
     } catch (e) {console.log(e);}
@@ -495,7 +563,7 @@ function loadFromLocalStorage() {
 
 function storeToLocalStorage(data) {
   const store = {
-    raw: data,
+    parsed: data,
     date: Date.now(),
   }
   localStorage[STORE_KEY] = JSON.stringify(store);
@@ -518,8 +586,8 @@ function storeSettings() {
 function handleInventory(data) {
   if (data.result.length > 0) {
     plugin.inventory = parseInventory("⌂", data.result);
-    storeToLocalStorage(data.result);
-    window.runHooks("pluginInventoryRefresh", {inventory: plugin.inventory});
+    storeToLocalStorage(plugin.inventory.store());
+    window.runHooks("pluginInventoryRefresh", {inventory: plugin.inventory, raw: data.result});
   } else {
     alert("Inventory empty, probably hitting rate limit, try again later");
   }
@@ -966,7 +1034,7 @@ function setupDisplay() {
 // iitc setup
 function setup() {
   // Dummy inventory
-  plugin.inventory = new Inventory();
+  plugin.inventory = new Inventory("⌂");
 
   plugin.hasActiveSubscription = false;
   plugin.isHighlighActive = false;
