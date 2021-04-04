@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Player Inventory
 // @category       Info
-// @version        0.2.21
+// @version        0.2.22
 // @description    View inventory
 
 // stock intel
@@ -481,6 +481,67 @@ function localeCompare(a,b) {
 const STORE_KEY = "plugin-player-inventory";
 const SETTINGS_KEY = "plugin-player-inventory-settings";
 
+function openIndexedDB() {
+  const rq = window.indexedDB.open("player-inventory", 1);
+  rq.onupgradeneeded = function(event) {
+    const db = event.target.result;
+    db.createObjectStore("inventory", { autoIncrement: true });
+  };
+  return rq;
+}
+
+function loadFromIndexedDB() {
+  if (!window.indexedDB) return loadFromLocalStorage();
+  const rq = openIndexedDB();
+  rq.onerror = function (event) {
+    loadFromLocalStorage();
+  };
+  rq.onsuccess = function (event) {
+    const db = event.target.result;
+    const tx = db.transaction(["inventory"], "readonly");
+    const store = tx.objectStore("inventory");
+    store.getAll().onsuccess = function (event) {
+      const r = event.target.result;
+      if (r.length > 0) {
+        const data = r[r.length-1];
+        plugin.inventory = parseInventory("⌂", data.raw);
+        plugin.lastRefresh = data.date;
+        autoRefresh();
+        window.runHooks("pluginInventoryRefresh", {inventory: plugin.inventory});
+      } else {
+        loadFromLocalStorage();
+      }
+    }
+    db.close();
+  };
+}
+
+function storeToIndexedDB(data) {
+  if (!window.indexedDB) return storeToLocalStorage(data);
+  const rq = openIndexedDB();
+  rq.onerror = function (event) {
+    storeToLocalStorage(data);
+  };
+  rq.onsuccess = function (event) {
+    const db = event.target.result;
+    const tx = db.transaction(["inventory"], "readwrite");
+    const store = tx.objectStore("inventory");
+    store.clear().onsuccess = function (event) {
+      const rq = store.add({
+        raw: data,
+        date: Date.now(),
+      });
+    };
+    tx.oncomplete = function () {
+      delete localStorage[STORE_KEY];
+    }
+    tx.onerror = function () {
+      storeToLocalStorage(data);
+    }
+    db.close();
+  };
+}
+
 function loadFromLocalStorage() {
   const store = localStorage[STORE_KEY];
   if (store) {
@@ -488,6 +549,7 @@ function loadFromLocalStorage() {
       const data = JSON.parse(store);
       plugin.inventory = parseInventory("⌂", data.raw);
       plugin.lastRefresh = data.date;
+      autoRefresh();
       window.runHooks("pluginInventoryRefresh", {inventory: plugin.inventory});
     } catch (e) {console.log(e);}
   }
@@ -518,7 +580,7 @@ function storeSettings() {
 function handleInventory(data) {
   if (data.result.length > 0) {
     plugin.inventory = parseInventory("⌂", data.result);
-    storeToLocalStorage(data.result);
+    storeToIndexedDB(data.result);
     window.runHooks("pluginInventoryRefresh", {inventory: plugin.inventory});
   } else {
     alert("Inventory empty, probably hitting rate limit, try again later");
@@ -971,7 +1033,7 @@ function setup() {
   plugin.hasActiveSubscription = false;
   plugin.isHighlighActive = false;
 
-  plugin.lastRefresh = 0;
+  plugin.lastRefresh = Date.now();
   plugin.autoRefreshTimer = null;
 
   plugin.settings = {
@@ -1009,13 +1071,6 @@ function setup() {
   })
 
   window.addHook('mapDataEntityInject', injectKeys);
-  window.addHook('iitcLoaded', () => {
-    const delay = plugin.lastRefresh + plugin.settings.autoRefreshDelay * 60 * 1000 - Date.now();
-    if (delay < 0)
-      refreshInventory();
-    else
-      plugin.autoRefreshTimer = setTimeout(refreshInventory, delay);
-  });
   window.addHook('portalSelected', (data) => {
     //{selectedPortalGuid: guid, unselectedPortalGuid: oldPortalGuid}
     if (!plugin.settings.popupEnable) return;
@@ -1027,5 +1082,5 @@ function setup() {
     }
   });
 
-  loadFromLocalStorage();
+  loadFromIndexedDB();
 }
