@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Player Inventory
 // @category       Info
-// @version        0.2.24
+// @version        0.2.25
 // @description    View inventory
 
 // stock intel
@@ -1112,7 +1112,7 @@ function setup() {
       const key = plugin.inventory.keys.get(data.guid);
       const capsules = Array.from(key.count.keys());
       $("#randdetails")
-        .append(`<tr><td>${total}</td><td>Keys</td><td>Capsules</td><td style="white-space: normal">${capsules.join(' ')}</td></tr>`);
+        .append(`<tr><td>${total}</td><th>Keys</th><th>Capsules</th><td style="white-space: normal">${capsules.join(' ')}</td></tr>`);
     }
   });
 
