@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Player Inventory
 // @category       Info
-// @version        0.2.23
+// @version        0.2.24
 // @description    View inventory
 
 // stock intel
@@ -976,6 +976,20 @@ function displayOpt() {
     L.DomEvent.on(button, 'click', exportToClipboard);
   }
 
+  {
+    const keysSidebarLabel = L.DomUtil.create('label', null, container);
+    keysSidebarLabel.textContent = "Keys in sidebar";
+    keysSidebarLabel.htmlFor = "plugin-player-inventory-keys-sidebar-enable"
+    const keysSidebarCheck = L.DomUtil.create('input', null, container);
+    keysSidebarCheck.type = 'checkbox';
+    keysSidebarCheck.checked = plugin.settings.keysSidebarEnable;
+    keysSidebarCheck.id = 'plugin-player-inventory-keys-sidebar-enable';
+    L.DomEvent.on(keysSidebarCheck, "change", (ev) => {
+      plugin.settings.keysSidebarEnable = keysSidebarCheck.checked === 'true' || (keysSidebarCheck.checked === 'false' ? false : keysSidebarCheck.checked);
+      storeSettings();
+    });
+  }
+
   dialog({
     title: 'Inventory Opt',
     id: 'inventory-opt',
@@ -1049,6 +1063,7 @@ function setup() {
     popupEnable: true,
     autoRefreshDelay: 30,
     autoSyncKeys: false,
+    keysSidebarEnable: false,
   }
 
   loadSettings();
@@ -1087,6 +1102,17 @@ function setup() {
       if (total > 0) {
         createPopup(data.selectedPortalGuid);
       }
+    }
+  });
+  window.addHook('portalDetailsUpdated', (data) => {
+    //{guid: guid, portal: portal, portalDetails: details, portalData: data}
+    if (!plugin.settings.keysSidebarEnable) return;
+    const total = plugin.inventory.countKey(data.guid);
+    if (total > 0) {
+      const key = plugin.inventory.keys.get(data.guid);
+      const capsules = Array.from(key.count.keys());
+      $("#randdetails")
+        .append(`<tr><td>${total}</td><td>Keys</td><td>Capsules</td><td style="white-space: normal">${capsules.join(' ')}</td></tr>`);
     }
   });
 
