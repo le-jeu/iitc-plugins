@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Player Inventory
 // @category       Info
-// @version        0.2.22
+// @version        0.2.23
 // @description    View inventory
 
 // stock intel
@@ -580,6 +580,7 @@ function storeSettings() {
 function handleInventory(data) {
   if (data.result.length > 0) {
     plugin.inventory = parseInventory("⌂", data.result);
+    plugin.lastRefresh = Date.now();
     storeToIndexedDB(data.result);
     window.runHooks("pluginInventoryRefresh", {inventory: plugin.inventory});
   } else {
@@ -844,11 +845,18 @@ function displayInventory(inventory) {
       "Options": displayOpt,
     }
   });
+
+  refreshIfOld();
 }
 
 function refreshInventory() {
   clearTimeout(plugin.autoRefreshTimer);
   getSubscriptionStatus();
+}
+
+function refreshIfOld() {
+  const delay = plugin.lastRefresh + plugin.settings.autoRefreshDelay * 60 * 1000 - Date.now();
+  if (delay <= 0) return refreshInventory();
 }
 
 function autoRefresh() {
@@ -946,7 +954,6 @@ function displayOpt() {
 
   // sync keys with the keys plugin
   if (window.plugin.keys) {
-
     const syncLabel = L.DomUtil.create('label', null, container);
     syncLabel.textContent = "Auto-sync with Keys";
     syncLabel.htmlFor = "plugin-player-inventory-autosync-enable"
@@ -998,6 +1005,7 @@ function setupDisplay() {
     android.addPane('playerInventory', 'Inventory', 'ic_action_view_as_list');
     addHook('paneChanged', function (pane) {
       if (pane === 'playerInventory') {
+        refreshIfOld();
         plugin.pane.style.display = "";
       } else if (plugin.pane) {
         plugin.pane.style.display = "none";
