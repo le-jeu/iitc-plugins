@@ -1,10 +1,11 @@
 // @author         jaiperdu
 // @name           Ingress Icons
 // @category       Appearance
-// @version        0.0.1
+// @version        0.1.0
 // @description    Bring ameba64/ingress-items icons into IITC
 
-function getModDetails(d) {
+
+function getModList(d) {
   var mods = [];
   var modsTitle = [];
   var modsColor = [];
@@ -62,17 +63,37 @@ function getModDetails(d) {
     mods.push(item);
   }
 
+  return mods;
+}
 
+function getModDetails(d) {
   var t = '';
-  mods.forEach(function (item) {
+  getModList(d).forEach(function (item) {
     t += '<span'+(item.tooltip.length ? ' title="'+item.tooltip+'"' : '')+' class="'+item.class+'"></span>'
   });
 
   return t;
 }
 
+function updateMobile(data) {
+  var el = $('#updatestatus .mods');
+  if (el) el.remove();
+
+  var guid = data.selectedPortalGuid;
+  if(!window.portals[guid]) return;
+
+  var details = window.portalDetail.get(guid);
+  var t = '';
+  getModList(details).forEach(function (item) {
+    t += '<div'+(item.tooltip.length ? ' title="'+item.tooltip+'"' : '')+' class="'+item.class+'"></div>'
+  });
+
+  $('#updatestatus').prepend('<div class="mods">'+t+'</div>');
+}
+
 var setup = function () {
   $('<style>').prop('type', 'text/css').html('@include_string:ingress-icons.css@').appendTo('head');
 
   window.getModDetails = getModDetails;
+  if (isSmartphone()) window.addHook('portalSelected', updateMobile);
 }
