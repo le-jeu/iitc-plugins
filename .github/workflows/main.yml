@@ -7,8 +7,8 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v2.3.1
 
-      - name: Build 🔧 
-        run: mkdir dist && python3 build_plugin.py --out-dir dist local plugins/labels_layer.js
+      - name: Build 🔧
+        run: mkdir dist && python3 build_plugin.py --out-dir dist local plugins/*.js
 
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@4.1.1

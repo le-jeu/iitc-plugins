@@ -193,12 +193,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('build', type=str, nargs='?',
                         help='Specify build name')
-    parser.add_argument('source', type=Path,
+    parser.add_argument('sources', type=Path, nargs='+',
                         help='Specify source file name')
     parser.add_argument('--out-dir', type=Path, nargs='?',
                         help='Specify out directory')
-    parser.add_argument('--watch', action='store_true',
-                        help='auto-rebuild on sources changes')
     args = parser.parse_args()
 
     try:
@@ -206,26 +204,19 @@ if __name__ == '__main__':
     except ValueError as err:
         parser.error(err)
 
-    if not args.source.is_file():
-        parser.error('Source file not found: {.source}'.format(args))
-
     args.out_dir = args.out_dir or Path(settings.build_target_dir)
     if not args.out_dir.is_dir():
         parser.error('Out directory not found: {.out_dir}'.format(args))
 
-    target = args.out_dir / (args.source.stem + '.user.js')
-    if target.is_file() and target.samefile(args.source):
-        parser.error('Target cannot be same as source: {.source}'.format(args))
+    for source in args.sources:
+        if not source.is_file():
+            parser.error('Source file not found: {}'.format(source))
 
-    if args.watch or settings.watch_mode:
-        from build import watch
-        print('Plugin build: {.build_name} (watch mode)\n'
-              ' source: {.source}\n'
-              ' target: {}'.format(settings, args, target))
-        watch(process_file, args.source, args.out_dir, interval=settings.watch_interval)
-    else:
+        target = args.out_dir / (source.stem + '.user.js')
+        if target.is_file() and target.samefile(source):
+            parser.error('Target cannot be same as source: {}'.format(source))
         try:
-            process_file(args.source, args.out_dir)
+            process_file(source, args.out_dir)
         except UserWarning as err:
             parser.error(err)
         print(target)
