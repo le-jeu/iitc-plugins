@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Portals pictures
 // @category       Info
-// @version        0.1.1
+// @version        0.1.2
 // @description    Show portal pictures in a dialog
 
 // use own namespace for plugin

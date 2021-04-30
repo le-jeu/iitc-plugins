@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Default base maps with labels above fields
 // @category       Map Tiles
-// @version        0.2.2
+// @version        0.2.3
 // @description    Print labels as an overlay of intel layer
 
 

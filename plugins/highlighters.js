@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Highlighters selection
 // @category       Highlighter
-// @version        0.0.3
+// @version        0.1.0
 // @description    Allow multiple highlighter to work concurrently
 
 /* global L */

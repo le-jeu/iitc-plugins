@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Ingress Icons
 // @category       Appearance
-// @version        0.1.0
+// @version        0.1.1
 // @description    Bring ameba64/ingress-items icons into IITC
 
 

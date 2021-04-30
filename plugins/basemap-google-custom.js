@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Custom Google map
 // @category       Map Tiles
-// @version        0.1.1
+// @version        0.1.2
 // @description    Add a customizable Version of Google map tiles as a base layer.
 
 
