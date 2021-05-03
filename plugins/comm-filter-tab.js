@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           COMM Filter Tab
 // @category       COMM
-// @version        0.1.5
+// @version        0.1.6
 // @description    Show virus in the regular Comm and add a new tab with portal/player name filter and event type filter.
 
 
@@ -255,14 +255,14 @@ commFilter.rules = [
   { type: 'attack', plain: 'Your Portal |PORTAL| is under attack by |PLAYER' },
   { type: 'neutralize', plain: 'Your Portal |PORTAL| neutralized by |PLAYER' },
   { type: 'kinetic', plain: 'Your Kinetic Capsule is now ready.' },
-  { type: 'first capture', plain: '[secure] | |PLAYER| captured their first Portal.' },
-  { type: 'first field', plain: '[secure] | |PLAYER| created their first Control Field' },
-  { type: 'first link', plain: '[secure] | |PLAYER| created their first Link.' },
+  { type: 'first capture', plain: 'SECURE| |PLAYER| captured their first Portal.' },
+  { type: 'first field', plain: 'SECURE| |PLAYER| created their first Control Field' },
+  { type: 'first link', plain: 'SECURE| |PLAYER| created their first Link.' },
   // { type: 'chat', plain: 'SENDER| blah |AT_PLAYER| blah |AT_PLAYER| blah ' },
   // { type: 'faction chat', plain: '[secure] |SENDER| blah |AT_PLAYER| blah |AT_PLAYER| blah ' },
 ];
 
-const markupType = new Set(['TEXT', 'PLAYER', 'PORTAL', 'FACTION', 'NUMBER', 'AT_PLAYER', 'SENDER']);
+const markupType = new Set(['TEXT', 'PLAYER', 'PORTAL', 'FACTION', 'NUMBER', 'AT_PLAYER', 'SENDER', 'SECURE']);
 
 function buildRules () {
   for (const r of commFilter.rules) {
