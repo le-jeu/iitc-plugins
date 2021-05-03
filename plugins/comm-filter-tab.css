@@ -63,3 +63,17 @@
 #chat tr {
   border-bottom: 1px solid #5558;
 }
+
+#chat td {
+  padding-bottom: 2px;
+  padding-top: 2px;
+}
+
+#chat table {
+  table-layout: unset;
+}
+
+#chat td:first-child,
+#chat td:nth-child(2) {
+  width: unset;
+}
