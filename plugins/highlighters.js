@@ -1,11 +1,10 @@
 // @author         jaiperdu
 // @name           Highlighters selection
 // @category       Highlighter
-// @version        0.1.0
+// @version        0.2.0
 // @description    Allow multiple highlighter to work concurrently
 
 /* global L */
-/* eslint-env es6 */
 
 // use own namespace for plugin
 const highlighters = {};
@@ -19,7 +18,7 @@ function loadSettings() {
   try {
     const settings = JSON.parse(localStorage[highlighters.SETTINGS_KEY]);
     Object.assign(highlighters.settings, settings);
-  } finally {
+  } catch (e) {
     // nothing to do
   }
 }
@@ -47,11 +46,9 @@ function displayDialog() {
     li.textContent = hl;
   }
 
-  $([enabledList, disabledList]).sortable({
-    connectWith: '.highlighters-list',
-    placeholder: 'sortable-placeholder',
-    forcePlaceholderSize:true,
-    update: function () {
+  new Sortable(enabledList, {
+    group: "shared",
+    onSort: () => {
       const list = [];
       highlighters.settings.highlighters_enabled = [];
       for (const li of enabledList.children) {
@@ -60,8 +57,12 @@ function displayDialog() {
       highlighters.settings.highlighters_enabled = list;
       storeSettings();
       window.resetHighlightedPortals();
-    }
-  }).disableSelection();
+    },
+  });
+
+  new Sortable(disabledList, {
+    group: "shared",
+  });
 
   window.dialog({
     html: html,
@@ -70,26 +71,8 @@ function displayDialog() {
   });
 }
 
-const PortalStyler = L.Class.extend({
-  initialize: function (portal) {
-    L.setOptions(this, portal.options);
-  },
-  setStyle: function (style) {
-    L.setOptions(this, style);
-  },
-  setRadius: function (radius) {
-    L.setOptions(this, {radius: radius});
-  },
-  getRadius: function () {
-    return this.options.radius;
-  },
-  getOptions: function () {
-    return this.options;
-  }
-});
-
 function highlightPortal(p) {
-  const styler = new PortalStyler(p);
+  const styler = new L.PortalStyler(p);
   for (const hl of highlighters.settings.highlighters_enabled) {
     const highlighter = window._highlighters[hl];
     if (highlighter !== undefined) {
@@ -104,7 +87,31 @@ function highlightPortal(p) {
 window.plugin.highlighters = highlighters;
 
 /* eslint-disable-next-line no-unused-vars */
-const setup = function () {
+function setup () {
+  try {
+    '@include_raw:external/Sortable.min.js@';
+  } catch (e) {
+    console.error(e);
+  }
+
+  L.PortalStyler = L.Class.extend({
+    initialize: function (portal) {
+      L.setOptions(this, portal.options);
+    },
+    setStyle: function (style) {
+      L.setOptions(this, style);
+    },
+    setRadius: function (radius) {
+      L.setOptions(this, {radius: radius});
+    },
+    getRadius: function () {
+      return this.options.radius;
+    },
+    getOptions: function () {
+      return this.options;
+    }
+  });
+
   $('<style>').prop('type', 'text/css').html('@include_css:highlighters.css@').appendTo('head');
 
   window.highlightPortal = highlightPortal;
