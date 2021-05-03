@@ -20,16 +20,19 @@ function renderPortal (portal) {
   var lat = portal.latE6/1E6, lng = portal.lngE6/1E6;
   var perma = window.makePermalink([lat,lng]);
   var js = 'window.selectPortalByLatLng('+lat+', '+lng+');return false';
+  var spanClass = "";
+  if (portal.team === 'RESISTANCE') spanClass = "res-light";
+  else if (portal.team === 'ENLIGHTENED') spanClass = "enl-light";
   return '<a onclick="'+js+'"'
     + ' title="'+portal.address+'"'
-    + ' href="'+perma+'" class="help">'
+    + ' href="'+perma+'" class="help portal ' + spanClass + '">'
     + window.chat.getChatPortalName(portal)
     + '</a>';
 };
 
 function renderFactionEnt (faction) {
-  var name = faction.team === 'ENLIGHTENED' ? 'Enlightened' : 'Resistance';
-  var spanClass = faction.team === 'ENLIGHTENED' ? TEAM_ENL : TEAM_RES;
+  var name = faction.team === 'RESISTANCE' ? 'Resistance' : 'Enlightened';
+  var spanClass = faction.team === 'RESISTANCE' ? TEAM_TO_CSS[TEAM_RES] : TEAM_TO_CSS[TEAM_ENL];
   return $('<div/>').html($('<span/>')
     .attr('class', spanClass)
     .text(name)).html();

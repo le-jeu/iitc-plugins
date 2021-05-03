@@ -20,6 +20,14 @@
   margin-right: .2rem;
 }
 
+#chat .portal.enl-light {
+  color: #5e5;
+}
+
+#chat .portal.res-light {
+  color: #2de;
+}
+
 .pl_nudge_date {
   float: unset;
   text-align: unset;
