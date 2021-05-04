@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           COMM Filter Tab
 // @category       COMM
-// @version        0.3.1
+// @version        0.3.2
 // @description    Show virus in the regular Comm and add a new tab with portal/player name filter and event type filter.
 
 
@@ -584,7 +584,7 @@ function tabCreate () {
 
 window.plugin.commFilter = commFilter;
 
-var setup = function() {
+function setup () {
   $("<style>")
     .prop("type", "text/css")
     .html('@include_string:comm-filter-tab.css@')
