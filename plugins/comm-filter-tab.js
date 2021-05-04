@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           COMM Filter Tab
 // @category       COMM
-// @version        0.2.1
+// @version        0.3.1
 // @description    Show virus in the regular Comm and add a new tab with portal/player name filter and event type filter.
 
 
@@ -261,6 +261,8 @@ commFilter.rules = [
   { type: 'first capture', plain: 'SECURE| |PLAYER| captured their first Portal.' },
   { type: 'first field', plain: 'SECURE| |PLAYER| created their first Control Field' },
   { type: 'first link', plain: 'SECURE| |PLAYER| created their first Link.' },
+  { type: 'drone returned', plain: 'Drone returned to Agent by |PLAYER' },
+  { type: 'drone returned', plain: 'Your Drone returned by |PLAYER' },
   // { type: 'chat', plain: 'SENDER| blah |AT_PLAYER| blah |AT_PLAYER| blah ' },
   // { type: 'faction chat', plain: '[secure] |SENDER| blah |AT_PLAYER| blah |AT_PLAYER| blah ' },
 ];
