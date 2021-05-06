@@ -44,6 +44,15 @@
 	padding: unset;
 }
 
+#chat-filters.desktop {
+  z-index: 1;
+}
+
+#chat-filters.desktop #filter-type:hover {
+  margin-bottom: -8em;
+  height: 10em;
+}
+
 #chatfilter table {
   margin-bottom: 2.5rem;
 }

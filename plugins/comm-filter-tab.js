@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           COMM Filter Tab
 // @category       COMM
-// @version        0.3.2
+// @version        0.4.1
 // @description    Show virus in the regular Comm and add a new tab with portal/player name filter and event type filter.
 
 
@@ -463,13 +463,13 @@ function updateCSS () {
   for (const guid of window.chat._public.guids) {
     const n = window.chat._public.data[guid][3];
     const d = window.chat._public.data[guid][4]['comm-filter'];
-    let show = commFilter.filters.type == d.type;
+    let show = commFilter.filters.type.includes(d.type);
 
     // special type
-    if (commFilter.filters.type == 'all') show = true;
-    if (commFilter.filters.type == 'chat all' && (d.type == 'chat' || d.type == 'chat faction')) show = true;
-    if (commFilter.filters.type == 'chat public' && d.type == 'chat') show = true;
-    if (commFilter.filters.type == 'virus' && d.virus) show = true;
+    if (commFilter.filters.type.includes('all')) show = true;
+    if (commFilter.filters.type.includes('chat all') && (d.type == 'chat' || d.type == 'chat faction')) show = true;
+    if (commFilter.filters.type.includes('chat public') && d.type == 'chat') show = true;
+    if (commFilter.filters.type.includes('virus') && d.virus) show = true;
 
     let match = false;
     if (n.includes(commFilter.filters.text)) match = true;
@@ -565,7 +565,7 @@ function tabCreate () {
   commFilter.filtersDiv = document.querySelector('#chat-filters');
   commFilter.filtersDiv.innerHTML =
     '<input id="filter-text" placeholder="Portal or Agent">'
-    + '<select id="filter-type">'
+    + '<select id="filter-type" multiple size="1">'
     + Array.from(events).map((s) => '<option value="'+s+'">'+s+'</option>')
     + '</select>';
   $('#filter-text').on('change', function (ev) {
@@ -573,10 +573,12 @@ function tabCreate () {
     updateCSS();
   });
   $('#filter-type').on('change', function (ev) {
-    commFilter.filters.type = ev.target.value;
+    commFilter.filters.type =
+      Array.from(ev.target.options)
+        .filter((o) => o.selected)
+        .map((o) => o.value);
     updateCSS();
   });
-
 };
 
 
@@ -597,10 +599,13 @@ function setup () {
   // plugin
   commFilter.filters = {
     text: '',
-    type: 'all',
+    type: ['all'],
   };
   buildRules();
   tabCreate();
+
+  if (!window.isSmartphone())
+    commFilter.filtersDiv.classList.add('desktop');
 
   if (useAndroidPanes()) {
     android.addPane('comm-filter-tab', 'Comm Filter', 'ic_action_view_as_list');
