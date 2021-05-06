@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Player Inventory
 // @category       Info
-// @version        0.2.27
+// @version        0.2.28
 // @description    View inventory and highlight portals with keys at any zoom. Can be used with the official plugins Keys and Keys on map to show the number of keys on the map.
 
 // stock intel
@@ -750,7 +750,7 @@ function createCapsuleTable(inventory, capsule) {
 
     const row = L.DomUtil.create('tr', null, table);
     L.DomUtil.create('td', null, row).textContent = total;
-    L.DomUtil.create('td', null, row);
+    if (capsule.type !== "KEY_CAPSULE") L.DomUtil.create('td', null, row);
     L.DomUtil.create('td', null, row).appendChild(a);
   }
   const medias = Object.values(capsule.medias).sort((a,b) => localeCompare(a.name, b.name));
