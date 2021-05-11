@@ -1,22 +1,43 @@
 // @author         jaiperdu
 // @name           Cache visible portals
 // @category       Cache
-// @version        0.1.0
+// @version        0.2.0
 // @description    Cache the data of visible portals and use this to populate the map when possible
 
 // use own namespace for plugin
 var cachePortals = {};
 
-cachePortals.MIN_ZOOM = 15;          // zoom min to show data
+var MAX_ZOOM = 22;
+
+cachePortals.MIN_ZOOM = 15; // zoom min to show data
 cachePortals.MAX_AGE = 12 * 60 * 60; // 12 hours max age for cached data
 
 function openDB() {
-  var rq = window.indexedDB.open("cache-portals", 1);
+  var rq = window.indexedDB.open("cache-portals", 2);
   rq.onupgradeneeded = function (event) {
     var db = event.target.result;
-    var store = db.createObjectStore("portals", { keyPath: "guid" });
-    store.createIndex("latLngE6", ["latE6", "lngE6"], { unique: true });
-    store.createIndex("loadtime", "loadtime", { unique: false });
+    if (event.oldVersion < 1) {
+      var store = db.createObjectStore("portals", { keyPath: "guid" });
+      store.createIndex("latLngE6", ["latE6", "lngE6"], { unique: true });
+      store.createIndex("loadtime", "loadtime", { unique: false });
+    }
+    if (event.oldVersion < 2) {
+      var store = rq.transaction.objectStore("portals");
+      store.openCursor().onsuccess = function (e) {
+        var cursor = e.target.result;
+        if (cursor) {
+          var portal = cursor.value;
+          L.Util.extend(portal, coordsToTiles(portal.latE6, portal.lngE6));
+          store.put(portal);
+          cursor.continue();
+        }
+      };
+      // MAX_ZOOM=22
+      for (var i = 1; i <= 22; i++) {
+        var key = "z" + i;
+        store.createIndex(key, key, { unique: false });
+      }
+    }
   };
   rq.onsuccess = function (event) {
     var db = event.target.result;
@@ -60,6 +81,7 @@ function portalDetailLoaded(data) {
       timestamp: data.details.timestamp,
       loadtime: +Date.now(),
     };
+    L.Util.extend(portal, coordsToTiles(portal.latE6, portal.lngE6));
     putPortal(portal);
   }
 }
@@ -73,16 +95,43 @@ function portalAdded(data) {
     timestamp: data.portal.options.timestamp,
     loadtime: +Date.now(),
   };
+  L.Util.extend(portal, coordsToTiles(portal.latE6, portal.lngE6));
   putPortal(portal);
+}
+
+function coordsToTile(latE6, lngE6, zoom) {
+  latE6 = latE6 + 90000000;
+  lngE6 = lngE6 + 180000000;
+  var size = 360000000;
+  for (var i = 0; i < zoom; i++) size = size / 2;
+  return [Math.floor(latE6 / size), Math.floor(lngE6 / size)];
+}
+
+function coordsToTiles(latE6, lngE6) {
+  latE6 = latE6 + 90000000;
+  lngE6 = lngE6 + 180000000;
+  var size = 360000000;
+  var tiles = {};
+  for (var i = 0; i <= MAX_ZOOM; i++) {
+    tiles["z" + i] = Math.floor(latE6 / size) + "_" + Math.floor(lngE6 / size);
+    size = size / 2;
+  }
+  return tiles;
 }
 
 function entityInject(data) {
   if (!cachePortals.db) return;
-  if (window.map.getZoom() < cachePortals.MIN_ZOOM) return;
-  var tx = cachePortals.db.transaction("portals", "readonly");
-  var index = tx.objectStore("portals").index("latLngE6");
 
-  var bounds = window.map.getBounds();
+  var mapZoom = map.getZoom();
+  if (mapZoom < cachePortals.MIN_ZOOM) return;
+
+  if (mapZoom > MAX_ZOOM) mapZoom = MAX_ZOOM;
+
+  var bounds = window.clampLatLngBounds(map.getBounds());
+
+  var tx = cachePortals.db.transaction("portals", "readonly");
+  var index = tx.objectStore("portals").index("z" + mapZoom);
+
   var lowerBound = [bounds.getSouth(), bounds.getWest()].map((v) =>
     Math.round(v * 1e6)
   );
@@ -90,37 +139,28 @@ function entityInject(data) {
     Math.round(v * 1e6)
   );
 
-  var range = window.IDBKeyRange.bound(lowerBound, upperBound);
+  var lowerTile = coordsToTile(lowerBound[0], lowerBound[1], mapZoom);
+  var upperTile = coordsToTile(upperBound[0], upperBound[1], mapZoom);
 
   var maxAge = Date.now() - cachePortals.MAX_AGE * 1000;
-
-  var ents = [];
-  index.openCursor(range).onsuccess = function (event) {
-    var cursor = event.target.result;
-    if (cursor) {
-      var portal = cursor.value;
-      if (portal.lngE6 < lowerBound[1])
-        cursor.continue([portal.latE6, lowerBound[1]]);
-      else if (portal.lngE6 > upperBound[1])
-        cursor.continue([portal.latE6 + 1, lowerBound[1]]);
-      else {
-        if (portal.loadtime > maxAge) {
-          ents.push([
-            portal.guid,
-            portal.timestamp,
-            ["p", portal.team, portal.latE6, portal.lngE6],
-          ]);
+  for (var x = lowerTile[0]; x <= upperTile[0]; x++) {
+    for (var y = lowerTile[1]; y <= upperTile[1]; y++) {
+      var ents = [];
+      index.getAll(x + "_" + y).onsuccess = function (event) {
+        var portals = event.target.result;
+        if (portals.length > 0) {
+          data.callback(
+            portals.map((portal) => [
+              portal.guid,
+              portal.timestamp,
+              ["p", portal.team, portal.latE6, portal.lngE6],
+            ]),
+            "core"
+          );
         }
-        if (ents.length > 50) {
-          data.callback(ents, "core");
-          ents = [];
-        }
-        cursor.continue();
-      }
-    } else {
-      if (ents.length > 0) data.callback(ents, "core");
+      };
     }
-  };
+  }
 }
 
 function setup() {
