@@ -13,7 +13,7 @@ cachePortals.MIN_ZOOM = 15; // zoom min to show data
 cachePortals.MAX_AGE = 12 * 60 * 60; // 12 hours max age for cached data
 
 function openDB() {
-  var rq = window.indexedDB.open("cache-portals", 3);
+  var rq = window.indexedDB.open("cache-portals", 4);
   rq.onupgradeneeded = function (event) {
     var db = event.target.result;
     if (event.oldVersion < 1) {
@@ -41,6 +41,12 @@ function openDB() {
     if (event.oldVersion < 3) {
       var store = db.createObjectStore("portals_history", { keyPath: "id", autoIncrement: true });
       store.createIndex("guid", "guid", { unique: false });
+    }
+    if (event.oldVersion < 4) {
+      // allow co-located portals
+      var store = rq.transaction.objectStore('portals');
+      store.deleteIndex("latLngE6");
+      store.createIndex("latLngE6", ["latE6", "lngE6"], { unique: false });
     }
   };
   rq.onsuccess = function (event) {
