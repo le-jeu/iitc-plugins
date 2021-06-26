@@ -12,8 +12,10 @@ var MAX_ZOOM = 22;
 cachePortals.MIN_ZOOM = 15; // zoom min to show data
 cachePortals.MAX_AGE = 12 * 60 * 60; // 12 hours max age for cached data
 
+cachePortals.MAX_LOCATION_AGE = 30 * 24 * 60 * 60; // 1 month for location history
+
 function openDB() {
-  var rq = window.indexedDB.open("cache-portals", 4);
+  var rq = window.indexedDB.open("cache-portals", 6);
   rq.onupgradeneeded = function (event) {
     var db = event.target.result;
     if (event.oldVersion < 1) {
@@ -48,19 +50,38 @@ function openDB() {
       store.deleteIndex("latLngE6");
       store.createIndex("latLngE6", ["latE6", "lngE6"], { unique: false });
     }
+    if (event.oldVersion < 5) {
+      var store = rq.transaction.objectStore('portals_history');
+      store.openCursor().onsuccess = function (e) {
+        var cursor = e.target.result;
+        if (cursor) {
+          var portal = cursor.value;
+          if (!portal.date) portal.date = portal.lastSeen;
+          if (!portal.timestamp) portal.timestamp = portal.date;
+          store.put(portal);
+          cursor.continue();
+        }
+      };
+
+      store.createIndex("lastSeen", "lastSeen", { unique: false });
+    }
   };
   rq.onsuccess = function (event) {
     var db = event.target.result;
     cachePortals.db = db;
     cleanup();
   };
+  rq.onerror = function (event) {
+    console.error("cache-portals: something went wrong", event);
+  };
   return rq;
 }
 
 function cleanup() {
   if (!cachePortals.db) return;
+  console.time("cache-portals: cleanup");
   var maxAge = Date.now() - cachePortals.MAX_AGE * 1000;
-  var tx = cachePortals.db.transaction("portals", "readwrite");
+  var tx = cachePortals.db.transaction(["portals", "portals_history"], "readwrite");
   tx
     .objectStore("portals")
     .index("loadtime")
@@ -73,6 +94,23 @@ function cleanup() {
       cursor.continue();
     }
   };
+  maxAge = Date.now() - cachePortals.MAX_LOCATION_AGE * 1000;
+  tx
+    .objectStore("portals_history")
+    .index("lastSeen")
+    .openKeyCursor(window.IDBKeyRange.upperBound(maxAge)).onsuccess = function (
+    event
+  ) {
+    var cursor = event.target.result;
+    if (cursor) {
+      tx.objectStore("portals_history").delete(cursor.primaryKey);
+      cursor.continue();
+    }
+  };
+
+  tx.oncomplete = function () {
+    console.timeEnd("cache-portals: cleanup");
+  }
 }
 
 function updateLocationHistory(portal) {
@@ -183,7 +221,6 @@ function entityInject(data) {
   var lowerTile = coordsToTile(lowerBound[0], lowerBound[1], mapZoom);
   var upperTile = coordsToTile(upperBound[0], upperBound[1], mapZoom);
 
-  var maxAge = Date.now() - cachePortals.MAX_AGE * 1000;
   for (var x = lowerTile[0]; x <= upperTile[0]; x++) {
     for (var y = lowerTile[1]; y <= upperTile[1]; y++) {
       var ents = [];
