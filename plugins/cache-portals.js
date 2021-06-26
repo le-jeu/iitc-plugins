@@ -113,41 +113,81 @@ function cleanup() {
   }
 }
 
-function updateLocationHistory(portal) {
+function updateLocationHistory(portals) {
   var tx = cachePortals.db.transaction("portals_history", "readwrite");
   var store = tx.objectStore("portals_history");
   var index = store.index("guid");
-  index.getAll(portal.guid).onsuccess = function (event) {
-    var portals = event.target.result;
-    if (portals.length > 0) {
-      var last = portals[portals.length-1];
-      if (last.latE6 === portal.latE6 && last.lngE6 === portal.lngE6) {
-        last.lastSeen = Date.now();
-        store.put(last)
-        return;
+
+  var count = portals.length;
+
+  console.time("cache-portals: updateLocationHistory");
+  tx.oncomplete = () => {
+    console.timeEnd("cache-portals: updateLocationHistory");
+    console.log("cache-portals: updateLocationHistory:", count, "portals");
+  }
+
+  portals.forEach((portal) => {
+    // ignore some forged data
+    if (!portal.timestamp) return;
+    index.getAll(portal.guid).onsuccess = function (event) {
+      var portals = event.target.result;
+      if (portals.length > 0) {
+        var last = portals[portals.length-1];
+        // ignore old data (whatever the source)
+        if (last.timestamp > portal.timestamp) return
+        // update last seen
+        if (last.latE6 === portal.latE6 && last.lngE6 === portal.lngE6) {
+          last.lastSeen = Date.now();
+          last.timestamp = portal.timestamp;
+          store.put(last)
+          return;
+        }
+        window.map.fire('portalChange:location', { prev: last, cur: portal });
+        var latLng = [
+          (portal.latE6*1e-6).toFixed(6),
+          (portal.lngE6*1e-6).toFixed(6)
+        ];
+        var link = window.makePermalink(latLng);
+        var div = L.DomUtil.create('div');
+        div.append("Portal ")
+        var a = L.DomUtil.create('a', '', div);
+        a.textContent = portal.guid;
+        L.DomEvent.on(a, 'click', (ev) => {
+          L.DomEvent.preventDefault();
+          window.zoomToAndShowPortal(portal.guid, latLng);
+        });
+        div.append(` has moved from ${(last.latE6*1e-6).toFixed(6)},${(last.lngE6*1e-6).toFixed(6)} to ${latLng.join(',')}`);
+        alert(div, true);
       }
-      window.map.fire('portalChange:location', { prev: last, cur: portal });
-      var link = window.makePermalink([
-        (portal.latE6*1e-6).toFixed(6),
-        (portal.lngE6*1e-6).toFixed(6)
-      ]);
-      alert(`Portal <a href="${link}">${portal.guid}</a> has moved from ${(last.latE6*1e-6).toFixed(6)},${(last.lngE6*1e-6).toFixed(6)} to ${(portal.latE6*1e-6).toFixed(6)},${(portal.lngE6*1e-6).toFixed(6)}`);
-    }
-    store.add({
-      guid: portal.guid,
-      latE6: portal.latE6,
-      lngE6: portal.lngE6,
-      date: portal.timestamp,
-      lastSeen: Date.now(),
-    });
-  };
+      store.add({
+        guid: portal.guid,
+        latE6: portal.latE6,
+        lngE6: portal.lngE6,
+        date: portal.timestamp,
+        timestamp: portal.timestamp,
+        lastSeen: Date.now(),
+      });
+    };
+  });
+}
+
+function putPortals(portals) {
+  if (!cachePortals.db) return;
+
+  var tx = cachePortals.db.transaction("portals", "readwrite");
+  var store = tx.objectStore("portals");
+  var count = portals.length;
+  console.time("cache-portals: putPortals");
+  tx.oncomplete = () => {
+    console.timeEnd("cache-portals: putPortals");
+    console.log("cache-portals: putPortals:", count, "portals");
+  }
+  portals.forEach((portal) => store.put(portal));
+  updateLocationHistory(portals);
 }
 
 function putPortal(portal) {
-  if (!cachePortals.db) return;
-  var tx = cachePortals.db.transaction("portals", "readwrite");
-  tx.objectStore("portals").put(portal);
-  updateLocationHistory(portal);
+  putPortals([portal]);
 }
 
 function portalDetailLoaded(data) {
@@ -165,17 +205,23 @@ function portalDetailLoaded(data) {
   }
 }
 
-function portalAdded(data) {
-  var portal = {
-    guid: data.portal.options.guid,
-    team: data.portal.options.data.team,
-    latE6: data.portal.options.data.latE6,
-    lngE6: data.portal.options.data.lngE6,
-    timestamp: data.portal.options.timestamp,
-    loadtime: +Date.now(),
-  };
-  L.Util.extend(portal, coordsToTiles(portal.latE6, portal.lngE6));
-  putPortal(portal);
+function mapDataRefreshEnd() {
+  var portals = [];
+  for (var guid in window.portals) {
+    var options = window.portals[guid].options;
+    if (options.level === undefined) continue;
+    var portal = {
+      guid: options.guid,
+      team: options.data.team,
+      latE6: options.data.latE6,
+      lngE6: options.data.lngE6,
+      timestamp: options.timestamp,
+      loadtime: +Date.now(),
+    };
+    L.Util.extend(portal, coordsToTiles(portal.latE6, portal.lngE6));
+    portals.push(portal);
+  }
+  putPortals(portals);
 }
 
 function coordsToTile(latE6, lngE6, zoom) {
@@ -247,7 +293,7 @@ function setup() {
 
   openDB();
 
-  window.addHook("portalAdded", portalAdded);
+  window.addHook("mapDataRefreshEnd", mapDataRefreshEnd);
   window.addHook("portalDetailLoaded", portalDetailLoaded);
   window.addHook("mapDataEntityInject", entityInject);
 }
