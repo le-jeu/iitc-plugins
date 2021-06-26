@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Cache visible portals
 // @category       Cache
-// @version        0.3.0
+// @version        0.4.0
 // @description    Cache the data of visible portals and use this to populate the map when possible
 
 // use own namespace for plugin
@@ -287,6 +287,75 @@ function entityInject(data) {
   }
 }
 
+function displayHistory() {
+  if (!cachePortals.db) return;
+  var div = L.DomUtil.create('div');
+
+  var guidSelect = L.DomUtil.create('select', '', div);
+  guidSelect.innerHTML = "<option selected disabled>Select a guid</option>"
+  var historySelect = L.DomUtil.create('select', '', div);
+  var pre = L.DomUtil.create('pre', '', div);
+  var curHist = {};
+
+  L.DomEvent.on(historySelect, 'change', () => {
+    var p = curHist[historySelect.value];
+    if (!p) return;
+    pre.textContent = `Portal ${p.guid}
+First seen: ${new Date(p.date).toLocaleString()}
+Last seen: ${new Date(p.lastSeen).toLocaleString()}
+Lat: ${p.latE6/1e6}
+Lng: ${p.lngE6/1e6}`;
+  });
+
+  L.DomEvent.on(guidSelect, 'change', function (ev) {
+    var guid = guidSelect.value;
+    historySelect.innerHTML = "<option selected disabled>Select a date</option>";
+    curHist = {};
+    var tx = cachePortals.db.transaction("portals_history", "readonly");
+    var portalsStore = tx.objectStore("portals_history");
+    var guidIndex = portalsStore.index("guid");
+    guidIndex.getAll(guid).onsuccess = function (e) {
+      var portals = e.target.result;
+      portals.forEach((p) => {
+        curHist[p.date] = p;
+        var option = L.DomUtil.create('option', '', historySelect);
+        option.value = p.date;
+        option.textContent = new Date(p.date).toLocaleString();
+      })
+    }
+  });
+
+  var tx = cachePortals.db.transaction("portals_history", "readonly");
+  var portalsStore = tx.objectStore("portals_history");
+  var guidIndex = portalsStore.index("guid");
+
+  var lastGuid = null;
+  guidIndex.openKeyCursor().onsuccess = function (e) {
+    var cursor = e.target.result;
+    if (cursor) {
+      var guid = cursor.key;
+      if (lastGuid === guid) {
+        var opt = L.DomUtil.create('option', '', guidSelect)
+        opt.textContent = guid;
+        cursor.continue(guid + 'x');
+      } else {
+        lastGuid = guid;
+        cursor.continue();
+      }
+    }
+  };
+
+  tx.oncomplete = function (e) {
+
+  };
+
+  window.dialog({
+    title: "Portal Location History",
+    html: div,
+    width: 'auto',
+  });
+}
+
 function setup() {
   if (!window.indexedDB) return;
   window.plugin.cachePortals = cachePortals;
@@ -296,4 +365,9 @@ function setup() {
   window.addHook("mapDataRefreshEnd", mapDataRefreshEnd);
   window.addHook("portalDetailLoaded", portalDetailLoaded);
   window.addHook("mapDataEntityInject", entityInject);
+
+  $('<a>')
+    .html('Portal Cache')
+    .click(displayHistory)
+    .appendTo('#toolbox');
 }
