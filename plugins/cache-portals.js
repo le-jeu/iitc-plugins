@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Cache visible portals
 // @category       Cache
-// @version        0.4.0
+// @version        0.4.1
 // @description    Cache the data of visible portals and use this to populate the map when possible
 
 // use own namespace for plugin
@@ -13,6 +13,15 @@ cachePortals.MIN_ZOOM = 15; // zoom min to show data
 cachePortals.MAX_AGE = 12 * 60 * 60; // 12 hours max age for cached data
 
 cachePortals.MAX_LOCATION_AGE = 30 * 24 * 60 * 60; // 1 month for location history
+
+cachePortals.SETTINGS_KEY = "plugins-cache-portals";
+cachePortals.settings = {
+  injectPortals: false,
+  injectZoom: 15, // do whatever you want...
+  storeTeam: false,
+  maxAge: 12, // hour, because team is game state
+  maxLocationAge: 30, // days
+};
 
 function openDB() {
   var rq = window.indexedDB.open("cache-portals", 6);
@@ -80,7 +89,7 @@ function openDB() {
 function cleanup() {
   if (!cachePortals.db) return;
   console.time("cache-portals: cleanup");
-  var maxAge = Date.now() - cachePortals.MAX_AGE * 1000;
+  var maxAge = Date.now() - cachePortals.settings.maxAge * 60 * 60 * 1000;
   var tx = cachePortals.db.transaction(["portals", "portals_history"], "readwrite");
   tx
     .objectStore("portals")
@@ -94,7 +103,7 @@ function cleanup() {
       cursor.continue();
     }
   };
-  maxAge = Date.now() - cachePortals.MAX_LOCATION_AGE * 1000;
+  maxAge = Date.now() - cachePortals.settings.maxLocationAge * 24 * 60 * 60* 1000;
   tx
     .objectStore("portals_history")
     .index("lastSeen")
@@ -201,6 +210,8 @@ function portalDetailLoaded(data) {
       loadtime: Date.now(),
     };
     L.Util.extend(portal, coordsToTiles(portal.latE6, portal.lngE6));
+    if (!cachePortals.settings.storeTeam)
+      delete portal.team;
     putPortal(portal);
   }
 }
@@ -219,6 +230,8 @@ function mapDataRefreshEnd() {
       loadtime: +Date.now(),
     };
     L.Util.extend(portal, coordsToTiles(portal.latE6, portal.lngE6));
+    if (!cachePortals.settings.storeTeam)
+      delete portal.team;
     portals.push(portal);
   }
   putPortals(portals);
@@ -246,9 +259,10 @@ function coordsToTiles(latE6, lngE6) {
 
 function entityInject(data) {
   if (!cachePortals.db) return;
+  if (!cachePortals.settings.injectPortals) return;
 
   var mapZoom = map.getZoom();
-  if (mapZoom < cachePortals.MIN_ZOOM) return;
+  if (mapZoom < cachePortals.settings.injectZoom) return;
 
   if (mapZoom > MAX_ZOOM) mapZoom = MAX_ZOOM;
 
@@ -287,9 +301,57 @@ function entityInject(data) {
   }
 }
 
+function saveSettings() {
+  localStorage[cachePortals.SETTINGS_KEY] = JSON.stringify(cachePortals.settings);
+}
+
+function addInput(container, type, desc, key) {
+  L.DomUtil.create('label', '', container).textContent = desc;
+  var input = L.DomUtil.create('input', '', container);
+  input.type = type;
+  if (type == 'checkbox') input.checked = !!cachePortals.settings[key];
+  else input.value = cachePortals.settings[key];
+
+  L.DomEvent.on(input, 'change', () => {
+    if (type == 'checkbox') cachePortals.settings[key] = input.checked;
+    else cachePortals.settings[key] = parseInt(input.value);
+    saveSettings();
+  });
+}
+
+function displayOpt() {
+  var div = L.DomUtil.create('div');
+  div.style.display = "grid";
+  div.style.gridTemplateColumns = "auto auto";
+
+  var section = L.DomUtil.create('h4', '', div);
+  section.textContent = "Cache on map";
+  section.style.gridColumn = "1/3";
+  addInput(div, 'checkbox', "Use cache to populate the map", 'injectPortals');
+  addInput(div, 'number', "Populate from zoom", 'injectZoom');
+  addInput(div, 'checkbox', "Store team", 'storeTeam');
+  addInput(div, 'number', "Hours to keep data", 'maxAge');
+
+  section = L.DomUtil.create('h4', '', div);
+  section.textContent = "Cache for location history";
+  section.style.gridColumn = "1/3";
+  addInput(div, 'number', "Days to keep data", 'maxLocationAge');
+
+  window.dialog({
+    title: "Cache portals options",
+    html: div,
+    width: 'auto',
+    buttons: {
+      'History': displayHistory
+    }
+  });
+}
+
 function displayHistory() {
   if (!cachePortals.db) return;
   var div = L.DomUtil.create('div');
+
+  L.DomUtil.create("h4", '', div).textContent = "Portals with multiple locations";
 
   var guidSelect = L.DomUtil.create('select', '', div);
   guidSelect.innerHTML = "<option selected disabled>Select a guid</option>"
@@ -345,8 +407,8 @@ Lng: ${p.lngE6/1e6}`;
     }
   };
 
-  tx.oncomplete = function (e) {
-
+  tx.onerror = function (e) {
+    console.error(e);
   };
 
   window.dialog({
@@ -360,6 +422,13 @@ function setup() {
   if (!window.indexedDB) return;
   window.plugin.cachePortals = cachePortals;
 
+  try {
+    var settings = JSON.parse(localStorage[cachePortals.SETTINGS_KEY]);
+    Object.assign(cachePortals.settings, settings);
+  } catch {
+    saveSettings();
+  }
+
   openDB();
 
   window.addHook("mapDataRefreshEnd", mapDataRefreshEnd);
@@ -368,6 +437,6 @@ function setup() {
 
   $('<a>')
     .html('Portal Cache')
-    .click(displayHistory)
+    .click(displayOpt)
     .appendTo('#toolbox');
 }
