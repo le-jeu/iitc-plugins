@@ -9,11 +9,6 @@ var cachePortals = {};
 
 var MAX_ZOOM = 22;
 
-cachePortals.MIN_ZOOM = 15; // zoom min to show data
-cachePortals.MAX_AGE = 12 * 60 * 60; // 12 hours max age for cached data
-
-cachePortals.MAX_LOCATION_AGE = 30 * 24 * 60 * 60; // 1 month for location history
-
 cachePortals.SETTINGS_KEY = "plugins-cache-portals";
 cachePortals.settings = {
   injectPortals: false,
