@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Cache visible portals
 // @category       Cache
-// @version        0.4.1
+// @version        0.4.2
 // @description    Cache the data of visible portals and use this to populate the map when possible
 
 // use own namespace for plugin
@@ -220,7 +220,7 @@ function mapDataRefreshEnd() {
   var portals = [];
   for (var guid in window.portals) {
     var options = window.portals[guid].options;
-    if (options.level === undefined) continue;
+    if (options.data.level === undefined) continue;
     var portal = {
       guid: options.guid,
       team: options.data.team,
