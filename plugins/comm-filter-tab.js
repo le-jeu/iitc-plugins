@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           COMM Filter Tab
 // @category       COMM
-// @version        0.4.1
+// @version        0.4.2
 // @description    Show virus in the regular Comm and add a new tab with portal/player name filter and event type filter.
 
 
@@ -543,18 +543,46 @@ function tabToogle () {
 };
 
 function tabCreate () {
-  $('#chatcontrols').append('<a>Filter</a>');
-  $('#chatcontrols a:last').click(tabToogle);
-  $('#chat')
-    .append('<div id="chat-filters"></div>')
-    .append('<div style="display: none" id="chatfilter"><table></table></div>');
+  $('#chat').append('<div id="chat-filters"></div>')
 
-  $('#chatfilter').scroll(function() {
-    var t = $(this);
-    if(t.data('ignoreNextScroll')) return t.data('ignoreNextScroll', false);
-    if(t.scrollTop() < CHAT_REQUEST_SCROLL_TOP) window.chat.requestPublic(true);
-    if(scrollBottom(t) === 0) window.chat.requestPublic(false);
-  });
+  if (window.chat.addCommTab) {
+    window.chat.addCommTab({
+      channel: 'filter',
+      name: 'Filter',
+      inputPrompt: '',
+      sendMessage: () => {},
+      request: (_, old) => window.chat.requestChannel('all', old),
+      render: (c, old) => {
+        $('#chat-filters').show();
+        window.chat.renderChannel(c, old);
+      },
+      localBounds: true,
+    });
+    // bind filter to all
+    window.chat._channels['filter'] = window.chat._channels['all'];
+  }
+  else {
+    $('#chatcontrols').append('<a>Filter</a>');
+    $('#chatcontrols a:last').click(tabToogle);
+    $('#chat')
+      .append('<div style="display: none" id="chatfilter"><table></table></div>');
+
+    $('#chatfilter').scroll(function() {
+      var t = $(this);
+      if(t.data('ignoreNextScroll')) return t.data('ignoreNextScroll', false);
+      if(t.scrollTop() < CHAT_REQUEST_SCROLL_TOP) window.chat.requestPublic(true);
+      if(scrollBottom(t) === 0) window.chat.requestPublic(false);
+    });
+
+    if (useAndroidPanes()) {
+      android.addPane('comm-filter-tab', 'Comm Filter', 'ic_action_view_as_list');
+      window.addHook('paneChanged', function (id) {
+        if (id == 'comm-filter-tab') {
+          tabToogle();
+        }
+      })
+    }
+  }
 
   const events = new Set(['all', 'chat all', 'chat public', 'chat faction', 'virus']);
   for (const rule of commFilter.rules) {
@@ -579,6 +607,9 @@ function tabCreate () {
         .map((o) => o.value);
     updateCSS();
   });
+
+  if (!window.isSmartphone())
+    commFilter.filtersDiv.classList.add('desktop');
 };
 
 
@@ -603,18 +634,6 @@ function setup () {
   };
   buildRules();
   tabCreate();
-
-  if (!window.isSmartphone())
-    commFilter.filtersDiv.classList.add('desktop');
-
-  if (useAndroidPanes()) {
-    android.addPane('comm-filter-tab', 'Comm Filter', 'ic_action_view_as_list');
-    window.addHook('paneChanged', function (id) {
-      if (id == 'comm-filter-tab') {
-        tabToogle();
-      }
-    })
-  }
 
   window.addHook('publicChatDataAvailable', reparsePublicData);
 };
