@@ -29,29 +29,29 @@ function setup() {
   $('<style>').prop('type', 'text/css').html('.leaflet-overlay-pane .leaflet-gl-layer { z-index: 101; }').appendTo('head');
 
   var sources = {
-    fields: { "type": "FeatureCollection", "features": [] },
-    links: { "type": "FeatureCollection", "features": [] },
-    portals: { "type": "FeatureCollection", "features": [] },
+    fields: new Map(),
+    links: new Map(),
+    portals: new Map(),
   };
 
   var layer = L.maplibreGL({
     pane: 'overlayPane',
-    //interactive: true,
+    interactive: true,
     style: {
       version: 8,
       name: "GL layers",
       sources: {
         "fields": {
           type: "geojson",
-          data: sources.fields,
+          data: { "type": "FeatureCollection", "features": [] },
         },
         "links": {
           type: "geojson",
-          data: sources.links,
+          data: { "type": "FeatureCollection", "features": [] },
         },
         "portals": {
           type: "geojson",
-          data: sources.portals,
+          data: { "type": "FeatureCollection", "features": [] },
         },
       },
       layers: [
@@ -135,10 +135,8 @@ function setup() {
   });
 
   function onMapDataRefreshEnd() {
-    if (!layer.getMaplibreMap()) return;
     for (var name of ['fields', 'links', 'portals']) {
-      var source = layer.getMaplibreMap().getSource(name);
-      var data = [];
+      sources[name] = new Map();
       for (var guid in window[name]) {
         var entity = window[name][guid];
         var geojson = entity.toGeoJSON();
@@ -146,10 +144,11 @@ function setup() {
         geojson.properties.guid = guid;
         geojson.properties.team = entity.options.data.team;
         geojson.properties.level = entity.options.data.level;
-        data.push(geojson);
+        sources[name].set(guid, geojson);
       }
-      sources[name].features = data;
-      source.setData(sources[name]);
+      if (!layer.getMaplibreMap()) continue;
+      var source = layer.getMaplibreMap().getSource(name);
+      source.setData({ "type": "FeatureCollection", "features": Array.from(sources[name].values()) });
     }
   }
 
@@ -159,31 +158,53 @@ function setup() {
     window.renderPortalDetails(portal.properties.guid);
   }
 
-  function registerPortalClick(e) {
+  function onLayerInit(e) {
     if (e.layer === layer) {
+      window.map.off('layeradd', onLayerInit);
       console.log('on portal click');
       layer.getMaplibreMap().on('click', 'portals', onPortalClick)
-      window.map.off('layeradd', registerPortalClick);
 
-      // var animationStep = 50;
-      // var step = 0;
-      // let dashArraySeq = [
-      //     [0, 4, 3],
-      //     [1, 4, 2],
-      //     [2, 4, 1],
-      //     [3, 4, 0],
-      //     [0, 1, 3, 3],
-      //     [0, 2, 3, 2],
-      //     [0, 3, 3, 1]
-      // ];
-      // setInterval(() => {
-      //   step = (step + 1) % dashArraySeq.length;
-      //   if (!layer.getMaplibreMap()) return;
-      //   layer.getMaplibreMap().setPaintProperty("links", 'line-dasharray', dashArraySeq[step]);
-      // }, animationStep);
+      var animationStep = 50;
+      var step = 0;
+      let dashArraySeq = [
+          [0, 4, 3],
+          [1, 4, 2],
+          [2, 4, 1],
+          [3, 4, 0],
+          [0, 1, 3, 3],
+          [0, 2, 3, 2],
+          [0, 3, 3, 1]
+      ];
+      setInterval(() => {
+        step = (step + 1) % dashArraySeq.length;
+        if (!layer.getMaplibreMap()) return;
+        layer.getMaplibreMap().setPaintProperty("links", 'line-dasharray', dashArraySeq[step]);
+      }, animationStep);
     }
   }
-  window.map.on('layeradd', registerPortalClick);
+
+  var oldprocessGameEntities = window.Render.prototype.processGameEntities;
+  window.Render.prototype.processGameEntities = function(entities, details) {
+    oldprocessGameEntities.call(this, entities, details);
+    for (var name of ['fields', 'links', 'portals']) {
+      var data = [];
+      for (var ent of entities) {
+        var guid = ent[0];
+        if (!(guid in window[name])) continue;
+        var entity = window[name][guid];
+        var geojson = entity.toGeoJSON();
+        geojson.properties.type = name;
+        geojson.properties.guid = guid;
+        geojson.properties.team = entity.options.data.team;
+        geojson.properties.level = entity.options.data.level;
+        sources[name].set(guid, geojson);
+      }
+      if (!layer.getMaplibreMap()) continue;
+      var source = layer.getMaplibreMap().getSource(name);
+      source.setData({ "type": "FeatureCollection", "features": Array.from(sources[name].values()) });
+    }
+  }
+  window.map.on('layeradd', onLayerInit);
 
   //window.overlayStatus['GL Layers'] = false;
   window.addLayerGroup('GL Layers', layer, false);
