@@ -43,9 +43,9 @@ var ingressStyle = {
         "fill-color": [
           'match',
           ['get', 'team'],
-          'R', '#0088FF',
-          'E', '#03DC03',
-          '#FF6600'
+          'R', COLORS[1],
+          'E', COLORS[2],
+          COLORS[0]
         ],
         "fill-opacity": .4,
         "fill-antialias": false,
@@ -60,9 +60,9 @@ var ingressStyle = {
         "line-color": [
           'match',
           ['get', 'team'],
-          'R', '#0088FF',
-          'E', '#03DC03',
-          '#FF6600'
+          'R', COLORS[1],
+          'E', COLORS[2],
+          COLORS[0]
         ],
       }
     },
@@ -72,18 +72,26 @@ var ingressStyle = {
       type: "circle",
       paint: {
         "circle-color": [
-          'match',
-          ['get', 'team'],
-          'R', '#0088FF',
-          'E', '#03DC03',
-          '#FF6600'
+          'case',
+          ['boolean', ['feature-state', 'selected'], false],
+          COLOR_SELECTED_PORTAL,
+          ['match',
+            ['get', 'team'],
+            'R', COLORS[1],
+            'E', COLORS[2],
+            COLORS[0]
+          ]
         ],
-        "circle-stroke-color": [
-          'match',
-          ['get', 'team'],
-          'R', '#0088FF',
-          'E', '#03DC03',
-          '#FF6600'
+        "circle-stroke-color":  [
+          'case',
+          ['boolean', ['feature-state', 'selected'], false],
+          COLOR_SELECTED_PORTAL,
+          ['match',
+            ['get', 'team'],
+            'R', COLORS[1],
+            'E', COLORS[2],
+            COLORS[0]
+          ]
         ],
         'circle-stroke-width': [
           'interpolate' , ["linear"], ["get", "level"],
@@ -92,26 +100,25 @@ var ingressStyle = {
         ],
         "circle-opacity": .5,
         'circle-radius': [
-          'interpolate' , ["linear"], ["zoom"],
-          7, [
-            '*', .5, [
-                'interpolate' , ["linear"], ["get", "level"],
-                0, 5,
-                8, 8,
-              ]
-            ],
-          16, [
-            '*', 1, [
-              'interpolate' , ["linear"], ["get", "level"],
-              0, 5,
-              8, 8,
-            ]
+          'let', 'radius', [
+            'interpolate' , ["linear"], ["get", "level"],
+            0, 5,
+            8, 8,
           ],
+          ['interpolate',
+            ["linear"], ["zoom"],
+            7, ['*', .5, ['var', 'radius']],
+            16, ['*', 1, ['var', 'radius']],
+          ]
         ],
       }
     },
   ]
 };
+
+function guidToID(guid) {
+  return parseInt(guid.slice(0,8),16);
+}
 
 function mapInit() {
   try {
@@ -145,6 +152,7 @@ function mapInit() {
       for (var guid in window[name]) {
         var entity = window[name][guid];
         var geojson = entity.toGeoJSON();
+        geojson.id = guidToID(guid);
         geojson.properties.type = name;
         geojson.properties.guid = guid;
         geojson.properties.team = entity.options.data.team;
@@ -153,6 +161,15 @@ function mapInit() {
       }
       source.setData({ "type": "FeatureCollection", "features": Array.from(sources[name].values()) });
     }
+  }
+
+  function onPortalSelected(d) {
+    var prev = d.unselectedPortalGuid;
+    var next = d.selectedPortalGuid;
+    var map = layer.getMaplibreMap();
+    if (!map) return;
+    if (prev) map.setFeatureState({ id: guidToID(prev), source: 'portals' }, { selected: false });
+    if (next) map.setFeatureState({ id: guidToID(next), source: 'portals' }, { selected: true });
   }
 
   function onPortalClick (e) {
@@ -185,7 +202,16 @@ function mapInit() {
     if (e.layer === layer) {
       window.map.off('layeradd', onLayerInit);
       console.log('on portal click');
-      layer.getMaplibreMap().on('click', 'portals', onPortalClick)
+      var map = layer.getMaplibreMap();
+      map.on('click', 'portals', onPortalClick);
+      layer.getCanvas().style.cursor = "default";
+      map.on('mouseenter', 'portals', () => {
+        layer.getCanvas().style.cursor = "pointer";
+      });
+      map.on('mouseleave', 'portals', () => {
+        layer.getCanvas().style.cursor = "default";
+      });
+      map.scrollZoom.disable();
     }
   }
 
@@ -208,6 +234,7 @@ function mapInit() {
         if (!(guid in window[name])) continue;
         var entity = window[name][guid];
         var geojson = entity.toGeoJSON();
+        geojson.id = guidToID(guid);
         geojson.properties.type = name;
         geojson.properties.guid = guid;
         geojson.properties.team = entity.options.data.team;
@@ -226,9 +253,14 @@ function mapInit() {
   //window.overlayStatus['GL Layers'] = false;
   window.addLayerGroup('GL Layers', layer, false);
   window.addHook('mapDataRefreshEnd', onMapDataRefreshEnd);
+  window.addHook('portalSelected', onPortalSelected);
+
+  window.mapLibreLayers.layer = layer;
 }
 
 function setup() {
   addExternalCSS("https://unpkg.com/maplibre-gl@1.14.0-rc.1/dist/maplibre-gl.css");
   addExternalScript("https://unpkg.com/maplibre-gl@1.14.0-rc.1/dist/maplibre-gl.js").onload = mapInit;
+
+  window.mapLibreLayers = {};
 }
