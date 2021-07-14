@@ -145,22 +145,26 @@ function mapInit() {
 
   function onMapDataRefreshEnd() {
     for (var name of ['fields', 'links', 'portals']) {
-      if (!layer.getMaplibreMap()) continue;
-      var source = layer.getMaplibreMap().getSource(name);
-      if (!source) continue;
-      sources[name] = new Map();
-      for (var guid in window[name]) {
-        var entity = window[name][guid];
-        var geojson = entity.toGeoJSON();
-        geojson.id = guidToID(guid);
-        geojson.properties.type = name;
-        geojson.properties.guid = guid;
-        geojson.properties.team = entity.options.data.team;
-        geojson.properties.level = entity.options.data.level;
-        sources[name].set(guid, geojson);
-      }
-      source.setData({ "type": "FeatureCollection", "features": Array.from(sources[name].values()) });
+      refreshSource(name);
     }
+  }
+
+  function refreshSource(name) {
+    if (!layer.getMaplibreMap()) return;
+    var source = layer.getMaplibreMap().getSource(name);
+    if (!source) return;
+    sources[name] = new Map();
+    for (var guid in window[name]) {
+      var entity = window[name][guid];
+      var geojson = entity.toGeoJSON();
+      geojson.id = guidToID(guid);
+      geojson.properties.type = name;
+      geojson.properties.guid = guid;
+      geojson.properties.team = entity.options.data.team;
+      geojson.properties.level = entity.options.data.level;
+      sources[name].set(guid, geojson);
+    }
+    source.setData({ "type": "FeatureCollection", "features": Array.from(sources[name].values()) });
   }
 
   function onPortalSelected(d) {
@@ -217,6 +221,7 @@ function mapInit() {
 
   function onLayerAdd(e) {
     if (e.layer !== layer) return;
+    onMapDataRefreshEnd();
     requestAnimationFrame(lineAnimate);
   }
   function onLayerRemove(e) {
@@ -253,6 +258,7 @@ function mapInit() {
   //window.overlayStatus['GL Layers'] = false;
   window.addLayerGroup('GL Layers', layer, false);
   window.addHook('mapDataRefreshEnd', onMapDataRefreshEnd);
+  window.addHook('portalDetailsUpdated', () => refreshSource('portals'));
   window.addHook('portalSelected', onPortalSelected);
 
   window.mapLibreLayers.layer = layer;
