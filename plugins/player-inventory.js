@@ -459,13 +459,14 @@ function getPortalLink(key) {
   a.title = key.address;
   a.href = window.makePermalink(key.latLng);
   L.DomEvent.on(a, 'click', function(event) {
+      window.renderPortalDetails(key.guid);
       window.selectPortalByLatLng(key.latLng);
       event.preventDefault();
       return false;
   })
   L.DomEvent.on(a, 'dblclick', function(event) {
-      map.setView(key.latLng, DEFAULT_ZOOM);
-      window.selectPortalByLatLng(key.latLng);
+      window.renderPortalDetails(key.guid);
+      window.zoomToAndShowPortal(key.guid, key.latLng);
       event.preventDefault();
       return false;
   });
