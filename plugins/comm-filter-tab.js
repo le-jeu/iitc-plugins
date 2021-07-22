@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           COMM Filter Tab
 // @category       COMM
-// @version        0.4.2
+// @version        0.4.3
 // @description    Show virus in the regular Comm and add a new tab with portal/player name filter and event type filter.
 
 
@@ -235,6 +235,55 @@ function renderDivider(text) {
   return '<tr class="divider"><td><hr></td><td>' + text + '</td><td><hr></td></tr>';
 }
 
+function renderData(data, element, likelyWereOldMsgs, sortedGuids) {
+  var elm = $('#'+element);
+  if (elm.is(':hidden')) return;
+
+  // discard guids and sort old to new
+  //TODO? stable sort, to preserve server message ordering? or sort by GUID if timestamps equal?
+  var vals = sortedGuids;
+  if (vals === undefined) {
+    vals = $.map(data, function(v, k) { return [[v[0], k]]; });
+    vals = vals.sort(function(a, b) { return a[0]-b[0]; });
+    vals = vals.map(function(v) { return v[1]; });
+  }
+
+  // render to string with date separators inserted
+  var msgs = '';
+  var prevTime = null;
+  vals.forEach(function(guid) {
+    var msg = data[guid];
+    var nextTime = new Date(msg[0]).toLocaleDateString();
+    if (prevTime && prevTime !== nextTime)
+      msgs += window.chat.renderDivider(nextTime);
+    msgs += msg[2];
+    prevTime = nextTime;
+  });
+
+  var firstRender = elm.is(':empty');
+  var scrollBefore = window.scrollBottom(elm);
+  elm.html('<table>' + msgs + '</table>');
+
+  if (firstRender)
+    elm.data('needsScrollTop', 99999999);
+  else
+    window.chat.keepScrollPosition(elm, scrollBefore, likelyWereOldMsgs);
+
+  if(elm.data('needsScrollTop')) {
+    elm.data('ignoreNextScroll', true);
+    elm.scrollTop(elm.data('needsScrollTop'));
+    elm.data('needsScrollTop', null);
+  }
+}
+
+// fix for browser zoom/devicePixelRatio != 1
+// was jquery more reliable ?
+function scrollBottom(elm) {
+  if(typeof elm === 'string') elm = $(elm);
+  elm = elm.get(0);
+  return Math.max(0,elm.scrollHeight - elm.clientHeight - elm.scrollTop);
+}
+
 // =============
 // chat analysis
 // =============
@@ -438,28 +487,13 @@ function computeMUs (guids, data) {
   }
 };
 
-function updateCSS () {
-  let elm = document.getElementById('comm-filter-css');
-  if (!elm) {
-    elm = document.createElement('style');
-    document.body.appendChild(elm);
-    elm.id = 'comm-filter-css';
-  }
-
-  elm.textContent = '';
-
-  const ada = [];
-  const jarvis = [];
+function computeHidden() {
   let hidden = [];
   for (const [guid, prop] of commFilter.viruses) {
-    if (prop.type === 'jarvis')
-      jarvis.push(guid);
-    else
-      ada.push(guid);
     hidden = hidden.concat(prop.guids);
   }
 
-  const filtered = new Set();
+  const filtered = new Set(hidden);
   for (const guid of window.chat._public.guids) {
     const n = window.chat._public.data[guid][3];
     const d = window.chat._public.data[guid][4]['comm-filter'];
@@ -484,6 +518,28 @@ function updateCSS () {
     if (!show || !match) filtered.add(guid);
   }
 
+  return filtered;
+}
+
+function updateCSS () {
+  let elm = document.getElementById('comm-filter-css');
+  if (!elm) {
+    elm = document.createElement('style');
+    document.body.appendChild(elm);
+    elm.id = 'comm-filter-css';
+  }
+
+  elm.textContent = '';
+
+  const ada = [];
+  const jarvis = [];
+  for (const [guid, prop] of commFilter.viruses) {
+    if (prop.type === 'jarvis')
+      jarvis.push(guid);
+    else
+      ada.push(guid);
+  }
+
   const highlights = [];
   for (const guid of window.chat._public.guids) {
     const d = window.chat._public.data[guid][4];
@@ -499,21 +555,13 @@ function updateCSS () {
     content += jarvis.map((guid) => '#chat tr[data-guid="' + guid + '"] td:nth-child(3):before').join(',\n')
       + '{ content: "[ADA]"; color: #f88; background-color: #500; margin-right: .5rem; }\n';
   }
-  if (hidden.length > 0) {
-    content += hidden.map((guid) => '#chat tr[data-guid="' + guid + '"]').join(',\n')
-      + '{ display: none; }\n';
-  }
-  if (filtered.size > 0) {
-    content += Array.from(filtered).map((guid) => '#chatfilter tr[data-guid="' + guid + '"]').join(',\n')
-      + '{ display: none; }\n';
-  }
   if (highlights.length > 0) {
     content += highlights.map((guid) => '#chat tr[data-guid="' + guid + '"]').join(',\n')
       +'{ background-color: #9118 }\n';
   }
 
   elm.textContent = content;
-};
+}
 
 function reparsePublicData () {
   const public = window.chat._public;
@@ -525,10 +573,22 @@ function reparsePublicData () {
   computeMUs(public.guids, public.data);
   findVirus(public.guids, public.data);
 
-  updateCSS();
+  commFilter.hidden = computeHidden();
 
-  window.chat.renderData(window.chat._public.data, 'chatfilter', true);
-};
+  updateCSS();
+  renderChatFilter(true);
+}
+
+function renderChatFilter(old) {
+  const public = window.chat._public;
+  if (!public.guids) public.guids = [];
+  else window.chat.renderData(
+    public.data,
+    'chatfilter',
+    old,
+    public.guids.filter(guid => !commFilter.hidden.has(guid))
+  );
+}
 
 // filter tab
 function tabToogle () {
@@ -539,7 +599,7 @@ function tabToogle () {
   $('#chatfilter').show();
   $('#chatcontrols .active').removeClass('active');
   $("#chatcontrols a:contains('Filter')").addClass('active');
-  window.chat.renderData(window.chat._public.data, 'chatfilter', true);
+  renderChatFilter(true);
 };
 
 function tabCreate () {
@@ -554,7 +614,7 @@ function tabCreate () {
       request: (_, old) => window.chat.requestChannel('all', old),
       render: (c, old) => {
         $('#chat-filters').show();
-        window.chat.renderChannel(c, old);
+        renderChatFilter(old);
       },
       localBounds: true,
     });
@@ -598,14 +658,16 @@ function tabCreate () {
     + '</select>';
   $('#filter-text').on('change', function (ev) {
     commFilter.filters.text = ev.target.value;
-    updateCSS();
+    commFilter.hidden = computeHidden();
+    renderChatFilter(false);
   });
   $('#filter-type').on('change', function (ev) {
     commFilter.filters.type =
       Array.from(ev.target.options)
         .filter((o) => o.selected)
         .map((o) => o.value);
-    updateCSS();
+    commFilter.hidden = computeHidden();
+    renderChatFilter(false);
   });
 
   if (!window.isSmartphone())
@@ -626,6 +688,8 @@ function setup () {
   // injection
   window.chat.renderDivider = renderDivider;
   window.chat.writeDataToHash = writeDataToHash;
+  window.chat.renderData = renderData;
+  window.scrollBottom = scrollBottom;
 
   // plugin
   commFilter.filters = {
