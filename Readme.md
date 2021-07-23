@@ -32,21 +32,24 @@ The plugin only stores guid, coordinates, timestamp.and optionnaly team from int
 This is a WIP plugin to test WebGL layers for IITC.
 Version 0.1 uses cached data from the Portal cache plugin to draw a layer with all portals using a WebGL layer with [Leaflet.glify](https://github.com/robertleeplummerjr/Leaflet.glify).
 
-## [Maplibre layers][maplibre-layers]
+## Ingress [Maplibre layers][maplibre-layers] and [MapBox Vector Tiles][basemap-mapboxgl]
 This is another WIP plugin to test WebGL layers for IITC using [MapLibre GL JS](https://github.com/maplibre/maplibre-gl-js).
-Version 0.1 uses a custom style and loads data from the IITC objects as GeoJSON. It implements portal click and link direction animation.
-
+Maplibre layers uses a custom style and loads data from the IITC objects as GeoJSON. It implements portal click and link direction animation.
+MapBox Vector Tiles brings map vector tiles as base layer.
+Both plugins need the plugin [maplibre-gl-js.user.js][maplibre-gl-js] as dependency.
 
 ## [MUs Comm Tab][muTab]
 Adds a tab to the chat and computes the MU score per player parsing the COMM. The data is delete only on page reload or by user interaction (per player) so you can move the map without losing the already loaded scores.
 
 [basemap-google-custom]: https://le-jeu.github.io/iitc-plugins/basemap-google-custom.user.js
+[basemap-mapboxgl]: https://le-jeu.github.io/iitc-plugins/basemap-mapboxgl.user.js
 [cache-portals]: https://le-jeu.github.io/iitc-plugins/cache-portals.user.js
 [comm-filter-tab]: https://le-jeu.github.io/iitc-plugins/comm-filter-tab.user.js
 [glify-layer]: https://le-jeu.github.io/iitc-plugins/glify-layer.user.js
 [highlight-intel-uniques]: https://le-jeu.github.io/iitc-plugins/highlight-intel-uniques.user.js
 [ingress-icons]: https://le-jeu.github.io/iitc-plugins/ingress-icons.user.js
 [labels_layer]: https://le-jeu.github.io/iitc-plugins/labels_layer.user.js
+[maplibre-gl-js]: https://le-jeu.github.io/iitc-plugins/maplibre-gl-js.user.js
 [maplibre-layers]: https://le-jeu.github.io/iitc-plugins/maplibre-layers.user.js
 [muTab]: https://le-jeu.github.io/iitc-plugins/muTab.user.js
 [player-inventory]: https://le-jeu.github.io/iitc-plugins/player-inventory.user.js
