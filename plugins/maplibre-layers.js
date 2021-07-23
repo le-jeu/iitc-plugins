@@ -1,21 +1,8 @@
 // @author         jaiperdu
 // @name           MapLibre GL Layers
 // @category       Map Tiles
-// @version        0.1.0
+// @version        0.2.0
 // @description    GL layers
-
-function addExternalScript(url) {
-  var script = document.createElement("script");
-  script.src = url;
-  script.async = false;
-  return document.head.appendChild(script);
-}
-function addExternalCSS(url) {
-  var script = document.createElement("link");
-  script.href = url;
-  script.rel = "stylesheet";
-  return document.head.appendChild(script);
-}
 
 var ingressStyle = {
   version: 8,
@@ -121,16 +108,6 @@ function guidToID(guid) {
 }
 
 function mapInit() {
-  try {
-    '@include_raw:external/leaflet-maplibre-gl.js@';
-  } catch (e) {
-    console.error(e);
-    return;
-  }
-
-
-  $('<style>').prop('type', 'text/css').html('.leaflet-overlay-pane .leaflet-gl-layer { z-index: 101; }').appendTo('head');
-
   var sources = {
     fields: new Map(),
     links: new Map(),
@@ -205,22 +182,24 @@ function mapInit() {
   function onLayerInit(e) {
     if (e.layer === layer) {
       window.map.off('layeradd', onLayerInit);
-      console.log('on portal click');
       var map = layer.getMaplibreMap();
-      map.on('click', 'portals', onPortalClick);
-      layer.getCanvas().style.cursor = "default";
-      map.on('mouseenter', 'portals', () => {
-        layer.getCanvas().style.cursor = "pointer";
-      });
-      map.on('mouseleave', 'portals', () => {
-        layer.getCanvas().style.cursor = "default";
-      });
       map.scrollZoom.disable();
+      layer.getContainer().style.zIndex = 101;
     }
   }
 
   function onLayerAdd(e) {
     if (e.layer !== layer) return;
+    var map = layer.getMaplibreMap();
+    map.off('click mouseenter mouseleave');
+    map.on('click', 'portals', onPortalClick);
+    layer.getCanvas().style.cursor = "default";
+    map.on('mouseenter', 'portals', () => {
+      layer.getCanvas().style.cursor = "pointer";
+    });
+    map.on('mouseleave', 'portals', () => {
+      layer.getCanvas().style.cursor = "default";
+    });
     onMapDataRefreshEnd();
     requestAnimationFrame(lineAnimate);
   }
@@ -261,12 +240,14 @@ function mapInit() {
   window.addHook('portalDetailsUpdated', () => refreshSource('portals'));
   window.addHook('portalSelected', onPortalSelected);
 
-  window.mapLibreLayers.layer = layer;
+  window.plugin.mapLibreLayers.layer = layer;
 }
 
 function setup() {
-  addExternalCSS("https://unpkg.com/maplibre-gl@1.14.0-rc.1/dist/maplibre-gl.css");
-  addExternalScript("https://unpkg.com/maplibre-gl@1.14.0-rc.1/dist/maplibre-gl.js").onload = mapInit;
-
-  window.mapLibreLayers = {};
+  if (!window.plugin.mapLibreGL) {
+    alert("Maplibre Layers needs Maplibre GL JS to run.");
+    throw "Missing Maplibre GL JS";
+  }
+  window.plugin.mapLibreLayers = {};
+  window.plugin.mapLibreGL.load().then(mapInit);
 }
