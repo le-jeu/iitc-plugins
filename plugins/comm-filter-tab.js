@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           COMM Filter Tab
 // @category       COMM
-// @version        0.4.3
+// @version        0.4.4
 // @description    Show virus in the regular Comm and add a new tab with portal/player name filter and event type filter.
 
 
@@ -521,6 +521,7 @@ function computeHidden() {
   return filtered;
 }
 
+// for *ALL* and filter
 function updateCSS () {
   let elm = document.getElementById('comm-filter-css');
   if (!elm) {
@@ -533,11 +534,13 @@ function updateCSS () {
 
   const ada = [];
   const jarvis = [];
+  let hidden = [];
   for (const [guid, prop] of commFilter.viruses) {
     if (prop.type === 'jarvis')
       jarvis.push(guid);
     else
       ada.push(guid);
+    hidden = hidden.concat(prop.guids);
   }
 
   const highlights = [];
@@ -554,6 +557,10 @@ function updateCSS () {
   if (jarvis.length > 0) {
     content += jarvis.map((guid) => '#chat tr[data-guid="' + guid + '"] td:nth-child(3):before').join(',\n')
       + '{ content: "[ADA]"; color: #f88; background-color: #500; margin-right: .5rem; }\n';
+  }
+  if (hidden.length > 0) {
+    content += hidden.map((guid) => '#chat tr[data-guid="' + guid + '"]').join(',\n')
+      + '{ display: none }\n';
   }
   if (highlights.length > 0) {
     content += highlights.map((guid) => '#chat tr[data-guid="' + guid + '"]').join(',\n')
