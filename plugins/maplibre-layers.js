@@ -4,105 +4,6 @@
 // @version        0.2.0
 // @description    GL layers
 
-var ingressStyle = {
-  version: 8,
-  name: "GL layers",
-  sources: {
-    "fields": {
-      type: "geojson",
-      data: { "type": "FeatureCollection", "features": [] },
-    },
-    "links": {
-      type: "geojson",
-      data: { "type": "FeatureCollection", "features": [] },
-    },
-    "portals": {
-      type: "geojson",
-      data: { "type": "FeatureCollection", "features": [] },
-    },
-  },
-  layers: [
-    {
-      id: "fields",
-      source: "fields",
-      type: "fill",
-      paint: {
-        "fill-color": [
-          'match',
-          ['get', 'team'],
-          'R', COLORS[1],
-          'E', COLORS[2],
-          COLORS[0]
-        ],
-        "fill-opacity": .4,
-        "fill-antialias": false,
-      }
-    },
-    {
-      id: "links",
-      source: "links",
-      type: "line",
-      paint: {
-        "line-width": 2,
-        "line-color": [
-          'match',
-          ['get', 'team'],
-          'R', COLORS[1],
-          'E', COLORS[2],
-          COLORS[0]
-        ],
-      }
-    },
-    {
-      id: "portals",
-      source: "portals",
-      type: "circle",
-      paint: {
-        "circle-color": [
-          'case',
-          ['boolean', ['feature-state', 'selected'], false],
-          COLOR_SELECTED_PORTAL,
-          ['match',
-            ['get', 'team'],
-            'R', COLORS[1],
-            'E', COLORS[2],
-            COLORS[0]
-          ]
-        ],
-        "circle-stroke-color":  [
-          'case',
-          ['boolean', ['feature-state', 'selected'], false],
-          COLOR_SELECTED_PORTAL,
-          ['match',
-            ['get', 'team'],
-            'R', COLORS[1],
-            'E', COLORS[2],
-            COLORS[0]
-          ]
-        ],
-        'circle-stroke-width': [
-          'interpolate' , ["linear"], ["get", "level"],
-          0, 2,
-          8, 3,
-        ],
-        "circle-opacity": .5,
-        'circle-radius': [
-          'let', 'radius', [
-            'interpolate' , ["linear"], ["get", "level"],
-            0, 5,
-            8, 8,
-          ],
-          ['interpolate',
-            ["linear"], ["zoom"],
-            7, ['*', .5, ['var', 'radius']],
-            16, ['*', 1, ['var', 'radius']],
-          ]
-        ],
-      }
-    },
-  ]
-};
-
 function guidToID(guid) {
   return parseInt(guid.slice(0,8),16);
 }
@@ -112,6 +13,105 @@ function mapInit() {
     fields: new Map(),
     links: new Map(),
     portals: new Map(),
+  };
+
+  var ingressStyle = {
+    version: 8,
+    name: "GL layers",
+    sources: {
+      "fields": {
+        type: "geojson",
+        data: { "type": "FeatureCollection", "features": [] },
+      },
+      "links": {
+        type: "geojson",
+        data: { "type": "FeatureCollection", "features": [] },
+      },
+      "portals": {
+        type: "geojson",
+        data: { "type": "FeatureCollection", "features": [] },
+      },
+    },
+    layers: [
+      {
+        id: "fields",
+        source: "fields",
+        type: "fill",
+        paint: {
+          "fill-color": [
+            'match',
+            ['get', 'team'],
+            'R', COLORS[1],
+            'E', COLORS[2],
+            COLORS[0]
+          ],
+          "fill-opacity": .4,
+          "fill-antialias": false,
+        }
+      },
+      {
+        id: "links",
+        source: "links",
+        type: "line",
+        paint: {
+          "line-width": 2,
+          "line-color": [
+            'match',
+            ['get', 'team'],
+            'R', COLORS[1],
+            'E', COLORS[2],
+            COLORS[0]
+          ],
+        }
+      },
+      {
+        id: "portals",
+        source: "portals",
+        type: "circle",
+        paint: {
+          "circle-color": [
+            'case',
+            ['boolean', ['feature-state', 'selected'], false],
+            COLOR_SELECTED_PORTAL,
+            ['match',
+              ['get', 'team'],
+              'R', COLORS[1],
+              'E', COLORS[2],
+              COLORS[0]
+            ]
+          ],
+          "circle-stroke-color":  [
+            'case',
+            ['boolean', ['feature-state', 'selected'], false],
+            COLOR_SELECTED_PORTAL,
+            ['match',
+              ['get', 'team'],
+              'R', COLORS[1],
+              'E', COLORS[2],
+              COLORS[0]
+            ]
+          ],
+          'circle-stroke-width': [
+            'interpolate' , ["linear"], ["get", "level"],
+            0, 2,
+            8, 3,
+          ],
+          "circle-opacity": .5,
+          'circle-radius': [
+            'let', 'radius', [
+              'interpolate' , ["linear"], ["get", "level"],
+              0, 5,
+              8, 8,
+            ],
+            ['interpolate',
+              ["linear"], ["zoom"],
+              7, ['*', .5, ['var', 'radius']],
+              16, ['*', 1, ['var', 'radius']],
+            ]
+          ],
+        }
+      },
+    ]
   };
 
   var layer = L.maplibreGL({
