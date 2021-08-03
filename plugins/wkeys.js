@@ -1,8 +1,8 @@
 // @author         jaiperdu
 // @name           Wasabee Key Sync
 // @category       Misc
-// @version        0.1.1
-// @description    Sync keys from CORE with Wasabee OP
+// @version        0.1.2
+// @description    Sync keys from CORE with Wasabee OP/D
 
 const wkeys = {};
 
@@ -17,7 +17,7 @@ function pushKey(server, opID, portalID, onhand, capsule) {
   const fd = new FormData();
   fd.append("count", onhand);
   fd.append("capsule", capsule);
-  fetch(`${server}/api/v1/draw/${opID}/portal/${portalID}/keyonhand`, {
+  return fetch(`${server}/api/v1/draw/${opID}/portal/${portalID}/keyonhand`, {
     method: "POST",
     mode: "cors",
     cache: "default",
@@ -25,6 +25,30 @@ function pushKey(server, opID, portalID, onhand, capsule) {
     redirect: "manual",
     referrerPolicy: "origin",
     body: fd,
+  });
+}
+
+function pushDKey(server, portalID, count, capsule, name, lat, lng) {
+  const dk = {
+    PortalID: portalID,
+    Count: count,
+    CapID: capsule,
+    Name: name,
+    Lat: lat,
+    Lng: lng,
+  };
+  const j = JSON.stringify(dk);
+  return fetch(`${server}/api/v1/d`, {
+    method: "POST",
+    mode: "cors",
+    cache: "default",
+    credentials: "include",
+    redirect: "manual",
+    referrerPolicy: "origin",
+    headers: {
+      "Content-Type": "application/json;charset=UTF-8",
+    },
+    body: j,
   });
 }
 
@@ -293,7 +317,7 @@ const keyTable = [
       L.DomEvent.on(checkbox, "change", (ev) => {
         if (ev.target.checked)
           wkeys.selected.add(portalCapsID(k));
-        else wkeys.selected.remove(portalCapsID(k));
+        else wkeys.selected.delete(portalCapsID(k));
       });
     },
   },
@@ -348,7 +372,7 @@ function syncOpKeys() {
   const map = {}
   for (const k of wkeys.keys) {
     if (wkeys.selected.has(portalCapsID(k))) {
-      if (k.guid in map) map[k.guid].name = "";
+      if (k.guid in map) map[k.guid].name = "*multi*";
       else map[k.guid] = {total: 0, name: k.capsule};
       map[k.guid].total += k.count;
     }
@@ -357,6 +381,29 @@ function syncOpKeys() {
     pushKey(op.server, op.ID, guid, map[guid].total, map[guid].name);
     op.keyOnHand(guid, gid, map[guid].total, map[guid].name);
   }
+}
+
+function syncDKeys() {
+  const op = getSelectedOp();
+  const map = {}
+  for (const k of wkeys.keys) {
+    if (wkeys.selected.has(portalCapsID(k))) {
+      if (k.guid in map) map[k.guid].capsule = "*multi*";
+      else map[k.guid] = L.extend({total: 0}, k);
+      map[k.guid].total += k.count;
+    }
+  }
+  Promise.all(
+    Object.keys(map).map((guid) => pushDKey(
+      op.server,
+      guid,
+      map[guid].total,
+      map[guid].capsule,
+      map[guid].title,
+      map[guid].latLng[0].toFixed(6),
+      map[guid].latLng[1].toFixed(6)
+    ))
+  ).then(() => window.map.fire("wasabee:defensivekeys"));
 }
 
 function displayKeys() {
@@ -382,6 +429,7 @@ function displayKeys() {
         table.setItems(wkeys.keys);
       },
       "Sync to OP Keys": syncOpKeys,
+      "Sync to D-Keys": syncDKeys,
     }
   });
 }
