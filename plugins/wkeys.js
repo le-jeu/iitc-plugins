@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Wasabee Key Sync
 // @category       Misc
-// @version        0.1.2
+// @version        0.1.3
 // @description    Sync keys from CORE with Wasabee OP/D
 
 const wkeys = {};
@@ -28,17 +28,9 @@ function pushKey(server, opID, portalID, onhand, capsule) {
   });
 }
 
-function pushDKey(server, portalID, count, capsule, name, lat, lng) {
-  const dk = {
-    PortalID: portalID,
-    Count: count,
-    CapID: capsule,
-    Name: name,
-    Lat: lat,
-    Lng: lng,
-  };
-  const j = JSON.stringify(dk);
-  return fetch(`${server}/api/v1/d`, {
+function pushDKeys(server, dks) {
+  const j = JSON.stringify(dks);
+  return fetch(`${server}/api/v1/d/bulk`, {
     method: "POST",
     mode: "cors",
     cache: "default",
@@ -393,16 +385,16 @@ function syncDKeys() {
       map[k.guid].total += k.count;
     }
   }
-  Promise.all(
-    Object.keys(map).map((guid) => pushDKey(
-      op.server,
-      guid,
-      map[guid].total,
-      map[guid].capsule,
-      map[guid].title,
-      map[guid].latLng[0].toFixed(6),
-      map[guid].latLng[1].toFixed(6)
-    ))
+  pushDKeys(
+    op.server,
+    Object.values(map).map((k) => ({
+      PortalID: k.guid,
+      Count: k.total,
+      CapID: k.capsule,
+      Name: k.title,
+      Lat: k.latLng[0].toFixed(6),
+      Lng: k.latLng[1].toFixed(6),
+    }))
   ).then(() => window.map.fire("wasabee:defensivekeys"));
 }
 
