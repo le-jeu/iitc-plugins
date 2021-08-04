@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Wasabee Key Sync
 // @category       Misc
-// @version        0.1.3
+// @version        0.1.4
 // @description    Sync keys from CORE with Wasabee OP/D
 
 const wkeys = {};
@@ -358,9 +358,13 @@ function selectOpPortals() {
 }
 
 function syncOpKeys() {
+  const op = getSelectedOp();
+  if (!op.isServerOp() || !op.isOnCurrentServer()) {
+    alert("You need to select an OP that is on the current server.");
+    return;
+  }
   const me = localStorage["wasabee-me"];
   const gid = JSON.parse(me).GoogleID;
-  const op = getSelectedOp();
   const map = {}
   for (const k of wkeys.keys) {
     if (wkeys.selected.has(portalCapsID(k))) {
@@ -370,13 +374,17 @@ function syncOpKeys() {
     }
   }
   for (const guid in map) {
-    pushKey(op.server, op.ID, guid, map[guid].total, map[guid].name);
-    op.keyOnHand(guid, gid, map[guid].total, map[guid].name);
+    pushKey(op.server, op.ID, guid, map[guid].total, map[guid].name)
+      .then(() => op.keyOnHand(guid, gid, map[guid].total, map[guid].name));
   }
 }
 
 function syncDKeys() {
-  const op = getSelectedOp();
+  const me = localStorage["wasabee-me"];
+  if (!me) {
+    alert("You are not connected...");
+    return;
+  }
   const map = {}
   for (const k of wkeys.keys) {
     if (wkeys.selected.has(portalCapsID(k))) {
@@ -386,7 +394,7 @@ function syncDKeys() {
     }
   }
   pushDKeys(
-    op.server,
+    localStorage[window.plugin.wasabee.static.constants.SERVER_BASE_KEY],
     Object.values(map).map((k) => ({
       PortalID: k.guid,
       Count: k.total,
@@ -395,7 +403,8 @@ function syncDKeys() {
       Lat: k.latLng[0].toFixed(6),
       Lng: k.latLng[1].toFixed(6),
     }))
-  ).then(() => window.map.fire("wasabee:defensivekeys"));
+  ).then(() => window.map.fire("wasabee:defensivekeys"))
+   .catch((e) => alert("Something went wrong: " + e.toString()));
 }
 
 function displayKeys() {
