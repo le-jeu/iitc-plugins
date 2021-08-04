@@ -13,6 +13,17 @@ function getSelectedOp() {
   return null;
 }
 
+function getWasabeeServer() {
+  const WasabeeConstants = window.plugin.wasabee.static.constants;
+  if (WasabeeConstants) {
+    let server = localStorage[WasabeeConstants.SERVER_BASE_KEY];
+    if (server == null)
+      server = WasabeeConstants.SERVER_BASE_DEFAULT;
+    return server;
+  }
+  return null;
+}
+
 function pushKey(server, opID, portalID, onhand, capsule) {
   const fd = new FormData();
   fd.append("count", onhand);
@@ -376,7 +387,7 @@ function syncOpKeys() {
 }
 
 function syncDKeys() {
-  const op = getSelectedOp();
+  const server = getWasabeeServer();
   const map = {}
   for (const k of wkeys.keys) {
     if (wkeys.selected.has(portalCapsID(k))) {
@@ -386,7 +397,7 @@ function syncDKeys() {
     }
   }
   pushDKeys(
-    op.server,
+    server,
     Object.values(map).map((k) => ({
       PortalID: k.guid,
       Count: k.total,
