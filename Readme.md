@@ -41,9 +41,14 @@ Both plugins need the plugin [maplibre-gl-js.user.js][maplibre-gl-js] as depende
 ## [MUs Comm Tab][muTab]
 Adds a tab to the chat and computes the MU score per player parsing the COMM. The data is delete only on page reload or by user interaction (per player) so you can move the map without losing the already loaded scores.
 
+
+## [Dialog List][dialogs]
+Because of overdose of dialogs. List open dialogs in the sidebar with the ability to give focus or close a dialog.
+
 [basemap-google-custom]: https://le-jeu.github.io/iitc-plugins/basemap-google-custom.user.js
 [basemap-mapboxgl]: https://le-jeu.github.io/iitc-plugins/basemap-mapboxgl.user.js
 [cache-portals]: https://le-jeu.github.io/iitc-plugins/cache-portals.user.js
+[dialogs]: https://le-jeu.github.io/iitc-plugins/dialogs.user.js
 [comm-filter-tab]: https://le-jeu.github.io/iitc-plugins/comm-filter-tab.user.js
 [glify-layer]: https://le-jeu.github.io/iitc-plugins/glify-layer.user.js
 [highlight-intel-uniques]: https://le-jeu.github.io/iitc-plugins/highlight-intel-uniques.user.js
