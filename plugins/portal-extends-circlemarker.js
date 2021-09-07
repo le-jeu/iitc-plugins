@@ -128,41 +128,13 @@ function setup() {
 
 	/* map_data_request.js */
 
-	var oldProto = window.MapDataRequest.prototype;
+	var oldClass = window.MapDataRequest;
 	window.MapDataRequest = function() {
-		this.cache = new DataCache();
-		this.render = new Render();
-		this.debugTiles = new RenderDebugTiles();
-
-		this.activeRequestCount = 0;
-		this.requestedTiles = {};
-
-		this.renderQueue = [];
-		this.renderQueueTimer = undefined;
-		this.renderQueuePaused = false;
-
-		this.idle = false;
-		this.MAX_REQUESTS = 5;
-		this.NUM_TILES_PER_REQUEST = 25;
-		this.MAX_TILE_RETRIES = 5;
-		this.MOVE_REFRESH = 3; //time, after a map move (pan/zoom) before starting the refresh processing
-		this.STARTUP_REFRESH = 3; //refresh time used on first load of IITC
-		this.IDLE_RESUME_REFRESH = 5; //refresh time used after resuming from idle
-		this.DOWNLOAD_DELAY = 1;  //delay after preparing the data download before tile requests are sent
-		this.RUN_QUEUE_DELAY = 0;
-		this.BAD_REQUEST_RUN_QUEUE_DELAY = 5; // longer delay before doing anything after errors (other than TIMEOUT)
-		this.EMPTY_RESPONSE_RUN_QUEUE_DELAY = 5; // also long delay - empty responses are likely due to some server issues
-		this.TIMEOUT_REQUEST_RUN_QUEUE_DELAY = 0;
-		this.RENDER_BATCH_SIZE = window.map.options.preferCanvas ? 1E9 : 1500;
-		this.RENDER_PAUSE = (typeof android === 'undefined') ? 0.1 : 0.2; //100ms desktop, 200ms mobile
-
-
-		this.REFRESH_CLOSE = 300;  // refresh time to use for close views z>12 when not idle and not moving
-		this.REFRESH_FAR = 900;  // refresh time for far views z <= 12
-		this.FETCH_TO_REFRESH_FACTOR = 2;  //minimum refresh time is based on the time to complete a data fetch, times this value
-		this.setStatus('startup', undefined, -1);
+		oldClass.call(this);
+		// drop the hook
+		window._hooks['portalDetailLoaded'].pop();
 	}
-	window.MapDataRequest.prototype = oldProto;
+	window.MapDataRequest.prototype = oldClass.prototype;
 
 	/*  portal_detail.js */
 
