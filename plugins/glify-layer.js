@@ -23,7 +23,37 @@ var colors = {
 
 glLayers.layer = null;
 function showCache() {
-  if (window.plugin.cachePortals && window.plugin.cachePortals.db) {
+  if (window.plugin.offle) {
+    var portals = Object.values(window.plugin.offle.portalDb);
+    var colors = {
+      // not visited
+      0: { r: 0, g: 0, b: 0, a: .2 },
+      // visited not captured
+      1: { r: 1, g: 0, b: 0, a: .5 },
+      // not visited but captured (unlikely)
+      2: { r: .8, g: .8, b: 0, a: .5 },
+      // visited and captured
+      3: { r: 0, g: .8, b: .8, a: .5 },
+    };
+    if (portals.length > 0) {
+      glLayers.layer = L.glify.points({
+        map: map,
+        pane: "cache",
+        data: portals.map((p) => [p.lat, p.lng, p.guid]),
+        size: 10,
+        color: (i) => colors[portals[i].flags & 3],
+        click: (e, feature) => {
+          var guid = feature[2];
+          if (guid in window.portals) {
+            window.portals[guid].fire('click');
+            return;
+          }
+          toClicks[guid] = true;
+          window.renderPortalDetails(guid);
+        },
+      });
+    }
+  } else if (window.plugin.cachePortals && window.plugin.cachePortals.db) {
     var tx = window.plugin.cachePortals.db.transaction("portals", "readonly");
     tx.objectStore("portals").getAll().onsuccess = function (event) {
       var portals = event.target.result;
@@ -72,7 +102,7 @@ function setup() {
         delete glLayers.layer;
       }
     },
-  })), true);
+  })), false);
 
   window.addHook("portalSelected", onPortalSelected);
 }
