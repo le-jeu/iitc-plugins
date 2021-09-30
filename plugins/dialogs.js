@@ -7,13 +7,13 @@
 function itemOnClick(ev) {
   var id = ev.target.closest('tr').dataset.id;
   var dialog = $(window.DIALOGS[id]);
-  dialog.dialog('moveToTop');;
+  dialog.dialog('moveToTop');
 }
 
 function itemOnClose(ev) {
   var id = ev.target.closest('tr').dataset.id;
   var dialog = $(window.DIALOGS[id]);
-  dialog.dialog('close');;
+  dialog.dialog('close');
 }
 
 function dialogListItem(id) {
@@ -25,7 +25,8 @@ function dialogListItem(id) {
   var title = document.createElement('td');
   tr.appendChild(title);
   title.textContent = text;
-  title.classList.add('ui-dialog-title-inactive');
+  if (!dialog.is(':hidden'))
+    title.classList.add('ui-dialog-title-inactive');
   title.addEventListener('click', itemOnClick);
   var closeButton = document.createElement('td');
   tr.appendChild(closeButton);
