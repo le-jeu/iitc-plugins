@@ -10,7 +10,7 @@ It adds a highlight that shows all portals in view (even not loaded) you have ke
 You can export the key numbers to the [Keys](https://iitc.app/download_desktop.html#keys_bqy_xelio_release) plugin if available. In the later case, you benefit from the Keys plugin, including [keys on map](https://iitc.app/download_desktop.html#keys-on-map_bqy_xelio_release), and in the [portals list](https://iitc.app/download_desktop.html#portals-list_bqy_teo96_release).
 
 ## [Comm Filter Tab][comm-filter-tab]
-Show virus in the regular Comm and add a tab/pane with portal/player name filter and event type filter. This script refactors IITC chat code and parses chat log to flag each comm by its type. The features are inspired by [COMM Filter](https://github.com/udnp/iitc-plugins) by upnp
+Show virus in the regular Comm and add a tab/pane with portal/player name filter and event type filter. This script refactors IITC chat code and parses chat log to flag each comm by its type. The features are inspired by [COMM Filter](https://github.com/udnp/iitc-plugins) by udnp
 
 ## [Ingress Icons][ingress-icons]
 Bring [ameba64/ingress-items](https://github.com/ameba64/ingress-items) icons into IITC. Currently for mods only, in portail details and as overlay on mobile
