@@ -689,7 +689,7 @@ window.plugin.commFilter = commFilter;
 function setup () {
   $("<style>")
     .prop("type", "text/css")
-    .html('@include_string:comm-filter-tab.css@')
+    .html('@include_css:comm-filter-tab.css@')
     .appendTo("head");
 
   // injection

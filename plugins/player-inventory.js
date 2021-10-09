@@ -1047,7 +1047,7 @@ function displayOpt() {
 }
 
 function setupCSS() {
-  $('<style>').html('@include_string:player-inventory.css@').appendTo('head');
+  $('<style>').html('@include_css:player-inventory.css@').appendTo('head');
   let colorStyle = "";
   window.COLORS_LVL.forEach((c,i) => {
     colorStyle += `.level_L${i}{ color: ${c} }`;
