@@ -472,7 +472,7 @@ function setup() {
 				} else if (this._details.timestamp == details.timestamp) {
 					var localThis = this;
 					["level", "health", "resCount", "image", "title", "ornaments", "mission", "mission50plus", "artifactBrief", "mods", "resonators", "owner", "artifactDetail"].forEach(function(prop) {
-						if (details[prop]) localThis._details[prop] = details[prop];
+						if (details[prop] !== undefined) localThis._details[prop] = details[prop];
 					});
 					if (details.history) {
 						if (!this._details.history) this._details.history = details.history;
