@@ -126,6 +126,28 @@ function setup() {
 		return marker;
 	}
 
+	const createLinkEntity = window.Render.prototype.createLinkEntity;
+	window.Render.prototype.createLinkEntity = function(ent,faked) {
+		createLinkEntity.call(this, ent, faked);
+
+		if (!(ent[0] in window.links)) return;
+
+		var data = {
+			timestamp: ent[1],
+			team: ent[2][1],
+			oGuid: ent[2][2],
+			oLatE6: ent[2][3],
+			oLngE6: ent[2][4],
+			dGuid: ent[2][5],
+			dLatE6: ent[2][6],
+			dLngE6: ent[2][7]
+		};
+
+		this.createPlaceholderPortalEntity(data.oGuid, data.oLatE6, data.oLngE6, data.team, data.timestamp);
+		this.createPlaceholderPortalEntity(data.dGuid, data.dLatE6, data.dLngE6, data.team, data.timestamp);
+	};
+
+
 	/* map_data_request.js */
 
 	var oldClass = window.MapDataRequest;
