@@ -25,7 +25,7 @@ glLayers.layer = null;
 function showCache() {
   if (window.plugin.offle) {
     var portals = Object.values(window.plugin.offle.portalDb);
-    var colors = {
+    var colorsOffle = {
       // not visited
       0: { r: 0, g: 0, b: 0, a: .2 },
       // visited not captured
@@ -41,7 +41,7 @@ function showCache() {
         pane: "cache",
         data: portals.map((p) => [p.lat, p.lng, p.guid]),
         size: 10,
-        color: (i) => colors[portals[i].flags & 3],
+        color: (i) => colorsOffle[portals[i].flags & 3],
         click: (e, feature) => {
           var guid = feature[2];
           if (guid in window.portals) {
