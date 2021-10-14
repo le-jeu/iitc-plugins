@@ -9,10 +9,11 @@
 // 0.1.1 Headers changed. Ready for IITC-CE
 // 0.1.0 Original sript
 
-	// use own namespace for plugin
-	window.plugin.manageStorage = function(){};
+// use own namespace for plugin
+var manageStorage = {};
+window.plugin.manageStorage = manageStorage;
 
-	window.plugin.manageStorage.generateFile = function(type, filename, text){
+	function generateFile(type, filename, text){
 		var pom = document.createElement('a');
 		pom.setAttribute('href', type + encodeURIComponent(text));
 		pom.setAttribute('download', filename);
@@ -23,7 +24,8 @@
 		pom.click();
 		document.body.removeChild(pom);
 	}
-	window.plugin.manageStorage.importFile = function(){
+
+	function importFile(){
 		var fileInput = document.getElementById('manage-localstorage-import');
 		var file = fileInput.files[0];
 		var textType = /text.*/;
@@ -38,16 +40,16 @@
 					window.localStorage[storageName] = newData[storageName];
 				}
 			}
-			reader.readAsText(file);  
+			reader.readAsText(file);
 			alert('Import successful! Refresh the page.');
 		}else{
 			alert('File not supported!');
 		}
 	}
 
-	window.plugin.manageStorage.createFile = function(){
+	function createFile(){
 		var type = 'data:text/plain;charset=utf-8,';
-		var selectedStorage = window.plugin.manageStorage.getSelectedKey();
+		var selectedStorage = getSelectedKey();
 		var title = 'localstorage-'+selectedStorage+'-'+new Date().getTime();
 		if(title == ''){ title = 'untitled'; }
 		var filename = title+'.txt';
@@ -58,17 +60,19 @@
 
 		var text = '{"'+selectedStorage+'":'+JSON.stringify(store)+'}';
 
-		window.plugin.manageStorage.generateFile(type, filename, text);
+		generateFile(type, filename, text);
 	}
-	window.plugin.manageStorage.importData = function(){
-		dialog({
+
+	function importData(){
+		window.dialog({
 			html: '<div class="local-storage-import"><p>Selected a single or global data file. <input type="file" id="manage-localstorage-import" accept="text/plain" onchange="window.plugin.manageStorage.importFile();return false;" /></div>',
 			dialogClass: 'ui-dialog-local-storage-import',
 			title: 'LocalStorage Manager - Import'
 		});
 	}
-	window.plugin.manageStorage.reset = function(){
-		var KEY = window.plugin.manageStorage.getSelectedKey();
+
+	function reset(){
+		var KEY = getSelectedKey();
 		var promptAction = prompt('"'+KEY+'" data will be deleted. Are you sure? [Y/N]', '');
 		if(promptAction !== null && (promptAction === 'Y' || promptAction === 'y')){
 			delete localStorage[KEY];
@@ -76,7 +80,7 @@
 		}
 	}
 
-	window.plugin.manageStorage.createFileAll = function(){
+	function createFileAll(){
 		var type = 'data:text/plain;charset=utf-8,';
 		var title = 'localstorage-ALL-'+new Date().getTime();
 		if(title == ''){ title = 'untitled'; }
@@ -84,9 +88,10 @@
 
 		var text = JSON.stringify(window.localStorage);
 
-		window.plugin.manageStorage.generateFile(type, filename, text);
+		generateFile(type, filename, text);
 	}
-	window.plugin.manageStorage.resetAll = function(){
+
+	function resetAll(){
 		var promptAction = prompt('WARNING: All localStorage will be deleted. Are you sure? [Y/N]', '');
 		if(promptAction !== null && (promptAction === 'Y' || promptAction === 'y')){
 			var promptAction2 = prompt('WARNING: all, all, all your localStorage will be deleted. Are you really really really sure? [Y/N]', '');
@@ -97,15 +102,15 @@
 		}
 	}
 
-	window.plugin.manageStorage.selectKey = function(elem){
+	function selectKey(elem){
 		$('.manage-local-storage a.localData').removeClass('selected');
 		$(elem).addClass('selected');
 	}
-	window.plugin.manageStorage.getSelectedKey = function(){
-		return $('.manage-local-storage a.localData.selected').text()
+	function getSelectedKey(){
+		return $('.manage-local-storage a.localData.selected').text();
 	}
 
-	window.plugin.manageStorage.setupContent = function(){
+	function setupContent(){
 		var txt = '';
 
 		for(var key in localStorage){
@@ -118,37 +123,37 @@
 		return warn+'<div class="manage-local-storage">'+txt+'</div>';
 	}
 
-	window.plugin.manageStorage.dialog = function(){
-		dialog({
-			html: plugin.manageStorage.setupContent,
+	function dialog(){
+		window.dialog({
+			html: setupContent,
 			dialogClass: 'ui-dialog-local-storage',
 			title: 'LocalStorage Manager',
 			buttons:{
 				'EXPORT': function(){
 					if($('.manage-local-storage a.localData.selected').length){
-						window.plugin.manageStorage.createFile();
+						createFile();
 					}
 				},
 				'DELETE': function(){
 					if($('.manage-local-storage a.localData.selected').length){
-						window.plugin.manageStorage.reset();
+						reset();
 					}
 				},
 				'IMPORT': function(){
-						window.plugin.manageStorage.importData();
+						importData();
 				},
 				'EXPORT ALL': function(){
-					window.plugin.manageStorage.createFileAll();
+					createFileAll();
 				},
 				'DELETE ALL': function(){
-					window.plugin.manageStorage.resetAll();
+					resetAll();
 				}
 			}
 		});
 		$('.ui-dialog-local-storage button:contains(\'DELETE ALL\')').addClass('warning');
 	}
 
-	window.plugin.manageStorage.setupCSS = function(){
+	function setupCSS(){
 		$('<style>').prop('type', 'text/css').html(''
 			+'.manage-local-storage .localData{display:block; border:1px solid #aaa; color:#aaa; padding:4px 4px 2px; text-align:center; margin:7px 2px;}'
 			+'.manage-local-storage .localData:hover{text-decoration:none;background:rgba(8,48,78,.85);}'
@@ -160,9 +165,15 @@
 	}
 
 	var setup = function(){
-		window.plugin.manageStorage.setupCSS();
+		setupCSS();
+
+		/* expose api for click event */
+		manageStorage.selectKey = selectKey;
+		manageStorage.importFile = importFile;
+		manageStorage.dialog = dialog;
+
 		$('#toolbox').append('<a class="list-group-item" onclick="window.plugin.manageStorage.dialog();return false;" title="Manage Storage"><i class="fa fa-hdd-o"></i>LocalStorage</a>');
 	}
 
 // PLUGIN END //////////////////////////////////////////////////////////
-
+
