@@ -138,6 +138,7 @@ function dialog(){
 		html: setupContent,
 		dialogClass: 'ui-dialog-local-storage',
 		title: 'LocalStorage Manager',
+		width: 'auto',
 		buttons:{
 			'EXPORT': function(){
 				if($('.manage-local-storage a.localData.selected').length){
