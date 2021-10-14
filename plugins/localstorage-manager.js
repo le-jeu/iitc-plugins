@@ -1,11 +1,12 @@
 // @author         Zaso
 // @name           LocalStorage Manager
 // @category       Debug
-// @version        0.1.1
+// @version        0.1.2
 // @description    Manage LocalStorage: import, export and delete.
 
 // PlUGIN START ////////////////////////////////////////////////////////
 // History
+// 0.1.2 Show/sort by entry size
 // 0.1.1 Headers changed. Ready for IITC-CE
 // 0.1.0 Original sript
 
