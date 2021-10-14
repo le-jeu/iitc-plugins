@@ -107,14 +107,24 @@ window.plugin.manageStorage = manageStorage;
 		$(elem).addClass('selected');
 	}
 	function getSelectedKey(){
-		return $('.manage-local-storage a.localData.selected').text();
+		return $('.manage-local-storage a.localData.selected').data('key')
 	}
 
 	function setupContent(){
 		var txt = '';
 
-		for(var key in localStorage){
-			txt += '<a class="localData" onclick="window.plugin.manageStorage.selectKey(this);return false;">'+key+'</a>';
+		var items = [];
+
+		for(var i = 0; i < localStorage.length; i++) {
+			var key = localStorage.key(i);
+			var size = localStorage.getItem(key).length;
+			items.push([key, size]);
+		}
+
+		items.sort((a,b) => b[1] - a[1]);
+
+		for (var i=0; i < items.length; i++) {
+			txt += '<a class="localData" onclick="window.plugin.manageStorage.selectKey(this);return false;" data-key="' + items[i][0] + '">'+items[i][0]+' (' + items[i][1].toLocaleString() +')</a>';
 		}
 
 		var warn = '- Don\'t import with this plugin data exported by a different plugin.<br/>';
