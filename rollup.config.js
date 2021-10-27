@@ -6,7 +6,7 @@ import path from "path";
 import metablock from "./rollup-plugin-iitcplugin";
 
 const buildPath = "dist";
-const pluginsPath = "plugins";
+const pluginsPath = "src";
 
 let pluginsId = fs
   .readdirSync(pluginsPath)

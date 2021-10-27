@@ -4,10 +4,10 @@
   "description": "IITC plugins by jaiperdu",
   "scripts": {
     "build": "rollup -c",
-    "lint": "eslint plugins",
-    "lint:fix": "eslint --fix plugins",
-    "format": "prettier --check plugins *.js *.json",
-    "format:fix": "prettier --write plugins *.js *.json"
+    "lint": "eslint src",
+    "lint:fix": "eslint --fix src",
+    "format": "prettier --check src *.js *.json",
+    "format:fix": "prettier --write src *.js *.json"
   },
   "repository": {
     "type": "git",
