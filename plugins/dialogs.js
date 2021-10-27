@@ -1,9 +1,3 @@
-// @author         jaiperdu
-// @name           Dialog List
-// @category       Misc
-// @version        0.1.0
-// @description    List open dialogs in the sidebar
-
 function itemOnClick(ev) {
   var id = ev.target.closest('tr').dataset.id;
   var dialog = $(window.DIALOGS[id]);
@@ -57,7 +51,7 @@ var dialogMonitor = {
   }
 };
 
-function setup() {
+export default function () {
   window.DIALOGS = new Proxy(window.DIALOGS, dialogMonitor);
 
   $('<style>').prop('type', 'text/css').html(`
