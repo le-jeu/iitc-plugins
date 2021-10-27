@@ -574,6 +574,9 @@ function setup() {
 
 			var lvlWeight = LEVEL_TO_WEIGHT[level] * Math.sqrt(scale);
 			var lvlRadius = LEVEL_TO_RADIUS[level] * scale;
+
+			if (scale < 1) lvlWeight = 1;
+
 			if (this._team != TEAM_NONE && level == 0) {
 				lvlWeight = 1;
 			}
