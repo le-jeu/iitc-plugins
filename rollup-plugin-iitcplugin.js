@@ -1,4 +1,4 @@
-import MagicString from 'magic-string';
+import MagicString from "magic-string";
 
 const iitcHeader = `
 function wrapper(plugin_info) {
@@ -35,17 +35,17 @@ if (mobile.startsWith('script')) {
 export default function metablock(options = {}) {
   const pluginId = options.id;
   const baseConf = {
-    'author': 'anonymous',
-    'name': 'New plugin',
-    'category': 'Misc',
-    'version': '0.1.0',
-    'description': 'custom plugin',
-    'id': pluginId,
-    'namespace': 'https://github.com/IITC-CE/ingress-intel-total-conversion',
-    'updateURL': false,
-    'downloadURL': false,
-    'match': 'https://intel.ingress.com/*',
-    'grant': 'none',
+    author: "anonymous",
+    name: "New plugin",
+    category: "Misc",
+    version: "0.1.0",
+    description: "custom plugin",
+    id: pluginId,
+    namespace: "https://github.com/IITC-CE/ingress-intel-total-conversion",
+    updateURL: false,
+    downloadURL: false,
+    match: "https://intel.ingress.com/*",
+    grant: "none",
   };
 
   if (options.meta) {
@@ -55,7 +55,9 @@ export default function metablock(options = {}) {
   }
 
   if (options.timestamp) {
-    baseConf.version += '-' + new Date()
+    baseConf.version +=
+      "-" +
+      new Date()
         .toISOString()
         .replace(/[^0-9]/g, "")
         .slice(0, 14);
@@ -65,21 +67,24 @@ export default function metablock(options = {}) {
     baseConf.name = "IITC plugin: " + baseConf.name;
 
   if (options.downloadRoot) {
-    if (options.downloadRoot.slice(-1) !== '/') options.downloadRoot += '/';
-    baseConf.downloadURL = options.downloadRoot + pluginId + '.user.js';
-    baseConf.updateURL = options.downloadRoot + pluginId + (options.updateMeta ? '.meta.js' : '.user.js');
+    if (options.downloadRoot.slice(-1) !== "/") options.downloadRoot += "/";
+    baseConf.downloadURL = options.downloadRoot + pluginId + ".user.js";
+    baseConf.updateURL =
+      options.downloadRoot +
+      pluginId +
+      (options.updateMeta ? ".meta.js" : ".user.js");
   }
 
   const lines = [];
-  lines.push('// ==UserScript==');
+  lines.push("// ==UserScript==");
   for (const key in baseConf) {
     if (baseConf[key]) {
-      lines.push(`// @${key.padEnd(13, ' ')} ${baseConf[key]}`);
+      lines.push(`// @${key.padEnd(13, " ")} ${baseConf[key]}`);
     }
   }
-  lines.push('// ==/UserScript==');
+  lines.push("// ==/UserScript==");
 
-  const header = lines.join('\n');
+  const header = lines.join("\n");
   const useMeta = options.updateMeta;
 
   return {
@@ -87,7 +92,7 @@ export default function metablock(options = {}) {
       const magicString = new MagicString(code);
       magicString.prepend(iitcHeader);
       magicString.append(iitcFooter);
-      magicString.prepend(header + '\n');
+      magicString.prepend(header + "\n");
       const result = { code: magicString.toString() };
       if (outputOptions.sourcemap !== false) {
         result.map = magicString.generateMap({ hires: true });
@@ -96,11 +101,11 @@ export default function metablock(options = {}) {
     },
     generateBundle() {
       if (useMeta)
-      this.emitFile({
-        type: 'asset',
-        fileName: pluginId + '.meta.js',
-        source: header,
-      });
-    }
+        this.emitFile({
+          type: "asset",
+          fileName: pluginId + ".meta.js",
+          source: header,
+        });
+    },
   };
 }

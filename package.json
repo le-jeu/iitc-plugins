@@ -1,0 +1,34 @@
+{
+  "name": "iitc-plugins",
+  "version": "1.0.0",
+  "description": "IITC plugins by jaiperdu",
+  "scripts": {
+    "build": "rollup -c",
+    "lint": "eslint plugins",
+    "lint:fix": "eslint --fix plugins",
+    "format": "prettier --check plugins *.js *.json",
+    "format:fix": "prettier --write plugins *.js *.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/le-jeu/iitc-plugins.git"
+  },
+  "keywords": [
+    "iitc"
+  ],
+  "author": "jaiperdu",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/le-jeu/iitc-plugins/issues"
+  },
+  "homepage": "https://github.com/le-jeu/iitc-plugins#readme",
+  "devDependencies": {
+    "@babel/preset-env": "^7.15.8",
+    "@rollup/plugin-babel": "^5.3.0",
+    "eslint": "^8.1.0",
+    "magic-string": "^0.25.7",
+    "prettier": "^2.4.1",
+    "rollup": "^2.58.3",
+    "rollup-plugin-multi-input": "^1.3.1"
+  }
+}

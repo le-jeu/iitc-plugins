@@ -1,45 +1,44 @@
 function itemOnClick(ev) {
-  var id = ev.target.closest('tr').dataset.id;
-  var dialog = $(window.DIALOGS[id]);
-  dialog.dialog('moveToTop');
+  const id = ev.target.closest("tr").dataset.id;
+  const dialog = $(window.DIALOGS[id]);
+  dialog.dialog("moveToTop");
 }
 
 function itemOnClose(ev) {
-  var id = ev.target.closest('tr').dataset.id;
-  var dialog = $(window.DIALOGS[id]);
-  dialog.dialog('close');
+  const id = ev.target.closest("tr").dataset.id;
+  const dialog = $(window.DIALOGS[id]);
+  dialog.dialog("close");
 }
 
 function dialogListItem(id) {
-  var dialog = $(window.DIALOGS[id]);
-  var option = dialog.dialog('option');
-  var text = option.title;
-  var tr = document.createElement('tr');
+  const dialog = $(window.DIALOGS[id]);
+  const option = dialog.dialog("option");
+  const text = option.title;
+  const tr = document.createElement("tr");
   tr.dataset.id = id;
-  var title = document.createElement('td');
+  const title = document.createElement("td");
   tr.appendChild(title);
   title.textContent = text;
-  if (!dialog.is(':hidden'))
-    title.classList.add('ui-dialog-title-inactive');
-  title.addEventListener('click', itemOnClick);
-  var closeButton = document.createElement('td');
+  if (!dialog.is(":hidden")) title.classList.add("ui-dialog-title-inactive");
+  title.addEventListener("click", itemOnClick);
+  const closeButton = document.createElement("td");
   tr.appendChild(closeButton);
   closeButton.textContent = "X";
-  closeButton.addEventListener('click', itemOnClose);
+  closeButton.addEventListener("click", itemOnClose);
 
   return tr;
 }
 
 function updateList() {
-  var list = document.getElementById('dialog-list');
-  list.textContent = '';
+  const list = document.getElementById("dialog-list");
+  list.textContent = "";
   Object.keys(window.DIALOGS).forEach((id) => {
     list.appendChild(dialogListItem(id));
   });
 }
 
-var dialogMonitor = {
-  set: function(obj, prop, valeur) {
+const dialogMonitor = {
+  set: function (obj, prop, valeur) {
     obj[prop] = valeur;
     updateList();
     return true;
@@ -48,13 +47,16 @@ var dialogMonitor = {
     delete obj[prop];
     updateList();
     return true;
-  }
+  },
 };
 
 export default function () {
   window.DIALOGS = new Proxy(window.DIALOGS, dialogMonitor);
 
-  $('<style>').prop('type', 'text/css').html(`
+  $("<style>")
+    .prop("type", "text/css")
+    .html(
+      `
 #dialog-list {
   padding: 3px;
 }
@@ -73,10 +75,12 @@ export default function () {
 #dialog-list tr td:last-child {
   color: red;
   font-weight: bold;
-}`).appendTo('head');
+}`
+    )
+    .appendTo("head");
 
-  var sidebar = document.getElementById('sidebar');
-  var dialogList = document.createElement('div');
+  const sidebar = document.getElementById("sidebar");
+  const dialogList = document.createElement("div");
   sidebar.appendChild(dialogList);
   dialogList.id = "dialog-list";
 }
