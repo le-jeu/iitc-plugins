@@ -5,19 +5,19 @@
 #chatall tr.faction td:nth-child(3):before,
 #chatalerts tr.faction td:nth-child(3):before,
 #chatfilter tr.faction td:nth-child(3):before {
-  content: '[faction]';
+  content: "[faction]";
   color: #f88;
   background-color: #500;
-  margin-right: .2rem;
+  margin-right: 0.2rem;
 }
 
 #chatall tr.public td:nth-child(3):before,
 #chatalerts tr.public td:nth-child(3):before,
 #chatfilter tr.public td:nth-child(3):before {
-  content: '[public]';
+  content: "[public]";
   color: #ff6;
   background-color: #550;
-  margin-right: .2rem;
+  margin-right: 0.2rem;
 }
 
 #chat .portal.enl-light {
@@ -39,9 +39,9 @@
 }
 
 #chat #chat-filters {
-	overflow: unset;
-	height: unset;
-	padding: unset;
+  overflow: unset;
+  height: unset;
+  padding: unset;
 }
 
 #chat-filters.desktop {
@@ -66,7 +66,7 @@
 }
 
 #chat tr:nth-child(odd) {
-  background-color: #0002
+  background-color: #0002;
 }
 
 #chat tr {

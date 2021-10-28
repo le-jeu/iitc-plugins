@@ -1,4 +1,7 @@
 import { babel } from "@rollup/plugin-babel";
+import resolve from "@rollup/plugin-node-resolve";
+import postcss from "rollup-plugin-postcss";
+import url from "postcss-url";
 
 import fs from "fs";
 import path from "path";
@@ -19,10 +22,18 @@ export default pluginsId.map((p) => ({
     format: "iife",
     name: "setup",
     file: path.join(buildPath, p + ".user.js"),
-    sourcemap: "inline",
   },
   plugins: [
-    babel({ presets: ["@babel/preset-env"] }),
+    resolve(),
+    postcss({
+      inject: false,
+      plugins: [
+        url({
+          url: "inline",
+        }),
+      ],
+    }),
+    babel({ babelHelpers: "bundled", presets: ["@babel/preset-env"] }),
     metablock({
       id: p,
       meta: require("./" + path.join(pluginsPath, p + ".meta.json")),
