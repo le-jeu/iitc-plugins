@@ -57,6 +57,13 @@ const itemTypes = {
   'PORTAL_POWERUP:BN_BLM': 'Beacon - Black Lives Matter',
 };
 
+// missing strings from stock intel
+itemTypes['PORTAL_POWERUP:BB_BATTLE_RARE'] = 'Rare Battle Beacon';
+
+function defaultTypeString(s) {
+  if (!(s in itemTypes)) itemTypes[s] = s;
+}
+
 const levelItemTypes = [
   "EMITTER_A",
   "EMP_BURSTER",
@@ -88,22 +95,33 @@ class Inventory {
     this.clear();
   }
 
+  clearItem(type) {
+    defaultTypeString(type);
+    this.items[type] = {
+      type: type,
+      name: itemTypes[type],
+      leveled: levelItemTypes.includes(type),
+      counts: {},
+      total: 0,
+    }
+  }
+
   clear() {
     this.keys.clear();
     this.medias.clear();
     this.capsules = {};
     this.items = {};
     for (const type in itemTypes) {
-      this.items[type] = {
-        type: type,
-        name: itemTypes[type],
-        leveled: levelItemTypes.includes(type),
-        counts: {},
-        total: 0,
-      }
+      this.clearItem(type);
     }
     this.count = 0;
     this.keyLockersCount = 0;
+  }
+
+  getItem(type) {
+    if (!(type in this.items))
+      this.clearItem(type);
+    return this.items[type];
   }
 
   addCapsule(capsule) {
@@ -135,7 +153,7 @@ class Inventory {
   }
 
   addItem(item) {
-    const cat = this.items[item.type];
+    const cat = this.getItem(item.type);
     const lr = cat.leveled ? item.level : item.rarity;
     if (!cat.counts[lr]) cat.counts[lr] = {};
     const count = cat.counts[lr];
@@ -154,7 +172,7 @@ class Inventory {
   }
 
   countType(type, levelRarity) {
-    const cat = this.items[type];
+    const cat = this.getItem(type);
     if (levelRarity !== undefined) {
       return cat.counts[levelRarity] ? cat.counts[levelRarity].total : 0;
     }
@@ -222,7 +240,7 @@ class Inventory {
 
     for (const type in itemTypes) {
       if (type === "PORTAL_LINK_KEY") continue;
-      const item = this.items[type];
+      const item = this.getItem(type);
       for (const k in item.counts) {
         const count = item.counts[k][this.name];
         if (count) {
