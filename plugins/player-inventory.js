@@ -259,7 +259,7 @@ class Inventory {
 }
 
 function parsePortalLocation(location) {
-  return [lat, lng] = location.split(',').map(a => (Number.parseInt(a,16)&(-1))*1e-6);
+  return location.split(',').map(a => (Number.parseInt(a,16)&(-1))*1e-6);
 }
 
 /*
@@ -554,7 +554,7 @@ function openIndexedDB() {
 function loadFromIndexedDB() {
   if (!window.indexedDB) return loadFromLocalStorage();
   const rq = openIndexedDB();
-  rq.onerror = function (event) {
+  rq.onerror = function () {
     loadFromLocalStorage();
   };
   rq.onsuccess = function (event) {
@@ -580,15 +580,15 @@ function loadFromIndexedDB() {
 function storeToIndexedDB(data) {
   if (!window.indexedDB) return storeToLocalStorage(data);
   const rq = openIndexedDB();
-  rq.onerror = function (event) {
+  rq.onerror = function () {
     storeToLocalStorage(data);
   };
   rq.onsuccess = function (event) {
     const db = event.target.result;
     const tx = db.transaction(["inventory"], "readwrite");
     const store = tx.objectStore("inventory");
-    store.clear().onsuccess = function (event) {
-      const rq = store.add({
+    store.clear().onsuccess = function () {
+      store.add({
         raw: data,
         date: Date.now(),
       });
@@ -692,14 +692,14 @@ function portalKeyHighlight(data) {
   const guid = data.portal.options.guid;
   if (plugin.inventory.keys.has(guid)) {
     // place holder
-    if (data.portal.options.team != TEAM_NONE && data.portal.options.level === 0) {
+    if (data.portal.options.team != window.TEAM_NONE && data.portal.options.level === 0) {
       data.portal.setStyle({
         color: 'red',
         weight: 2*Math.sqrt(window.portalMarkerScale()),
         dashArray: '',
       });
     }
-    else if (window.map.getZoom() < 15 && data.portal.options.team == TEAM_NONE && !window.portalDetail.isFresh(guid))
+    else if (window.map.getZoom() < 15 && data.portal.options.team == window.TEAM_NONE && !window.portalDetail.isFresh(guid))
       // injected without intel data
       data.portal.setStyle({color: 'red', fillColor: 'gray'});
     else data.portal.setStyle({color: 'red'});
@@ -714,9 +714,10 @@ function createPopup(guid) {
     const count = plugin.inventory.keys.get(guid).count;
     const text = Array.from(count).map(([name, count]) => `<strong>${name}</strong>: ${count}`).join('<br/>');
 
-    const popup = L.popup()
+    L.popup()
       .setLatLng(latLng)
-      .setContent('<div class="inventory-keys">' + text + '</div>').openOn(window.map);
+      .setContent('<div class="inventory-keys">' + text + '</div>')
+      .openOn(window.map);
   }
 }
 
@@ -896,7 +897,7 @@ function fillPane(inventory) {
 function displayInventory(inventory) {
   const container = buildInventoryHTML(inventory);
 
-  plugin.dialog = dialog({
+  plugin.dialog = window.dialog({
     title: 'Inventory',
     id: 'inventory',
     html: container,
@@ -964,7 +965,7 @@ function exportToClipboard() {
     L.DomEvent.on(content, 'click', () => {
       content.select();
     });
-    dialog({
+    window.dialog({
       title: 'Keys',
       html: content,
       width: 'auto',
@@ -984,7 +985,7 @@ function displayOpt() {
   popupCheck.type = 'checkbox';
   popupCheck.checked = plugin.settings.popupEnable;
   popupCheck.id = 'plugin-player-inventory-popup-enable';
-  L.DomEvent.on(popupCheck, "change", (ev) => {
+  L.DomEvent.on(popupCheck, "change", () => {
     plugin.settings.popupEnable = popupCheck.checked === 'true' || (popupCheck.checked === 'false' ? false : popupCheck.checked);
     storeSettings();
   });
@@ -996,7 +997,7 @@ function displayOpt() {
   refreshCheck.type = 'checkbox';
   refreshCheck.checked = plugin.settings.autoRefreshActive;
   refreshCheck.id = 'plugin-player-inventory-autorefresh-enable';
-  L.DomEvent.on(refreshCheck, "change", (ev) => {
+  L.DomEvent.on(refreshCheck, "change", () => {
     plugin.settings.autoRefreshActive = refreshCheck.checked === 'true' || (refreshCheck.checked === 'false' ? false : refreshCheck.checked);
     if (plugin.settings.autoRefreshActive) {
       autoRefresh();
@@ -1011,7 +1012,7 @@ function displayOpt() {
   const refreshDelay = L.DomUtil.create('input', null, container);
   refreshDelay.type = 'number';
   refreshDelay.value = plugin.settings.autoRefreshDelay;
-  L.DomEvent.on(refreshDelay, "change", (ev) => {
+  L.DomEvent.on(refreshDelay, "change", () => {
     plugin.settings.autoRefreshDelay = +refreshDelay.value > 0 ? +refreshDelay.value : 1;
     refreshDelay.value = plugin.settings.autoRefreshDelay;
     storeSettings();
@@ -1026,7 +1027,7 @@ function displayOpt() {
     syncCheck.type = 'checkbox';
     syncCheck.checked = plugin.settings.autoSyncKeys;
     syncCheck.id = 'plugin-player-inventory-autosync-enable';
-    L.DomEvent.on(syncCheck, "change", (ev) => {
+    L.DomEvent.on(syncCheck, "change", () => {
       plugin.settings.autoSyncKeys = syncCheck.checked === 'true' || (syncCheck.checked === 'false' ? false : syncCheck.checked);
       storeSettings();
     });
@@ -1049,13 +1050,13 @@ function displayOpt() {
     keysSidebarCheck.type = 'checkbox';
     keysSidebarCheck.checked = plugin.settings.keysSidebarEnable;
     keysSidebarCheck.id = 'plugin-player-inventory-keys-sidebar-enable';
-    L.DomEvent.on(keysSidebarCheck, "change", (ev) => {
+    L.DomEvent.on(keysSidebarCheck, "change", () => {
       plugin.settings.keysSidebarEnable = keysSidebarCheck.checked === 'true' || (keysSidebarCheck.checked === 'false' ? false : keysSidebarCheck.checked);
       storeSettings();
     });
   }
 
-  dialog({
+  window.dialog({
     title: 'Inventory Opt',
     id: 'inventory-opt',
     html: container,
@@ -1082,7 +1083,7 @@ function setupDisplay() {
 
   if (window.useAndroidPanes()) {
     android.addPane('playerInventory', 'Inventory', 'ic_action_view_as_list');
-    addHook('paneChanged', function (pane) {
+    window.addHook('paneChanged', function (pane) {
       if (pane === 'playerInventory') {
         refreshIfOld();
         plugin.pane.style.display = "";
