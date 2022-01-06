@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Player Inventory
 // @category       Info
-// @version        0.2.30
+// @version        0.2.31
 // @description    View inventory and highlight portals with keys at any zoom. Can be used with the official plugins Keys and Keys on map to show the number of keys on the map.
 
 // stock intel
@@ -59,6 +59,10 @@ const itemTypes = {
 
 // missing strings from stock intel
 itemTypes['PORTAL_POWERUP:BB_BATTLE_RARE'] = 'Rare Battle Beacon';
+
+const dontCount = [
+  "DRONE",
+];
 
 function defaultTypeString(s) {
   if (!(s in itemTypes)) itemTypes[s] = s;
@@ -162,7 +166,9 @@ class Inventory {
     count[item.capsule] = (count[item.capsule] || 0) + item.count;
     count.total = (count.total || 0) + item.count;
     cat.total += item.count;
-    this.count += item.count;
+
+    if (!dontCount.includes(item.type))
+      this.count += item.count;
 
     if (item.type === "PORTAL_LINK_KEY") {
       this.addKey(item);
@@ -894,11 +900,20 @@ function fillPane(inventory) {
   plugin.pane.appendChild(buildInventoryHTML(inventory));
 }
 
+function getTitle() {
+  let title = "Inventory";
+  if (plugin.lastRefresh) {
+    title =
+      title + " (" + new Date(plugin.lastRefresh).toLocaleTimeString() + ")";
+  }
+  return title;
+}
+
 function displayInventory(inventory) {
   const container = buildInventoryHTML(inventory);
 
   plugin.dialog = window.dialog({
-    title: 'Inventory',
+    title: getTitle(),
     id: 'inventory',
     html: container,
     width: 'auto',
@@ -1153,9 +1168,14 @@ function setup() {
     }
     if (plugin.dialog) {
       plugin.dialog.html(buildInventoryHTML(data.inventory));
+      plugin.dialog.dialog("option", "title", getTitle());
     }
     if (plugin.pane) {
       fillPane(data.inventory);
+      const button = plugin.pane.querySelector("button");
+      if (button)
+        button.textContent =
+          "Refresh (" + new Date(plugin.lastRefresh).toLocaleTimeString() + ")";
     }
   })
 
