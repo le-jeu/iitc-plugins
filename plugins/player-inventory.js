@@ -667,6 +667,9 @@ function getInventory() {
 function handleSubscription(data) {
   plugin.hasActiveSubscription = data.result;
   if (data.result) getInventory();
+  else {
+    alert("You need to subscribe to C.O.R.E. to get your inventory from Intel Map.");
+  }
 }
 
 function getSubscriptionStatus() {
