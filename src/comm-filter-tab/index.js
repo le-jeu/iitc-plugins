@@ -1,5 +1,6 @@
+import W from "unsafeWindow";
 import styleInject from "style-inject";
-import style from "./comm-filter-tab.css";
+import style from "./style.css";
 
 //todo list
 //4) add checkable filtering for all/faction/alert
@@ -15,7 +16,7 @@ function renderText(text) {
 function renderPortal(portal) {
   const lat = portal.latE6 / 1e6,
     lng = portal.lngE6 / 1e6;
-  const perma = window.makePermalink([lat, lng]);
+  const perma = W.makePermalink([lat, lng]);
   const js =
     "window.selectPortalByLatLng(" + lat + ", " + lng + ");return false";
   let spanClass = "";
@@ -33,7 +34,7 @@ function renderPortal(portal) {
     '" class="help portal ' +
     spanClass +
     '">' +
-    window.chat.getChatPortalName(portal) +
+    W.chat.getChatPortalName(portal) +
     "</a>"
   );
 }
@@ -42,8 +43,8 @@ function renderFactionEnt(faction) {
   const name = faction.team === "RESISTANCE" ? "Resistance" : "Enlightened";
   const spanClass =
     faction.team === "RESISTANCE"
-      ? window.TEAM_TO_CSS[window.TEAM_RES]
-      : window.TEAM_TO_CSS[window.TEAM_ENL];
+      ? W.TEAM_TO_CSS[W.TEAM_RES]
+      : W.TEAM_TO_CSS[W.TEAM_ENL];
   return $("<div/>")
     .html($("<span/>").attr("class", spanClass).text(name))
     .html();
@@ -55,7 +56,7 @@ function renderPlayer(player, at, sender) {
     : at
     ? player.plain.slice(1)
     : player.plain;
-  const thisToPlayer = name === window.PLAYER.nickname;
+  const thisToPlayer = name === W.PLAYER.nickname;
   const spanClass = thisToPlayer
     ? "pl_nudge_me"
     : player.team + " pl_nudge_player";
@@ -113,8 +114,8 @@ function renderMarkup(markup) {
 }
 
 function renderTimeCell(time, classNames) {
-  const ta = window.unixTimeToHHmm(time);
-  let tb = window.unixTimeToDateTimeString(time, true);
+  const ta = W.unixTimeToHHmm(time);
+  let tb = W.unixTimeToDateTimeString(time, true);
   // add <small> tags around the milliseconds
   tb = (
     tb.slice(0, 19) +
@@ -165,14 +166,10 @@ function renderMsgRow(data) {
   const timeCell = renderTimeCell(data.time, timeClass);
 
   const nickClasses = ["nickname"];
-  if (
-    data.player.team === window.TEAM_ENL ||
-    data.player.team === window.TEAM_RES
-  )
-    nickClasses.push(window.TEAM_TO_CSS[data.player.team]);
+  if (data.player.team === W.TEAM_ENL || data.player.team === W.TEAM_RES)
+    nickClasses.push(W.TEAM_TO_CSS[data.player.team]);
   // highlight things said/done by the player in a unique colour (similar to @player mentions from others in the chat text itself)
-  if (data.player.name === window.PLAYER.nickname)
-    nickClasses.push("pl_nudge_me");
+  if (data.player.name === W.PLAYER.nickname) nickClasses.push("pl_nudge_me");
   const nickCell = renderNickCell(data.player.name, nickClasses.join(" "));
 
   const msg = renderMarkup(data.markup);
@@ -243,8 +240,7 @@ function parseMsgData(data) {
   const msgToPlayer = msgAlert && (isPublic || isSecure);
 
   const time = data[1];
-  let team =
-    data[2].plext.team === "RESISTANCE" ? window.TEAM_RES : window.TEAM_ENL;
+  let team = data[2].plext.team === "RESISTANCE" ? W.TEAM_RES : W.TEAM_ENL;
   const auto = data[2].plext.plextType !== "PLAYER_GENERATED";
   const systemNarrowcast = data[2].plext.plextType === "SYSTEM_NARROWCAST";
 
@@ -259,7 +255,7 @@ function parseMsgData(data) {
 
       case "PLAYER": // automatically generated messages
         nick = ent[1].plain;
-        team = ent[1].team === "RESISTANCE" ? window.TEAM_RES : window.TEAM_ENL;
+        team = ent[1].team === "RESISTANCE" ? W.TEAM_RES : W.TEAM_ENL;
         break;
 
       default:
@@ -346,17 +342,17 @@ function renderData(data, element, likelyWereOldMsgs, sortedGuids) {
     const msg = data[guid];
     const nextTime = new Date(msg[0]).toLocaleDateString();
     if (prevTime && prevTime !== nextTime)
-      msgs += window.chat.renderDivider(nextTime);
+      msgs += W.chat.renderDivider(nextTime);
     msgs += msg[2];
     prevTime = nextTime;
   });
 
   const firstRender = elm.is(":empty");
-  const scrollBefore = window.scrollBottom(elm);
+  const scrollBefore = W.scrollBottom(elm);
   elm.html("<table>" + msgs + "</table>");
 
   if (firstRender) elm.data("needsScrollTop", 99999999);
-  else window.chat.keepScrollPosition(elm, scrollBefore, likelyWereOldMsgs);
+  else W.chat.keepScrollPosition(elm, scrollBefore, likelyWereOldMsgs);
 
   if (elm.data("needsScrollTop")) {
     elm.data("ignoreNextScroll", true);
@@ -387,6 +383,11 @@ commFilter.rules = [
   },
   { type: "beacon", plain: "PLAYER| deployed a Beacon on |PORTAL" },
   { type: "battle", plain: "PLAYER| deployed a Battle Beacon on |PORTAL" },
+  { type: "battle", plain: "PLAYER| deployed a Rare Battle Beacon on |PORTAL" },
+  {
+    type: "battle",
+    plain: "PLAYER| deployed a Very Rare Battle Beacon on |PORTAL",
+  },
   { type: "fracker", plain: "PLAYER| deployed a Fracker on |PORTAL" },
   { type: "resonator", plain: "PLAYER| deployed a Resonator on |PORTAL" },
   {
@@ -404,6 +405,14 @@ commFilter.rules = [
   { type: "link", plain: "PLAYER| linked |PORTAL| to |PORTAL" },
   { type: "recurse", plain: "PLAYER| Recursed" },
   { type: "battle result", plain: "FACTION| won a Battle Beacon on |PORTAL" },
+  {
+    type: "battle result",
+    plain: "FACTION| won a Rare Battle Beacon on |PORTAL",
+  },
+  {
+    type: "battle result",
+    plain: "FACTION| won a Very Rare Battle Beacon on |PORTAL",
+  },
   {
     type: "destroy link",
     plain: "Your Link |PORTAL| to |PORTAL| destroyed by |PLAYER",
@@ -509,7 +518,7 @@ function reParseData(data) {
     .filter((ent) => ent[0] === "AT_PLAYER")
     .map((ent) => ({
       name: ent[1].plain.slice(1),
-      team: ent[1].team === "RESISTANCE" ? window.TEAM_RES : window.TEAM_ENL,
+      team: ent[1].team === "RESISTANCE" ? W.TEAM_RES : W.TEAM_ENL,
     }));
 
   parse.type = matchRule(data);
@@ -630,9 +639,9 @@ function computeHidden() {
   }
 
   const filtered = new Set(hidden);
-  for (const guid of window.chat._public.guids) {
-    const n = window.chat._public.data[guid][3];
-    const d = window.chat._public.data[guid][4]["comm-filter"];
+  for (const guid of W.chat._public.guids) {
+    const n = W.chat._public.data[guid][3];
+    const d = W.chat._public.data[guid][4]["comm-filter"];
     let show = commFilter.filters.type.includes(d.type);
 
     // special type
@@ -683,8 +692,8 @@ function updateCSS() {
   }
 
   const highlights = [];
-  for (const guid of window.chat._public.guids) {
-    const d = window.chat._public.data[guid][4];
+  for (const guid of W.chat._public.guids) {
+    const d = W.chat._public.data[guid][4];
     if (d.msgToPlayer) highlights.push(guid);
   }
 
@@ -723,7 +732,7 @@ function updateCSS() {
 }
 
 function reparsePublicData() {
-  const publicTab = window.chat._public;
+  const publicTab = W.chat._public;
   $.each(publicTab.data, function (ind, msg) {
     if (msg[4]["comm-filter"] === undefined) reParseData(msg[4]);
   });
@@ -738,10 +747,10 @@ function reparsePublicData() {
 }
 
 function renderChatFilter(old) {
-  const publicTab = window.chat._public;
+  const publicTab = W.chat._public;
   if (!publicTab.guids) publicTab.guids = [];
   else
-    window.chat.renderData(
+    W.chat.renderData(
       publicTab.data,
       "chatfilter",
       old,
@@ -764,13 +773,13 @@ function tabToogle() {
 function tabCreate() {
   $("#chat").append('<div id="chat-filters"></div>');
 
-  if (window.chat.addCommTab) {
-    window.chat.addCommTab({
+  if (W.chat.addCommTab) {
+    W.chat.addCommTab({
       channel: "filter",
       name: "Filter",
       inputPrompt: "",
       sendMessage: () => {},
-      request: (_, old) => window.chat.requestChannel("all", old),
+      request: (_, old) => W.chat.requestChannel("all", old),
       render: (c, old) => {
         $("#chat-filters").show();
         renderChatFilter(old);
@@ -778,7 +787,7 @@ function tabCreate() {
       localBounds: true,
     });
     // bind filter to all
-    window.chat._channels["filter"] = window.chat._channels["all"];
+    W.chat._channels["filter"] = W.chat._channels["all"];
   } else {
     $("#chatcontrols").append("<a>Filter</a>");
     $("#chatcontrols a:last").click(tabToogle);
@@ -789,18 +798,17 @@ function tabCreate() {
     $("#chatfilter").scroll(function () {
       const t = $(this);
       if (t.data("ignoreNextScroll")) return t.data("ignoreNextScroll", false);
-      if (t.scrollTop() < window.CHAT_REQUEST_SCROLL_TOP)
-        window.chat.requestPublic(true);
-      if (scrollBottom(t) === 0) window.chat.requestPublic(false);
+      if (t.scrollTop() < W.CHAT_REQUEST_SCROLL_TOP) W.chat.requestPublic(true);
+      if (scrollBottom(t) === 0) W.chat.requestPublic(false);
     });
 
-    if (window.useAndroidPanes()) {
-      window.android.addPane(
+    if (W.useAndroidPanes()) {
+      W.android.addPane(
         "comm-filter-tab",
         "Comm Filter",
         "ic_action_view_as_list"
       );
-      window.addHook("paneChanged", function (id) {
+      W.addHook("paneChanged", function (id) {
         if (id == "comm-filter-tab") {
           tabToogle();
         }
@@ -841,21 +849,21 @@ function tabCreate() {
     renderChatFilter(false);
   });
 
-  if (!window.isSmartphone()) commFilter.filtersDiv.classList.add("desktop");
+  if (!W.isSmartphone()) commFilter.filtersDiv.classList.add("desktop");
 }
 
 // setup
 
-window.plugin.commFilter = commFilter;
+W.plugin.commFilter = commFilter;
 
 function setup() {
   styleInject(style);
 
   // injection
-  window.chat.renderDivider = renderDivider;
-  window.chat.writeDataToHash = writeDataToHash;
-  window.chat.renderData = renderData;
-  window.scrollBottom = scrollBottom;
+  W.chat.renderDivider = renderDivider;
+  W.chat.writeDataToHash = writeDataToHash;
+  W.chat.renderData = renderData;
+  W.scrollBottom = scrollBottom;
 
   // plugin
   commFilter.filters = {
@@ -865,7 +873,7 @@ function setup() {
   buildRules();
   tabCreate();
 
-  window.addHook("publicChatDataAvailable", reparsePublicData);
+  W.addHook("publicChatDataAvailable", reparsePublicData);
 }
 
 export default setup;

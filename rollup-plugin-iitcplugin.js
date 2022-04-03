@@ -1,30 +1,44 @@
-import MagicString from "magic-string";
-
-const iitcHeader = `
-function wrapper(plugin_info) {
-// ensure plugin framework is there, even if iitc is not yet loaded
-if(typeof window.plugin !== 'function') window.plugin = function() {};
-`;
-
-const iitcFooter = `
-setup.info = plugin_info; //add the script info data to the function as a property
-if(!window.bootPlugins) window.bootPlugins = [];
-window.bootPlugins.push(setup);
-// if IITC has already booted, immediately run the 'setup' function
-if(window.iitcLoaded && typeof setup === 'function') setup();
-} // wrapper end
-// inject code into site context
-var script = document.createElement('script');
+const plugin_info = `
 var info = {};
 if (typeof GM_info !== 'undefined' && GM_info && GM_info.script) info.script = { version: GM_info.script.version, name: GM_info.script.name, description: GM_info.script.description };
+
+info.buildName = '@build_name@';
+info.dateTimeVersion = '@build_date@';
+info.pluginId = '@plugin_id@';
+`;
+
+const framework = {
+  header: `
+if (typeof unsafeWindow === 'undefined')
+  unsafeWindow = window.unsafeWindow || window;
+// ensure plugin framework is there, even if iitc is not yet loaded
+if(typeof unsafeWindow.plugin !== 'function') unsafeWindow.plugin = function() {};
+`,
+  footer: `
+if(!unsafeWindow.bootPlugins) unsafeWindow.bootPlugins = [];
+unsafeWindow.bootPlugins.push(setup);
+// if IITC has already booted, immediately run the 'setup' function
+if(unsafeWindow.iitcLoaded && typeof setup === 'function') setup(unsafeWindow);
+`,
+};
+
+const wrapper = {
+  header: "function wrapper(plugin_info) {\n",
+  footer:
+    "setup.info = plugin_info; //add the script info data to the function as a property\n}\n",
+};
+const noWrapper = "setup.info = info;\n";
+
+const injection = `
+// inject code into site context
+var script = document.createElement('script');
 // if on last IITC mobile, will be replaced by wrapper(info)
 var mobile = \`script.appendChild(document.createTextNode('('+ wrapper +')('+JSON.stringify(info)+');'));
 (document.body || document.head || document.documentElement).appendChild(script);\`;
-
+// detect if mobile
 if (mobile.startsWith('script')) {
   script.appendChild(document.createTextNode('('+ wrapper +')('+JSON.stringify(info)+');'));
-  if (info.script && info.script.name)
-    script.appendChild(document.createTextNode('//# sourceURL=' + encodeURIComponent(info.script.name)));
+  script.appendChild(document.createTextNode('//# sourceURL=iitc:///plugins/@plugin_id@.js'));
   (document.body || document.head || document.documentElement).appendChild(script);
 } else {
   // mobile string
@@ -54,13 +68,9 @@ export default function metablock(options = {}) {
     });
   }
 
+  const buildDate = new Date().toISOString();
   if (options.timestamp) {
-    baseConf.version +=
-      "-" +
-      new Date()
-        .toISOString()
-        .replace(/[^0-9]/g, "")
-        .slice(0, 14);
+    baseConf.version += "-" + buildDate.replace(/[-:]/g, "").slice(0, 15);
   }
 
   if (!options.withoutNamePrefix)
@@ -86,18 +96,29 @@ export default function metablock(options = {}) {
 
   const header = lines.join("\n");
   const useMeta = options.updateMeta;
+  const useWrapper = !options.noWrapper;
+  const pluginInfo = plugin_info
+    .replace("@build_date@", buildDate)
+    .replace("@plugin_id@", pluginId)
+    .replace("@build_name@", options.buildName || "rollup");
 
   return {
-    renderChunk(code, renderedChunk, outputOptions) {
-      const magicString = new MagicString(code);
-      magicString.prepend(iitcHeader);
-      magicString.append(iitcFooter);
-      magicString.prepend(header + "\n");
-      const result = { code: magicString.toString() };
-      if (outputOptions.sourcemap !== false) {
-        result.map = magicString.generateMap({ hires: true });
-      }
-      return result;
+    banner() {
+      return (
+        header +
+        "\n" +
+        pluginInfo +
+        (useWrapper ? wrapper.header : "") +
+        framework.header
+      );
+    },
+    footer() {
+      return (
+        framework.footer +
+        (useWrapper
+          ? wrapper.footer + injection.replace("@plugin_id@", pluginId)
+          : noWrapper)
+      );
     },
     generateBundle() {
       if (useMeta)

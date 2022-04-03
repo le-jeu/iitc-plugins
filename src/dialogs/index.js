@@ -1,17 +1,21 @@
+import W from "unsafeWindow";
+
+let DIALOGS = {};
+
 function itemOnClick(ev) {
   const id = ev.target.closest("tr").dataset.id;
-  const dialog = $(window.DIALOGS[id]);
+  const dialog = $(DIALOGS[id]);
   dialog.dialog("moveToTop");
 }
 
 function itemOnClose(ev) {
   const id = ev.target.closest("tr").dataset.id;
-  const dialog = $(window.DIALOGS[id]);
+  const dialog = $(DIALOGS[id]);
   dialog.dialog("close");
 }
 
 function dialogListItem(id) {
-  const dialog = $(window.DIALOGS[id]);
+  const dialog = $(DIALOGS[id]);
   const option = dialog.dialog("option");
   const text = option.title;
   const tr = document.createElement("tr");
@@ -32,7 +36,7 @@ function dialogListItem(id) {
 function updateList() {
   const list = document.getElementById("dialog-list");
   list.textContent = "";
-  Object.keys(window.DIALOGS).forEach((id) => {
+  Object.keys(DIALOGS).forEach((id) => {
     list.appendChild(dialogListItem(id));
   });
 }
@@ -51,7 +55,7 @@ const dialogMonitor = {
 };
 
 export default function () {
-  window.DIALOGS = new Proxy(window.DIALOGS, dialogMonitor);
+  DIALOGS = W.DIALOGS = new Proxy(W.DIALOGS, dialogMonitor);
 
   $("<style>")
     .prop("type", "text/css")

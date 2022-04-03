@@ -3,7 +3,6 @@ import resolve from "@rollup/plugin-node-resolve";
 import postcss from "rollup-plugin-postcss";
 import url from "postcss-url";
 
-import fs from "fs";
 import path from "path";
 
 import metablock from "./rollup-plugin-iitcplugin";
@@ -11,19 +10,29 @@ import metablock from "./rollup-plugin-iitcplugin";
 const buildPath = "dist";
 const pluginsPath = "src";
 
-let pluginsId = fs
-  .readdirSync(pluginsPath)
-  .filter((s) => s.slice(-10) === ".meta.json")
-  .map((s) => s.slice(0, -10));
+let pluginsId = ["dialogs", "comm-filter-tab"];
 
 export default pluginsId.map((p) => ({
-  input: path.join(pluginsPath, p + ".js"),
+  input: path.join(pluginsPath, p, "index.js"),
+  external: ["unsafeWindow"],
   output: {
     format: "iife",
     name: "setup",
     file: path.join(buildPath, p + ".user.js"),
+    globals: {
+      unsafeWindow: "{ default: unsafeWindow }",
+    },
   },
   plugins: [
+    metablock({
+      id: p,
+      meta: require("./" + path.join(pluginsPath, p, "meta.json")),
+      downloadRoot: "https://le-jeu.github.io/iitc-plugins/",
+      //updateMeta: true,
+      timestamp: true,
+      noWrapper: false,
+      buildName: "lejeu",
+    }),
     resolve(),
     postcss({
       inject: false,
@@ -34,12 +43,5 @@ export default pluginsId.map((p) => ({
       ],
     }),
     babel({ babelHelpers: "bundled", presets: ["@babel/preset-env"] }),
-    metablock({
-      id: p,
-      meta: require("./" + path.join(pluginsPath, p + ".meta.json")),
-      downloadRoot: "https://le-jeu.github.io/iitc-plugins/",
-      //updateMeta: true,
-      timestamp: true,
-    }),
   ],
 }));
