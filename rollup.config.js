@@ -10,10 +10,10 @@ import metablock from "./rollup-plugin-iitcplugin";
 const buildPath = "dist";
 const pluginsPath = "src";
 
-let pluginsId = ["dialogs", "comm-filter-tab", "search-guid"];
+let pluginsId = ["dialogs", "comm-filter-tab", "search-guid", "portals-pictures", "what3words"];
 
 export default pluginsId.map((p) => ({
-  input: path.join(pluginsPath, p, "index.js"),
+  input: path.join(pluginsPath, p),
   external: ["unsafeWindow"],
   output: {
     format: "iife",
@@ -42,6 +42,6 @@ export default pluginsId.map((p) => ({
         }),
       ],
     }),
-    babel({ babelHelpers: "bundled", presets: ["@babel/preset-env"] }),
+    babel({ babelHelpers: "bundled" }),
   ],
 }));
