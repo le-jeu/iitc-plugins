@@ -10,7 +10,7 @@ import metablock from "./rollup-plugin-iitcplugin";
 const buildPath = "dist";
 const pluginsPath = "src";
 
-let pluginsId = [];
+let pluginsId = ["search-guid"];
 
 export default pluginsId.map((p) => ({
   input: path.join(pluginsPath, p, "index.js"),
