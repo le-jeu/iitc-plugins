@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Tile rendering
 // @category       Tweaks
-// @version        0.1.1
+// @version        0.1.2
 // @description    Render vector layers with canvas tiles
 
 function setup() {
@@ -232,11 +232,24 @@ function setup() {
     return Browser.canvas ? new TileCanvas(options) : null;
   }
 
-  window.mapOptions.renderer = tileCanvas({
-    pane: "overlayPane",
-    tolerance: 0,
-  });
+  // dont use canvas for ornaments/beacons/frakers
   window.DISABLE_CANVASICONLAYER = true;
+
+  if (window.mapOptions) {
+    // iitc > 0.32
+    window.mapOptions.renderer = tileCanvas({
+      pane: "overlayPane",
+      tolerance: 0,
+    });
+  } else {
+    // fallback for iitc <= 0.32
+    window.addHook('iitcLoaded', () => {
+      window.map.options.renderer = tileCanvas({
+          pane: "overlayPane",
+          tolerance: 0,
+      });
+    })
+  }
 }
 
-setup.priority = "boot";
+setup.priority = 'boot';
