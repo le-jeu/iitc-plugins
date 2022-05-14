@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Tile rendering
-// @category       Tweak
-// @version        0.1.0
+// @category       Tweaks
+// @version        0.1.1
 // @description    Render vector layers with canvas tiles
 
 function setup() {
