@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Player Inventory
 // @category       Info
-// @version        0.2.31
+// @version        0.3.0
 // @description    View inventory and highlight portals with keys at any zoom. Can be used with the official plugins Keys and Keys on map to show the number of keys on the map.
 
 // stock intel
@@ -874,14 +874,22 @@ function buildInventoryHTML(inventory) {
   L.DomUtil.create("b", null, container).textContent = `On Hand (${onHand.size})`;
   L.DomUtil.create("div", "capsule", container).appendChild(createCapsuleTable(inventory, onHand));
 
-  const capsulesName = Object.keys(inventory.capsules).sort();
+  const mapping = plugin.settings.capsuleNameMap;
+  const capsulesName = Object.keys(inventory.capsules).sort((a, b) => {
+    if (mapping[a] && !mapping[b]) return -1;
+    if (!mapping[a] && mapping[b]) return 1;
+    a = mapping[a] || a;
+    b = mapping[b] || b;
+    return localeCompare(a, b);
+  });
   const keyLockers = capsulesName.filter((name) => inventory.capsules[name].type === "KEY_CAPSULE");
   const quantums = capsulesName.filter((name) => inventory.capsules[name].type === "INTEREST_CAPSULE");
   const commonCapsules = capsulesName.filter((name) => inventory.capsules[name].type === "CAPSULE");
   for (const names of [keyLockers, quantums, commonCapsules]) {
-    for (const name of names) {
+    for (let name of names) {
       const capsule = inventory.capsules[name];
       if (capsule.size > 0) {
+        if (mapping[name]) name = `${mapping[name]} [${name}]`;
         L.DomUtil.create("b", null, container).textContent = `${itemTypes[capsule.type]}: ${name} (${capsule.size})`;
         L.DomUtil.create("div", "capsule", container).appendChild(createCapsuleTable(inventory, capsule));
       }
@@ -990,7 +998,34 @@ function exportToClipboard() {
       height: 'auto',
     });
   }
+}
 
+function displayNameMapping() {
+  const container = L.DomUtil.create("table");
+  container.innerHTML = "<tr><th>Capsule ID</th><th>Name</th></tr>"
+
+  const capsules = plugin.inventory.capsules;
+  const mapping = plugin.settings.capsuleNameMap;
+  const capsulesName = Object.keys(capsules).sort();
+  for (const name of capsulesName) {
+    const row = L.DomUtil.create("tr", '', container);
+    L.DomUtil.create("td", "id", row).textContent = name;
+    const td = L.DomUtil.create("td", "name", row);
+    const input = L.DomUtil.create("input", "", td);
+    if (mapping[name]) input.value = mapping[name];
+    L.DomEvent.on(input, "input", () => {
+      mapping[name] = input.value;
+      storeSettings();
+    })
+  }
+
+  window.dialog({
+    title: 'Inventory Capsule Names',
+    id: 'inventory-names',
+    html: container,
+    width: 'auto',
+    height: 'auto',
+  });
 }
 
 function displayOpt() {
@@ -1035,6 +1070,12 @@ function displayOpt() {
     refreshDelay.value = plugin.settings.autoRefreshDelay;
     storeSettings();
   });
+
+  {
+    const button = L.DomUtil.create("button", null, container);
+    button.textContent = "Set Capsule names";
+    L.DomEvent.on(button, 'click', displayNameMapping);
+  }
 
   // sync keys with the keys plugin
   if (window.plugin.keys) {
@@ -1148,6 +1189,7 @@ function setup() {
     autoRefreshDelay: 30,
     autoSyncKeys: false,
     keysSidebarEnable: false,
+    capsuleNameMap: {},
   }
 
   loadSettings();

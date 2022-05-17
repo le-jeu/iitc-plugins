@@ -112,3 +112,12 @@
   margin-top: auto;
   margin-bottom: auto;
 }
+
+#dialog-inventory-names th {
+  white-space: nowrap;
+}
+
+#dialog-inventory-names .id {
+  font-family: monospace;
+  vertical-align: middle;
+}
