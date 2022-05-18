@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Player Inventory
 // @category       Info
-// @version        0.3.0
+// @version        0.3.1
 // @description    View inventory and highlight portals with keys at any zoom. Can be used with the official plugins Keys and Keys on map to show the number of keys on the map.
 
 // stock intel
@@ -525,16 +525,14 @@ function getPortalLink(key) {
   a.title = key.address;
   a.href = window.makePermalink(key.latLng);
   L.DomEvent.on(a, 'click', function(event) {
-      window.renderPortalDetails(key.guid);
-      window.selectPortalByLatLng(key.latLng);
-      event.preventDefault();
-      return false;
+    L.DomEvent.preventDefault(event);
+    window.renderPortalDetails(key.guid);
+    window.selectPortalByLatLng(key.latLng);
   })
   L.DomEvent.on(a, 'dblclick', function(event) {
-      window.renderPortalDetails(key.guid);
-      window.zoomToAndShowPortal(key.guid, key.latLng);
-      event.preventDefault();
-      return false;
+    L.DomEvent.preventDefault(event);
+    window.renderPortalDetails(key.guid);
+    window.zoomToAndShowPortal(key.guid, key.latLng);
   });
   return a;
 }
