@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Player Inventory
 // @category       Info
-// @version        0.3.1
+// @version        0.3.2
 // @description    View inventory and highlight portals with keys at any zoom. Can be used with the official plugins Keys and Keys on map to show the number of keys on the map.
 
 // stock intel
@@ -884,12 +884,37 @@ function buildInventoryHTML(inventory) {
   const quantums = capsulesName.filter((name) => inventory.capsules[name].type === "INTEREST_CAPSULE");
   const commonCapsules = capsulesName.filter((name) => inventory.capsules[name].type === "CAPSULE");
   for (const names of [keyLockers, quantums, commonCapsules]) {
-    for (let name of names) {
+    for (const name of names) {
       const capsule = inventory.capsules[name];
       if (capsule.size > 0) {
-        if (mapping[name]) name = `${mapping[name]} [${name}]`;
-        L.DomUtil.create("b", null, container).textContent = `${itemTypes[capsule.type]}: ${name} (${capsule.size})`;
-        L.DomUtil.create("div", "capsule", container).appendChild(createCapsuleTable(inventory, capsule));
+        const displayName = mapping[name] ?`${mapping[name]} [${name}]` : name;
+        const typeName = itemTypes[capsule.type];
+        const size = capsule.size;
+
+        const head = L.DomUtil.create("b", null, container);
+        head.textContent = `${typeName}: ${displayName} (${size})`;
+
+        const div = L.DomUtil.create("div", "capsule", container);
+
+        const editDiv = L.DomUtil.create("div", "", div);
+        const editIcon = L.DomUtil.create("a", "edit-name-icon", editDiv);
+        editIcon.textContent = "✏️";
+        editIcon.title = "Change capsule name";
+
+        const editInput = L.DomUtil.create("input", "edit-name-input", editDiv);
+        if (mapping[name]) editInput.value = mapping[name];
+        editInput.placeholder = "Enter capsule name";
+        L.DomEvent.on(editIcon, 'click', () => {
+          editInput.style.display = editInput.style.display === "unset" ? null : "unset";
+        });
+        L.DomEvent.on(editInput, 'input', () => {
+          mapping[name] = editInput.value;
+          storeSettings();
+          const displayName = mapping[name] ?`${mapping[name]} [${name}]` : name;
+          head.textContent = `${typeName}: ${displayName} (${size})`;
+        });
+
+        div.appendChild(createCapsuleTable(inventory, capsule));
       }
     }
   }
@@ -984,7 +1009,7 @@ function exportToClipboard() {
   if(typeof android !== 'undefined' && android && android.shareString)
     android.shareString(shared);
   else {
-    const content = L.DomUtil.create('textarea');
+    const content = L.DomUtil.create('textarea', "container");
     content.textContent = shared;
     L.DomEvent.on(content, 'click', () => {
       content.select();
@@ -999,23 +1024,18 @@ function exportToClipboard() {
 }
 
 function displayNameMapping() {
-  const container = L.DomUtil.create("table");
-  container.innerHTML = "<tr><th>Capsule ID</th><th>Name</th></tr>"
+  const container = L.DomUtil.create("textarea", "container");
+  container.placeholder = "AAAAAAAA: Name of AAAAAAAA\nBBBBBBBB: Name of BBBBBBBB\n...";
 
   const capsules = plugin.inventory.capsules;
   const mapping = plugin.settings.capsuleNameMap;
   const capsulesName = Object.keys(capsules).sort();
+  const text = [];
   for (const name of capsulesName) {
-    const row = L.DomUtil.create("tr", '', container);
-    L.DomUtil.create("td", "id", row).textContent = name;
-    const td = L.DomUtil.create("td", "name", row);
-    const input = L.DomUtil.create("input", "", td);
-    if (mapping[name]) input.value = mapping[name];
-    L.DomEvent.on(input, "input", () => {
-      mapping[name] = input.value;
-      storeSettings();
-    })
+    if (mapping[name])
+      text.push(`${name}: ${mapping[name]}`);
   }
+  container.value = text.join("\n");
 
   window.dialog({
     title: 'Inventory Capsule Names',
@@ -1023,6 +1043,18 @@ function displayNameMapping() {
     html: container,
     width: 'auto',
     height: 'auto',
+    buttons: {
+      "Set": () => {
+        const lines = container.value.trim().split('\n');
+        for (const line of lines) {
+          const m = line.trim().match(/^([0-9A-F]{8})\s*:\s*(.*)$/);
+          if (m) {
+            mapping[m[1]] = m[2];
+          }
+        }
+        storeSettings();
+      }
+    }
   });
 }
 
