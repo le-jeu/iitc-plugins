@@ -92,7 +92,7 @@ function updateMobile(data) {
 }
 
 var setup = function () {
-  $('<style>').prop('type', 'text/css').html('@include_string:ingress-icons.css@').appendTo('head');
+  $('<style>').prop('type', 'text/css').html('@include_css:ingress-icons.css@').appendTo('head');
 
   window.getModDetails = getModDetails;
   if (isSmartphone()) window.addHook('portalSelected', updateMobile);
