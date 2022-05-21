@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Player Inventory
 // @category       Info
-// @version        0.3.2
+// @version        0.3.3
 // @description    View inventory and highlight portals with keys at any zoom. Can be used with the official plugins Keys and Keys on map to show the number of keys on the map.
 
 // stock intel
@@ -1163,7 +1163,7 @@ function displayOpt() {
 }
 
 function setupCSS() {
-  $('<style>').html('@include_css:player-inventory.css@').appendTo('head');
+  document.head.append(h('style', {}, '@include_css:player-inventory.css@'));
   let colorStyle = "";
   window.COLORS_LVL.forEach((c,i) => {
     colorStyle += `.level_L${i}{ color: ${c} }`;
@@ -1172,7 +1172,7 @@ function setupCSS() {
     if (window.COLORS_MOD[r])
       colorStyle += `.rarity_${rarityShort[i]} { color: ${window.COLORS_MOD[r]}}`;
   });
-  $('<style>').html(colorStyle).appendTo('head');
+  document.head.append(h('style', {}, colorStyle));
 }
 
 function setupDisplay() {
@@ -1196,17 +1196,24 @@ function setupDisplay() {
     refreshButton.textContent = 'Refresh';
     L.DomEvent.on(refreshButton, 'click', refreshInventory);
 
-    $('<a>')
-      .html('Inventory Opt')
-      .attr('title','Inventory options')
-      .click(displayOpt)
-      .appendTo('#toolbox');
+    document.getElementById("toolbox").append(
+      h(
+        "a",
+        { title: "Inventory options", onclick: displayOpt },
+        "Inventory Opt"
+      )
+    );
   } else {
-    $('<a>')
-      .html('Inventory')
-      .attr('title','Show inventory')
-      .click(() => displayInventory(plugin.inventory))
-      .appendTo('#toolbox');
+    document.getElementById("toolbox").append(
+      h(
+        "a",
+        {
+          title: "Show inventory",
+          onclick: () => displayInventory(plugin.inventory),
+        },
+        "Inventory"
+      )
+    );
   }
 }
 
@@ -1313,7 +1320,7 @@ function setup() {
         )
       );
 
-      $("#randdetails").append(
+      document.getElementById("randdetails").append(
         h(
           "tr",
           { className: "inventory-details"},
