@@ -1042,20 +1042,27 @@ function displayNameMapping() {
     title: 'Inventory Capsule Names',
     id: 'inventory-names',
     html: container,
-    width: 'auto',
-    height: 'auto',
-    buttons: {
-      "Set": () => {
-        const lines = container.value.trim().split('\n');
-        for (const line of lines) {
-          const m = line.trim().match(/^([0-9A-F]{8})\s*:\s*(.*)$/);
-          if (m) {
-            mapping[m[1]] = m[2];
+    buttons: [
+      {
+        text: "Set",
+        click: () => {
+          const lines = container.value.trim().split('\n');
+          for (const line of lines) {
+            const m = line.trim().match(/^([0-9A-F]{8})\s*:\s*(.*)$/);
+            if (m) {
+              mapping[m[1]] = m[2];
+            }
           }
+          storeSettings();
+        },
+      },
+      {
+        text: "Close",
+        click: function () {
+          $(this).dialog('close');
         }
-        storeSettings();
       }
-    }
+    ],
   });
 }
 
