@@ -520,19 +520,20 @@ window.plugin.playerInventory = plugin;
 
 // again...
 function getPortalLink(key) {
+  const latLng = [key.latLng[0].toFixed(6), key.latLng[1].toFixed(6)];
   const a = L.DomUtil.create('a');
   a.textContent = key.title;
   a.title = key.address;
-  a.href = window.makePermalink(key.latLng);
+  a.href = window.makePermalink(latLng);
   L.DomEvent.on(a, 'click', function(event) {
     L.DomEvent.preventDefault(event);
     window.renderPortalDetails(key.guid);
-    window.selectPortalByLatLng(key.latLng);
+    window.selectPortalByLatLng(latLng);
   })
   L.DomEvent.on(a, 'dblclick', function(event) {
     L.DomEvent.preventDefault(event);
     window.renderPortalDetails(key.guid);
-    window.zoomToAndShowPortal(key.guid, key.latLng);
+    window.zoomToAndShowPortal(key.guid, latLng);
   });
   return a;
 }
@@ -1001,7 +1002,7 @@ function exportToClipboard() {
   const data = [];
   for (const [guid, key] of plugin.inventory.keys) {
     for (const [capsule, num] of key.count) {
-      data.push([key.title, key.latLng[0], key.latLng[1], capsule, num].join('\t'));
+      data.push([key.title, key.latLng[0].toFixed(6), key.latLng[1].toFixed(6), capsule, num].join('\t'));
     }
   }
   const shared = data.join('\n');
