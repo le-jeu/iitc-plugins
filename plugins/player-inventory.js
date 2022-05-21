@@ -1156,7 +1156,7 @@ function displayOpt() {
 }
 
 function setupCSS() {
-  $('<style>').html('@include_string:player-inventory.css@').appendTo('head');
+  $('<style>').html('@include_css:player-inventory.css@').appendTo('head');
   let colorStyle = "";
   window.COLORS_LVL.forEach((c,i) => {
     colorStyle += `.level_L${i}{ color: ${c} }`;
@@ -1202,6 +1202,31 @@ function setupDisplay() {
       .appendTo('#toolbox');
   }
 }
+
+/** createElement alias h */
+function h(tagName, attrs = {}, ...children) {
+  if (tagName === "fragment") return children;
+  attrs = attrs || {};
+  const rawHtml = attrs.rawHtml;
+  delete attrs.rawHtml;
+  const elem = document.createElement(tagName);
+  // dataset
+  if (attrs.dataset) {
+    for (const key in attrs.dataset) elem.dataset[key] = attrs.dataset[key];
+    delete attrs.dataset;
+  }
+  Object.assign(elem, attrs);
+  if (rawHtml) {
+    elem.innerHTML = rawHtml;
+    return elem;
+  }
+  for (const child of children) {
+    if (Array.isArray(child)) elem.append(...child);
+    else elem.append(child);
+  }
+  return elem;
+}
+
 
 // iitc setup
 function setup() {
@@ -1266,15 +1291,31 @@ function setup() {
       }
     }
   });
-  window.addHook('portalDetailsUpdated', (data) => {
+  window.addHook("portalDetailsUpdated", (data) => {
     //{guid: guid, portal: portal, portalDetails: details, portalData: data}
     if (!plugin.settings.keysSidebarEnable) return;
     const total = plugin.inventory.countKey(data.guid);
     if (total > 0) {
       const key = plugin.inventory.keys.get(data.guid);
-      const capsules = Array.from(key.count.keys());
-      $("#randdetails")
-        .append(`<tr><td>${total}</td><th>Keys</th><th>Capsules</th><td style="white-space: normal">${capsules.join(' ')}</td></tr>`);
+      const mapping = plugin.settings.capsuleNameMap;
+      const capsules = Array.from(key.count.keys()).map((name) =>
+        h(
+          "div",
+          { title: mapping[name] ? `${mapping[name]} [${name}]` : name },
+          mapping[name] ? `${mapping[name]}` : name
+        )
+      );
+
+      $("#randdetails").append(
+        h(
+          "tr",
+          { className: "inventory-details"},
+          h("td", {}, `${total}`),
+          h("th", {}, "Keys"),
+          h("th", {}, "Capsules"),
+          h("td", {}, capsules)
+        )
+      );
     }
   });
 
