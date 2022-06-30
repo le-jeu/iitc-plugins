@@ -1,24 +1,34 @@
 // @author         jaiperdu
 // @name           d3js shpere
 // @category       Misc
-// @version        0.1.0
+// @version        0.1.1
 // @description    Add sphere preview
 
 function addExternalScript(url) {
   var script = document.createElement("script");
   script.src = url;
-  script.async = false;
   return document.head.appendChild(script);
 }
 
-addExternalScript("https://cdn.jsdelivr.net/npm/d3-array@3");
-addExternalScript("https://cdn.jsdelivr.net/npm/d3-geo@3");
-addExternalScript("https://cdn.jsdelivr.net/npm/d3-interpolate@3");
-addExternalScript("https://cdn.jsdelivr.net/npm/d3-ease@3");
-addExternalScript("https://cdn.jsdelivr.net/npm/d3-dispatch@3");
-addExternalScript("https://cdn.jsdelivr.net/npm/d3-timer@3");
-addExternalScript("https://cdn.jsdelivr.net/npm/d3-selection@3");
-addExternalScript("https://cdn.jsdelivr.net/npm/d3-transition@3");
+function onloadPromise(script) {
+  return new Promise((resolve, reject) => {
+    script.onload = resolve;
+    script.onerror = reject;
+  });
+}
+
+var scriptsPromise = Promise.all(
+  [
+    "https://cdn.jsdelivr.net/npm/d3-array@3",
+    "https://cdn.jsdelivr.net/npm/d3-geo@3",
+    "https://cdn.jsdelivr.net/npm/d3-interpolate@3",
+    "https://cdn.jsdelivr.net/npm/d3-ease@3",
+    "https://cdn.jsdelivr.net/npm/d3-dispatch@3",
+    "https://cdn.jsdelivr.net/npm/d3-timer@3",
+    "https://cdn.jsdelivr.net/npm/d3-selection@3",
+    "https://cdn.jsdelivr.net/npm/d3-transition@3",
+  ].map((url) => onloadPromise(addExternalScript(url)))
+);
 
 function loop(as) {
   as.push(as[0]);
@@ -35,6 +45,14 @@ function latlng2array(c) {
 }
 
 function setup() {
+  // wait for d3 loading
+  scriptsPromise.then(delayedSetup).catch(() => {
+    window.alert("d3-sphere: fail to load d3js dependencies");
+  });
+}
+
+function delayedSetup(e) {
+  console.log(e);
   const projection = d3.geoOrthographic();
   
   const outline = ({type: "Sphere"});
