@@ -164,6 +164,14 @@ def process_file(source, out_dir, dist_path=None, deps_list=None):
     meta, is_main = fill_meta(meta, plugin_name, dist_path)
     settings.plugin_id = plugin_name
 
+    if not settings.version_timestamp and settings.ignore_semver:
+        try:
+            old_meta, _ = (out_dir / (plugin_name + '.user.js')).read_text().split('\n\n', 1)
+            if old_meta + '\n' == meta:
+                return
+        except:
+            pass
+
     path = source.parent  # used as root for all (relative) paths
     script = re.sub(r"'@bundle_code@';", partial(bundle_code, path=path), script)
     try:

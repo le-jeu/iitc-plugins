@@ -35,6 +35,9 @@ defaults = {  # common for all build targets
     'on_fail': lambda: print('\a'),    # function (or string for os.system)
     'on_success': lambda: print('Build successed'),
 
+    # don't build if the version has not changed (has no effect if version_timestamp is true)
+    'ignore_semver': False,
+
     # other:
     # runtime settings set in settings.py also can be overriden
     # - 'build_source_dir'
@@ -72,6 +75,7 @@ builds = {  # every build entry extends common defaults
     'lejeu': {
         'url_dist_base': 'https://le-jeu.github.io/iitc-plugins',
         'update_file': '.user.js',
+        'ignore_semver': True,
     },
 
     # publish your own fork of the project, and host it on your own web site
