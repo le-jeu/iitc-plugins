@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Wasabee Key Sync
 // @category       Misc
-// @version        0.1.4
+// @version        0.1.5
 // @description    Sync keys from CORE with Wasabee OP/D
 
 const wkeys = {};
@@ -363,8 +363,8 @@ function syncOpKeys() {
     alert("You need to select an OP that is on the current server.");
     return;
   }
-  const me = localStorage["wasabee-me"];
-  const gid = JSON.parse(me).GoogleID;
+  const me = JSON.parse(localStorage["wasabee-me"]);
+  const gid = me.GoogleID || me.id; // .id for >0.21
   const map = {}
   for (const k of wkeys.keys) {
     if (wkeys.selected.has(portalCapsID(k))) {
