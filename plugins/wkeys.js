@@ -333,7 +333,6 @@ function selectOpPortals() {
     if (sop.containsMarkerByID(k.guid, "GetKeyPortalMarker") || sop.anchors.includes(k.guid))
       wkeys.selected.add(portalCapsID(k));
   }
-  displayKeys();
 }
 
 function syncOpKeys() {
