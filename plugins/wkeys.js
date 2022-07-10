@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Wasabee Key Sync
 // @category       Misc
-// @version        0.1.5
+// @version        0.1.6
 // @description    Sync keys from CORE with Wasabee OP/D
 
 const wkeys = {};
@@ -13,6 +13,10 @@ function getSelectedOp() {
   return null;
 }
 
+function getToken() {
+  return localStorage["wasabee-jwt"];
+}
+
 function pushKey(server, opID, portalID, onhand, capsule) {
   const fd = new FormData();
   fd.append("count", onhand);
@@ -21,9 +25,12 @@ function pushKey(server, opID, portalID, onhand, capsule) {
     method: "POST",
     mode: "cors",
     cache: "default",
-    credentials: "include",
+    credentials: "omit",
     redirect: "manual",
     referrerPolicy: "origin",
+    headers: {
+      "Authorization": "Bearer " + getToken(),
+    },
     body: fd,
   });
 }
@@ -34,11 +41,12 @@ function pushDKeys(server, dks) {
     method: "POST",
     mode: "cors",
     cache: "default",
-    credentials: "include",
+    credentials: "omit",
     redirect: "manual",
     referrerPolicy: "origin",
     headers: {
       "Content-Type": "application/json;charset=UTF-8",
+      "Authorization": "Bearer " + getToken(),
     },
     body: j,
   });
@@ -185,35 +193,6 @@ function handleError(e) {
 function getSubscriptionStatus() {
   window.postAjax('getHasActiveSubscription', {}, handleSubscription, handleError);
 }
-
-// TEST with player inventory
-// function openIndexedDB() {
-//   const rq = window.indexedDB.open("player-inventory", 1);
-//   rq.onupgradeneeded = function(event) {
-//     const db = event.target.result;
-//     db.createObjectStore("inventory", { autoIncrement: true });
-//   };
-//   return rq;
-// }
-
-// function getSubscriptionStatus() {
-//   if (!window.indexedDB) return getSubscriptionStatus();
-//   const rq = openIndexedDB();
-//   rq.onsuccess = function (event) {
-//     const db = event.target.result;
-//     const tx = db.transaction(["inventory"], "readonly");
-//     const store = tx.objectStore("inventory");
-//     store.getAll().onsuccess = function (event) {
-//       const r = event.target.result;
-//       if (r.length > 0) {
-//         const data = r[r.length-1];
-//         handleInventory({result: data.raw});
-//       }
-//     }
-//     db.close();
-//   };
-// }
-//
 
 // sort table
 
