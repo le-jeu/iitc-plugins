@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Wasabee Key Sync
 // @category       Misc
-// @version        0.1.6
+// @version        0.1.7
 // @description    Sync keys from CORE with Wasabee OP/D
 
 const wkeys = {};
@@ -335,6 +335,17 @@ function selectOpPortals() {
   }
 }
 
+function namesToCapID(names) {
+  if (names.length == 0) // o_O
+    return "";
+  if (names.length == 1)
+    return names[0];
+  names = names.map((v) => v === "" ? "Inv" : v);
+  if (names.length > 8) return "*multi*";
+  let size = Math.floor(16 + 1 - names.length) / names.length;
+  return names.map((v) => v.slice(0, size)).join(',');
+}
+
 function syncOpKeys() {
   const op = getSelectedOp();
   if (!op.isServerOp() || !op.isOnCurrentServer()) {
@@ -346,14 +357,14 @@ function syncOpKeys() {
   const map = {}
   for (const k of wkeys.keys) {
     if (wkeys.selected.has(portalCapsID(k))) {
-      if (k.guid in map) map[k.guid].name = "*multi*";
-      else map[k.guid] = {total: 0, name: k.capsule};
+      if (!(k.guid in map)) map[k.guid] = { total: 0, names: [] };
       map[k.guid].total += k.count;
+      map[k.guid].names.push(k.capsule);
     }
   }
   for (const guid in map) {
-    pushKey(op.server, op.ID, guid, map[guid].total, map[guid].name)
-      .then(() => op.keyOnHand(guid, gid, map[guid].total, map[guid].name));
+    pushKey(op.server, op.ID, guid, map[guid].total, namesToCapID(map[guid].names))
+      .then(() => op.keyOnHand(guid, gid, map[guid].total, namesToCapID(map[guid].names)));
   }
 }
 
@@ -366,9 +377,9 @@ function syncDKeys() {
   const map = {}
   for (const k of wkeys.keys) {
     if (wkeys.selected.has(portalCapsID(k))) {
-      if (k.guid in map) map[k.guid].capsule = "*multi*";
-      else map[k.guid] = L.extend({total: 0}, k);
+      if (!(k.guid in map)) map[k.guid] = L.extend({ total: 0, names: [] }, k);
       map[k.guid].total += k.count;
+      map[k.guid].names.push(k.capsule);
     }
   }
   pushDKeys(
@@ -376,7 +387,7 @@ function syncDKeys() {
     Object.values(map).map((k) => ({
       PortalID: k.guid,
       Count: k.total,
-      CapID: k.capsule,
+      CapID: namesToCapID(k.names),
       Name: k.title,
       Lat: k.latLng[0].toFixed(6),
       Lng: k.latLng[1].toFixed(6),
