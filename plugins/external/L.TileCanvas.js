@@ -160,14 +160,12 @@ L.TileCanvas = L.GridLayer.extend({
   },
 
   _clearTile: function (tile) {
-    console.debug("_clearTile (%d, %d, %d)", tile.coords.x, tile.coords.y, tile.coords.z);
     var ctx = tile.el.getContext("2d");
     ctx.clearRect(0, 0, tile.el.width, tile.el.height);
     tile.needRedraw = true;
   },
 
   _clear: function () {
-    console.debug("_clear start");
     // clear entire tiles that intersect the redraw bounds
     var key,
       tile,
@@ -181,7 +179,6 @@ L.TileCanvas = L.GridLayer.extend({
         }
       }
     }
-    console.debug("_clear stop");
   },
 
   _draw: function () {
