@@ -1,0 +1,25 @@
+{
+  "name": "iitc-plugins",
+  "description": "Plugins for IITC",
+  "homepage": "https://github.com/le-jeu/iitc-plugins/",
+  "repository": "https://github.com/le-jeu/iitc-plugins.git",
+  "license": "BSD 2",
+  "private": true,
+  "devDependencies": {
+    "eslint": "^8.20.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.7.1"
+  },
+  "scripts": {
+    "build": "npm run build:local",
+    "build:local": "python3 build_plugin.py --out-dir dist local plugins/*.js",
+    "build:lejeu": "python3 build_plugin.py --out-dir dist lejeu plugins/*.js",
+    "lint": "npm run lint:check",
+    "lint:check": "eslint plugins",
+    "lint:fix": "eslint plugins --fix",
+    "format": "npm run format:check",
+    "format:check": "prettier plugins --check",
+    "format:fix": "prettier plugins --write"
+  }
+}

@@ -1,0 +1,27 @@
+{
+    "env": {
+        "browser": true,
+        "es6": true,
+        "jquery": true,
+        "greasemonkey": true
+    },
+    "extends": [
+        "eslint:recommended",
+        "plugin:prettier/recommended",
+        "prettier"
+    ],
+    "ignorePatterns": [
+        "/core/external/*.js",
+        "/plugins/external/*.js"
+    ],
+    "plugins": ["prettier"],
+    "rules": {
+        "eqeqeq": "error",
+        "spaced-comment": "error",
+        "no-unused-expressions": "error"
+    },
+    "globals": {
+        "L": "readonly",
+        "portals": "readonly"
+    }
+}
