@@ -168,7 +168,7 @@ def process_file(source, out_dir, dist_path=None, deps_list=None):
         try:
             old_meta, _ = (out_dir / (plugin_name + '.user.js')).read_text().split('\n\n', 1)
             if old_meta + '\n' == meta:
-                return
+                return False
         except:
             pass
 
@@ -194,6 +194,8 @@ def process_file(source, out_dir, dist_path=None, deps_list=None):
     (out_dir / (plugin_name + '.user.js')).write_text(''.join(data), encoding='utf8')
     if settings.url_dist_base and settings.update_file == '.meta.js':
         (out_dir / (plugin_name + '.meta.js')).write_text(meta, encoding='utf8')
+
+    return True
 
 
 if __name__ == '__main__':
@@ -224,7 +226,9 @@ if __name__ == '__main__':
         if target.is_file() and target.samefile(source):
             parser.error('Target cannot be same as source: {}'.format(source))
         try:
-            process_file(source, args.out_dir)
+            if process_file(source, args.out_dir):
+                print('new/changed:', target)
+            else:
+                print('unchanged:  ', target)
         except UserWarning as err:
             parser.error(err)
-        print(target)
