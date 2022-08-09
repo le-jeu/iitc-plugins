@@ -655,7 +655,8 @@ function handleInventory(data) {
   autoRefresh();
 }
 
-function handleError() {
+function handleError(_, textStatus, errorThrown) {
+  alert("Inventory: Last refresh failed. " + textStatus + ", " + errorThrown);
   autoRefresh();
 }
 
