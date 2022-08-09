@@ -29,21 +29,6 @@ class Color {
   }
 }
 
-/** Retrieve the value of the property `prop` of the portal */
-function getExpr(expr, portal) {
-  const prop = expr[1];
-  if (prop in portal.options) {
-    return portal.options[prop];
-  }
-  if (prop in portal.options.data) {
-    return portal.options.data[prop];
-  }
-  if (portal.options.data.history && prop in portal.options.data.history) {
-    return portal.options.data.history[prop];
-  }
-  return null;
-}
-
 function compareExpr(expr, portal) {
   const [op, e1, e2] = expr;
   const v1 = evaluateExpr(e1, portal);
@@ -185,6 +170,21 @@ function mathExpr(expr, portal) {
   return null;
 }
 
+/** Retrieve the value of the property `prop` of the portal */
+function getExpr(expr, portal) {
+  const prop = expr[1];
+  if (prop in portal.options) {
+    return portal.options[prop];
+  }
+  if (prop in portal.options.data) {
+    return portal.options.data[prop];
+  }
+  if (portal.options.data.history && prop in portal.options.data.history) {
+    return portal.options.data.history[prop];
+  }
+  return null;
+}
+
 function literalExpr(expr) {
   return expr[1];
 }
@@ -194,20 +194,26 @@ function zoomExpr() {
 }
 
 customHighlight.operators = {
+  // value
   get: getExpr,
   literal: literalExpr,
+  now: Date.now,
+  zoom: zoomExpr,
+  // math
   '+': mathExpr,
   '*': mathExpr,
   '-': mathExpr,
   '/': mathExpr,
   '%': mathExpr,
   '^': mathExpr,
+  // comparison
   '==': compareExpr,
   '!=': compareExpr,
   '<': compareExpr,
   '<=': compareExpr,
   '>': compareExpr,
   '>=': compareExpr,
+  // boolean
   or: booleanExpr,
   and: booleanExpr,
   any: booleanExpr,
@@ -215,13 +221,15 @@ customHighlight.operators = {
   not: booleanExpr,
   '!': booleanExpr,
   in: booleanExpr,
+  // switch-like
   match: matchExpr,
+  // if/elif/else
   case: caseExpr,
   interpolate: interpolateExpr,
+  // color
   rgb: rgbExpr,
+  // array
   slice: sliceExpr,
-  now: Date.now,
-  zoom: zoomExpr,
 };
 
 function evaluateExpr(expr, portal) {
