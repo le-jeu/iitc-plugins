@@ -1,11 +1,8 @@
 // @author         jaiperdu
 // @name           Customized highlighter
 // @category       Highlighter
-// @version        0.1.0
+// @version        0.2.0
 // @description    Configure you own highlighter
-
-const customHighlight = {};
-// const STORAGE_KEY = 'plugin-highlight-customized';
 
 function clamp(a, min, max) {
   if (a < min) return min;
@@ -193,6 +190,8 @@ function zoomExpr() {
   return window.map.getZoom();
 }
 
+const customHighlight = {};
+
 customHighlight.operators = {
   // value
   get: getExpr,
@@ -255,7 +254,7 @@ function computeStyle(style, portal) {
   return res;
 }
 
-customHighlight.styles = {
+const exampleStyles = {
   // examples, this needs a UI to define user based.
   rainbow: {
     color: ['interpolate', ['linear'], ['get', 'level'], 0, ['rgb', 255, 0, 0], 4, ['rgb', 0, 255, 0], 8, ['rgb', 0, 0, 255]],
@@ -322,13 +321,114 @@ customHighlight.styles = {
       ['rgb', 128, 128, 128],
     ],
   },
+  custom: {},
 };
+
+function showDialog() {
+  const div = document.createElement('div');
+
+  const styles = customHighlight.settings.styles;
+  const selected = customHighlight.settings.selected;
+
+  const selectStyle = document.createElement('select');
+  for (const name in styles) {
+    const option = document.createElement('option');
+    option.textContent = name;
+    option.value = name;
+    selectStyle.appendChild(option);
+  }
+  if (selected.length) selectStyle.value = selected[0];
+  div.appendChild(selectStyle);
+
+  const styleInput = document.createElement('textarea');
+  if (selected.length) styleInput.value = JSON.stringify(styles[selected[0]], null, 2);
+  div.appendChild(styleInput);
+
+  const desc = document.createElement('div');
+  desc.innerHTML =
+    "Style description is derived from <a 'href=https://docs.mapbox.com/mapbox-gl-js/style-spec/expressions/'>Expression for MapBox Style</a>. Give a look to the examples for inspiration.";
+  div.appendChild(desc);
+
+  selectStyle.addEventListener('change', function () {
+    const value = selectStyle.value;
+    if (value in styles) {
+      styleInput.value = JSON.stringify(styles[value], null, 2);
+      // one element for now
+      selected.splice(0, selected.length, value);
+    }
+  });
+
+  const buttons = {
+    Apply: function () {
+      try {
+        // need some validation
+        const style = JSON.parse(styleInput.value);
+        for (const name of selected) {
+          styles[name] = style;
+          styleInput.value = JSON.stringify(styles[name], null, 2);
+          window.resetHighlightedPortals();
+        }
+        localStorage[STORAGE_KEY] = JSON.stringify(customHighlight.settings);
+      } catch (e) {
+        console.error(e);
+        alert("Couldn't parse the style");
+      }
+    },
+    Reset: function () {
+      for (const name of selected) {
+        styles[name] = exampleStyles[name];
+        styleInput.value = JSON.stringify(styles[name], null, 2);
+      }
+    },
+    Close: function () {
+      $(this).dialog('close');
+    },
+  };
+
+  window.dialog({
+    id: 'plugin-custom-highlight',
+    html: div,
+    title: 'Change Custom highlighter style',
+    width: 'auto',
+    buttons: buttons,
+  });
+}
+
+const STORAGE_KEY = 'plugin-highlight-customized';
 
 /* exported setup */
 function setup() {
+  $('<style>')
+    .prop('type', 'text/css')
+    .html(
+      '#dialog-plugin-custom-highlight select { display: block }\
+           #dialog-plugin-custom-highlight textarea { width: 100%; min-height:250px; font-family: monospace }'
+    )
+    .appendTo('head');
+
+  customHighlight.settings = {
+    selected: ['older'],
+    styles: exampleStyles,
+  };
+  try {
+    const localSettings = JSON.parse(localStorage[STORAGE_KEY]);
+    customHighlight.settings.selected = localSettings.selected;
+    customHighlight.settings.styles = Object.assign(customHighlight.settings.styles, localSettings.styles);
+  } catch (_) {
+    // pass
+  }
+
+  const toolButton = document.getElementById('toolbox').appendChild(document.createElement('a'));
+  toolButton.textContent = 'Custom HL';
+  toolButton.addEventListener('click', showDialog);
+
   window.addPortalHighlighter('Custom Highlighter', function (data) {
     const portal = data.portal;
-    const style = computeStyle(customHighlight.styles.older, portal);
-    portal.setStyle(style);
+    for (const name of customHighlight.settings.selected) {
+      if (name in customHighlight.settings.styles) {
+        const style = customHighlight.settings.styles[name];
+        portal.setStyle(computeStyle(style, portal));
+      }
+    }
   });
 }
