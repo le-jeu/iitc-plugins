@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Customized highlighter
 // @category       Highlighter
-// @version        0.2.0
+// @version        0.2.1
 // @description    Configure you own highlighter
 
 function clamp(a, min, max) {
@@ -408,7 +408,7 @@ function setup() {
 
   customHighlight.settings = {
     selected: ['older'],
-    styles: exampleStyles,
+    styles: Object.assign({}, exampleStyles),
   };
   try {
     const localSettings = JSON.parse(localStorage[STORAGE_KEY]);
