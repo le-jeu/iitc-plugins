@@ -1,5 +1,5 @@
 export function createElement(tagName, attrs = {}, ...children) {
-  if (tagName === "fragment") return children;
+  if (tagName === 'fragment') return children;
   attrs = attrs || {};
   const rawHtml = attrs.rawHtml;
   delete attrs.rawHtml;
@@ -21,9 +21,9 @@ export function createElement(tagName, attrs = {}, ...children) {
     elem.innerHTML = rawHtml;
     return elem;
   }
-  for (const child of children) {
-    if (Array.isArray(child)) elem.append(...child);
-    else elem.append(child);
+  for (const child of children.flat()) {
+    // cast to string to display "undefined" or "null"
+    if (child !== undefined && child !== null) elem.append(child);
   }
   return elem;
 }

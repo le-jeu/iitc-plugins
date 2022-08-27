@@ -2,8 +2,13 @@
 import { createElement } from '../lib/dom';
 import playerInventoryCSS from './player-inventory.css';
 
+import playerInventory from './plugin';
+
 import { rarity, Inventory, itemTypes } from './inventory';
 import { parseInventory } from './parser';
+import { loadLastInventory, loadSettings, storeSettings, saveInventory } from './storage';
+import { requestInventory } from './request';
+import { createPopup, injectKeys, portalKeyHighlight } from './map';
 
 const rarityShort = rarity.map((v) =>
   v
@@ -15,219 +20,33 @@ const rarityShort = rarity.map((v) =>
 const rarityToInt = {};
 for (const i in rarity) rarityToInt[rarity[i]] = i;
 
-const playerInventory = {};
-window.plugin.playerInventory = playerInventory;
-
 // again...
 function getPortalLink(key) {
   const latLng = [key.latLng[0].toFixed(6), key.latLng[1].toFixed(6)];
-  const a = L.DomUtil.create('a');
-  a.textContent = key.title;
-  a.title = key.address;
-  a.href = window.makePermalink(latLng);
-  L.DomEvent.on(a, 'click', function(event) {
-    L.DomEvent.preventDefault(event);
-    window.renderPortalDetails(key.guid);
-    window.selectPortalByLatLng(latLng);
-  })
-  L.DomEvent.on(a, 'dblclick', function(event) {
-    L.DomEvent.preventDefault(event);
-    window.renderPortalDetails(key.guid);
-    window.zoomToAndShowPortal(key.guid, latLng);
-  });
-  return a;
+  return (
+    <a
+      title={key.address}
+      href={window.makePermalink(latLng)}
+      onclick={function (event) {
+        L.DomEvent.preventDefault(event);
+        window.renderPortalDetails(key.guid);
+        window.selectPortalByLatLng(latLng);
+      }}
+      ondblclick={function (event) {
+        L.DomEvent.preventDefault(event);
+        window.renderPortalDetails(key.guid);
+        window.zoomToAndShowPortal(key.guid, latLng);
+      }}
+    >
+      {key.title}
+    </a>
+  );
 }
 
 function localeCompare(a,b) {
   if (typeof a !== "string") a = '';
   if (typeof b !== "string") b = '';
   return a.localeCompare(b)
-}
-
-const STORE_KEY = "plugin-player-inventory";
-const SETTINGS_KEY = "plugin-player-inventory-settings";
-
-function openIndexedDB() {
-  const rq = window.indexedDB.open("player-inventory", 1);
-  rq.onupgradeneeded = function(event) {
-    const db = event.target.result;
-    db.createObjectStore("inventory", { autoIncrement: true });
-  };
-  return rq;
-}
-
-function loadFromIndexedDB() {
-  if (!window.indexedDB) return loadFromLocalStorage();
-  const rq = openIndexedDB();
-  rq.onerror = function () {
-    loadFromLocalStorage();
-  };
-  rq.onsuccess = function (event) {
-    const db = event.target.result;
-    const tx = db.transaction(["inventory"], "readonly");
-    const store = tx.objectStore("inventory");
-    store.getAll().onsuccess = function (event) {
-      const r = event.target.result;
-      if (r.length > 0) {
-        const data = r[r.length-1];
-        playerInventory.inventory = parseInventory("⌂", data.raw);
-        playerInventory.lastRefresh = data.date;
-        autoRefresh();
-        window.runHooks("pluginInventoryRefresh", {inventory: playerInventory.inventory});
-      } else {
-        loadFromLocalStorage();
-      }
-    }
-    db.close();
-  };
-}
-
-function storeToIndexedDB(data) {
-  if (!window.indexedDB) return storeToLocalStorage(data);
-  const rq = openIndexedDB();
-  rq.onerror = function () {
-    storeToLocalStorage(data);
-  };
-  rq.onsuccess = function (event) {
-    const db = event.target.result;
-    const tx = db.transaction(["inventory"], "readwrite");
-    const store = tx.objectStore("inventory");
-    store.clear().onsuccess = function () {
-      store.add({
-        raw: data,
-        date: Date.now(),
-      });
-    };
-    tx.oncomplete = function () {
-      delete localStorage[STORE_KEY];
-    }
-    tx.onerror = function () {
-      storeToLocalStorage(data);
-    }
-    db.close();
-  };
-}
-
-function loadFromLocalStorage() {
-  const store = localStorage[STORE_KEY];
-  if (store) {
-    try {
-      const data = JSON.parse(store);
-      playerInventory.inventory = parseInventory("⌂", data.raw);
-      playerInventory.lastRefresh = data.date;
-      autoRefresh();
-      window.runHooks("pluginInventoryRefresh", {inventory: playerInventory.inventory});
-    } catch (e) {console.log(e);}
-  }
-}
-
-function storeToLocalStorage(data) {
-  const store = {
-    raw: data,
-    date: Date.now(),
-  }
-  localStorage[STORE_KEY] = JSON.stringify(store);
-}
-
-function loadSettings() {
-  const settings = localStorage[SETTINGS_KEY];
-  if (settings) {
-    try {
-      const data = JSON.parse(settings);
-      $.extend(playerInventory.settings, data);
-    } catch (e) {console.log(e);}
-  }
-}
-
-function storeSettings() {
-  localStorage[SETTINGS_KEY] = JSON.stringify(playerInventory.settings);
-}
-
-function handleInventory(data) {
-  if (data.result.length > 0) {
-    playerInventory.inventory = parseInventory("⌂", data.result);
-    playerInventory.lastRefresh = Date.now();
-    storeToIndexedDB(data.result);
-    window.runHooks("pluginInventoryRefresh", {inventory: playerInventory.inventory});
-  } else {
-    alert("Inventory empty, probably hitting rate limit, try again later");
-  }
-  autoRefresh();
-}
-
-function handleError(_, textStatus, errorThrown) {
-  alert("Inventory: Last refresh failed. " + textStatus + ", " + errorThrown);
-  autoRefresh();
-}
-
-function getInventory() {
-  window.postAjax('getInventory', {lastQueryTimestamp:0}, handleInventory, handleError);
-}
-
-function handleSubscription(data) {
-  playerInventory.hasActiveSubscription = data.result;
-  if (data.result) getInventory();
-  else {
-    alert("You need to subscribe to C.O.R.E. to get your inventory from Intel Map.");
-  }
-}
-
-function getSubscriptionStatus() {
-  window.postAjax('getHasActiveSubscription', {}, handleSubscription, handleError);
-}
-
-function injectKeys(data) {
-  if (!playerInventory.isHighlighActive)
-    return;
-
-  const bounds = window.map.getBounds();
-  const entities = [];
-  for (const [guid, key] of playerInventory.inventory.keys) {
-    if (bounds.contains(key.latLng)) {
-      // keep known team
-      const team = window.portals[guid] ? window.portals[guid].options.ent[2][1] : 'N';
-      const ent = [
-        guid,
-        0,
-        ['p', team, Math.round(key.latLng[0]*1e6), Math.round(key.latLng[1]*1e6)]
-      ];
-      entities.push(ent);
-    }
-  }
-  data.callback(entities);
-}
-
-function portalKeyHighlight(data) {
-  const guid = data.portal.options.guid;
-  if (playerInventory.inventory.keys.has(guid)) {
-    // place holder
-    if (data.portal.options.team !== window.TEAM_NONE && data.portal.options.level === 0) {
-      data.portal.setStyle({
-        color: 'red',
-        weight: 2*Math.sqrt(window.portalMarkerScale()),
-        dashArray: '',
-      });
-    }
-    else if (window.map.getZoom() < 15 && data.portal.options.team === window.TEAM_NONE && !window.portalDetail.isFresh(guid))
-      // injected without intel data
-      data.portal.setStyle({color: 'red', fillColor: 'gray'});
-    else data.portal.setStyle({color: 'red'});
-  }
-}
-
-function createPopup(guid) {
-  const portal = window.portals[guid];
-  const latLng = portal.getLatLng();
-  // create popup only if the portal is in view
-  if (window.map.getBounds().contains(latLng)) {
-    const count = playerInventory.inventory.keys.get(guid).count;
-    const text = Array.from(count).map(([name, count]) => `<strong>${name}</strong>: ${count}`).join('<br/>');
-
-    L.popup()
-      .setLatLng(latLng)
-      .setContent('<div class="inventory-keys">' + text + '</div>')
-      .openOn(window.map);
-  }
 }
 
 function createAllTable(inventory) {
@@ -411,7 +230,7 @@ function buildInventoryHTML(inventory) {
         });
         L.DomEvent.on(editInput, 'input', () => {
           mapping[name] = editInput.value;
-          storeSettings();
+          storeSettings(playerInventory.settings);
           const displayName = mapping[name] ?`${mapping[name]} [${name}]` : name;
           head.textContent = `${typeName}: ${displayName} (${size})`;
         });
@@ -466,9 +285,30 @@ function displayInventory(inventory) {
   refreshIfOld();
 }
 
+function handleInventory(data) {
+  if (data.length > 0) {
+    playerInventory.inventory = parseInventory('⌂', data);
+    playerInventory.lastRefresh = Date.now();
+    saveInventory(data);
+    window.runHooks('pluginInventoryRefresh', { inventory: playerInventory.inventory });
+  } else {
+    alert('Inventory empty, probably hitting rate limit, try again later');
+  }
+  autoRefresh();
+}
+
+
 function refreshInventory() {
   clearTimeout(playerInventory.autoRefreshTimer);
-  getSubscriptionStatus();
+  requestInventory()
+    .then(handleInventory)
+    .catch((e) => {
+      if (e === 'no core') alert('You need to subscribe to C.O.R.E. to get your inventory from Intel Map.');
+      else {
+        alert('Inventory: Last refresh failed. ' + e);
+        autoRefresh();
+      }
+    })
 }
 
 function refreshIfOld() {
@@ -554,7 +394,7 @@ function displayNameMapping() {
               mapping[m[1]] = m[2];
             }
           }
-          storeSettings();
+          storeSettings(playerInventory.settings);
         },
       },
       {
@@ -568,91 +408,79 @@ function displayNameMapping() {
 }
 
 function displayOpt() {
-  const container = L.DomUtil.create("div", "container");
+  const container = (
+    <div className="container">
+      <label htmlFor="plugin-player-inventory-popup-enable">Auto-sync with Keys</label>
+      <input
+        type="checkbox"
+        checked={playerInventory.settings.popupEnable}
+        id="plugin-player-inventory-popup-enable"
+        onchange={(ev) => {
+          playerInventory.settings.popupEnable = ev.target.checked === 'true' || (ev.target.checked === 'false' ? false : ev.target.checked);
+          storeSettings(playerInventory.settings);
+        }}
+      ></input>
 
-  const popupLabel = L.DomUtil.create('label', null, container);
-  popupLabel.textContent = "Keys popups";
-  popupLabel.htmlFor = "plugin-player-inventory-popup-enable"
-  const popupCheck = L.DomUtil.create('input', null, container);
-  popupCheck.type = 'checkbox';
-  popupCheck.checked = playerInventory.settings.popupEnable;
-  popupCheck.id = 'plugin-player-inventory-popup-enable';
-  L.DomEvent.on(popupCheck, "change", () => {
-    playerInventory.settings.popupEnable = popupCheck.checked === 'true' || (popupCheck.checked === 'false' ? false : popupCheck.checked);
-    storeSettings();
-  });
+      <label htmlFor="plugin-player-inventory-autorefresh-enable">Auto-sync with Keys</label>
+      <input
+        type="checkbox"
+        checked={playerInventory.settings.autoRefreshActive}
+        id="plugin-player-inventory-autorefresh-enable"
+        onchange={(ev) => {
+          playerInventory.settings.autoRefreshActive = ev.target.checked === 'true' || (ev.target.checked === 'false' ? false : ev.target.checked);
+          if (playerInventory.settings.autoRefreshActive) {
+            autoRefresh();
+          } else {
+            stopAutoRefresh();
+          }
+          storeSettings(playerInventory.settings);
+        }}
+      ></input>
 
-  const refreshLabel = L.DomUtil.create('label', null, container);
-  refreshLabel.textContent = "Auto-refresh";
-  refreshLabel.htmlFor = "plugin-player-inventory-autorefresh-enable"
-  const refreshCheck = L.DomUtil.create('input', null, container);
-  refreshCheck.type = 'checkbox';
-  refreshCheck.checked = playerInventory.settings.autoRefreshActive;
-  refreshCheck.id = 'plugin-player-inventory-autorefresh-enable';
-  L.DomEvent.on(refreshCheck, "change", () => {
-    playerInventory.settings.autoRefreshActive = refreshCheck.checked === 'true' || (refreshCheck.checked === 'false' ? false : refreshCheck.checked);
-    if (playerInventory.settings.autoRefreshActive) {
-      autoRefresh();
-    } else {
-      stopAutoRefresh();
-    }
-    storeSettings();
-  });
+      <label>Refresh delay (min)</label>
+      <input
+        type="number"
+        checked={playerInventory.settings.autoRefreshDelay}
+        onchange={(ev) => {
+          playerInventory.settings.autoRefreshDelay = +ev.target.value > 0 ? +ev.target.value : 1;
+          ev.target.value = playerInventory.settings.autoRefreshDelay;
+          storeSettings(playerInventory.settings);
+        }}
+      ></input>
 
-  const refreshDelayLabel = L.DomUtil.create('label', null, container);
-  refreshDelayLabel.textContent = "Refresh delay (min)";
-  const refreshDelay = L.DomUtil.create('input', null, container);
-  refreshDelay.type = 'number';
-  refreshDelay.value = playerInventory.settings.autoRefreshDelay;
-  L.DomEvent.on(refreshDelay, "change", () => {
-    playerInventory.settings.autoRefreshDelay = +refreshDelay.value > 0 ? +refreshDelay.value : 1;
-    refreshDelay.value = playerInventory.settings.autoRefreshDelay;
-    storeSettings();
-  });
+      <button onclick={displayNameMapping}>Set Capsule names</button>
 
-  {
-    const button = L.DomUtil.create("button", null, container);
-    button.textContent = "Set Capsule names";
-    L.DomEvent.on(button, 'click', displayNameMapping);
-  }
+      {/* sync keys with the keys plugin */}
+      {window.plugin.keys && (
+        <>
+          <label htmlFor="plugin-player-inventory-autosync-enable">Auto-sync with Keys</label>
+          <input
+            type="checkbox"
+            checked={playerInventory.settings.autoSyncKeys}
+            id="plugin-player-inventory-autosync-enable"
+            onchange={(ev) => {
+              playerInventory.settings.autoSyncKeys = ev.target.checked === 'true' || (ev.target.checked === 'false' ? false : ev.target.checked);
+              storeSettings(playerInventory.settings);
+            }}
+          ></input>
+          <button onclick={exportToKeys}>Export to keys plugin</button>
+        </>
+      )}
 
-  // sync keys with the keys plugin
-  if (window.plugin.keys) {
-    const syncLabel = L.DomUtil.create('label', null, container);
-    syncLabel.textContent = "Auto-sync with Keys";
-    syncLabel.htmlFor = "plugin-player-inventory-autosync-enable"
-    const syncCheck = L.DomUtil.create('input', null, container);
-    syncCheck.type = 'checkbox';
-    syncCheck.checked = playerInventory.settings.autoSyncKeys;
-    syncCheck.id = 'plugin-player-inventory-autosync-enable';
-    L.DomEvent.on(syncCheck, "change", () => {
-      playerInventory.settings.autoSyncKeys = syncCheck.checked === 'true' || (syncCheck.checked === 'false' ? false : syncCheck.checked);
-      storeSettings();
-    });
-    const button = L.DomUtil.create("button", null, container);
-    button.textContent = "Export to keys plugin";
-    L.DomEvent.on(button, 'click', exportToKeys);
-  }
+      <button onclick={exportToClipboard}>Export keys to clipboard</button>
 
-  {
-    const button = L.DomUtil.create("button", null, container);
-    button.textContent = "Export keys to clipboard";
-    L.DomEvent.on(button, 'click', exportToClipboard);
-  }
-
-  {
-    const keysSidebarLabel = L.DomUtil.create('label', null, container);
-    keysSidebarLabel.textContent = "Keys in sidebar";
-    keysSidebarLabel.htmlFor = "plugin-player-inventory-keys-sidebar-enable"
-    const keysSidebarCheck = L.DomUtil.create('input', null, container);
-    keysSidebarCheck.type = 'checkbox';
-    keysSidebarCheck.checked = playerInventory.settings.keysSidebarEnable;
-    keysSidebarCheck.id = 'plugin-player-inventory-keys-sidebar-enable';
-    L.DomEvent.on(keysSidebarCheck, "change", () => {
-      playerInventory.settings.keysSidebarEnable = keysSidebarCheck.checked === 'true' || (keysSidebarCheck.checked === 'false' ? false : keysSidebarCheck.checked);
-      storeSettings();
-    });
-  }
+      <label htmlFor="plugin-player-inventory-keys-sidebar-enable">Keys in sidebar</label>
+      <input
+        type="checkbox"
+        checked={playerInventory.settings.keysSidebarEnable}
+        id="plugin-player-inventory-keys-sidebar-enable"
+        onchange={(ev) => {
+          playerInventory.settings.keysSidebarEnable = ev.target.checked === 'true' || (ev.target.checked === 'false' ? false : ev.target.checked);
+          storeSettings(playerInventory.settings);
+        }}
+      ></input>
+    </div>
+  );
 
   window.dialog({
     title: 'Inventory Opt',
@@ -712,11 +540,10 @@ function setupDisplay() {
 }
 
 // iitc setup
-export default function() {
+export default function () {
   // Dummy inventory
   playerInventory.inventory = new Inventory();
 
-  playerInventory.hasActiveSubscription = false;
   playerInventory.isHighlighActive = false;
 
   playerInventory.lastRefresh = Date.now();
@@ -729,21 +556,21 @@ export default function() {
     autoSyncKeys: false,
     keysSidebarEnable: false,
     capsuleNameMap: {},
-  }
+  };
 
-  loadSettings();
+  $.extend(playerInventory.settings, loadSettings());
 
   setupCSS();
   setupDisplay();
 
-  playerInventory.getSubscriptionStatus = getSubscriptionStatus;
+  playerInventory.requestInventory = requestInventory;
 
   playerInventory.highlighter = {
     highlight: portalKeyHighlight,
     setSelected: function (selected) {
       playerInventory.isHighlighActive = selected;
     },
-  }
+  };
   window.addPortalHighlighter('Inventory keys', playerInventory.highlighter);
 
   window.addHook('pluginInventoryRefresh', (data) => {
@@ -796,5 +623,10 @@ export default function() {
     }
   });
 
-  loadFromIndexedDB();
+  loadLastInventory().then((data) => {
+    playerInventory.inventory = parseInventory('⌂', data.raw);
+    playerInventory.lastRefresh = data.date;
+    autoRefresh();
+    window.runHooks('pluginInventoryRefresh', { inventory: playerInventory.inventory });
+  });
 }
