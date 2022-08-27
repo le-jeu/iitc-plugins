@@ -18,10 +18,12 @@
     "rules": {
         "eqeqeq": "error",
         "spaced-comment": "error",
-        "no-unused-expressions": "error"
+        "no-unused-expressions": "error",
+        "prettier/prettier": "warn"
     },
     "globals": {
         "L": "readonly",
-        "portals": "readonly"
+        "portals": "readonly",
+        "android": "readonly"
     }
 }
