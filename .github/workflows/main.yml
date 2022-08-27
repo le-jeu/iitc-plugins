@@ -28,5 +28,5 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4.4.0
         with:
           branch: dist # The branch the action should deploy to.
-          single-commit: true
+          # single-commit: true
           folder: dist # The folder the action should deploy.
