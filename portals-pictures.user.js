@@ -57,13 +57,13 @@ function jsx(tagName, attrs) {
 
 const jsxs = jsx;
 
-const defaultImage = "https://fevgames.net/wp-content/uploads/2018/11/FS-Onyx.png";
+const defaultImage = 'https://fevgames.net/wp-content/uploads/2018/11/FS-Onyx.png';
 
 function onPortalDetailsUpdated(e) {
   const img = document.querySelector('.portal-pictures-image[data-guid="' + e.guid + '"]');
 
   if (img) {
-    img.src = (e.portalData.image || defaultImage).replace("http:", "");
+    img.src = (e.portalData.image || defaultImage).replace('http:', '');
     img.title = e.portalData.title;
   }
 }
@@ -72,9 +72,9 @@ function filterOnInput(ev) {
   ev.preventDefault();
   const f = ev.target.value.toLowerCase();
 
-  for (const n of document.querySelectorAll(".portal-pictures-image")) {
+  for (const n of document.querySelectorAll('.portal-pictures-image')) {
     const title = n.title.toLowerCase();
-    if (title.includes(f)) n.style.display = null;else n.style.display = "none";
+    if (title.includes(f)) n.style.display = null;else n.style.display = 'none';
   }
 }
 
@@ -86,16 +86,16 @@ function imgOnClick(ev) {
   while (prev && prev.dataset.count - img.dataset.count < 0) prev = prev.previousElementSibling;
 
   if (prev) img.parentNode.insertBefore(img, prev.nextSibling);else img.parentNode.insertBefore(img, img.parentNode.firstElementChild);
-  renderPortalDetails(img.dataset.guid);
+  window.renderPortalDetails(img.dataset.guid);
   ev.preventDefault();
   return false;
 }
 
 function showDialog() {
   let portals = [];
-  let bounds = map.getBounds();
+  let bounds = window.map.getBounds();
 
-  for (const [guid, portal] of Object.entries(window.portals)) {
+  for (const portal of Object.values(window.portals)) {
     let ll = portal.getLatLng();
 
     if (bounds.contains(ll)) {
@@ -110,7 +110,7 @@ function showDialog() {
       oninput: filterOnInput
     }), jsx("hr", {}), jsx("div", {
       children: portals.map(portal => jsx("img", {
-        src: (portal.options.data.image || defaultImage).replace("http:", ""),
+        src: (portal.options.data.image || defaultImage).replace('http:', ''),
         title: portal.options.data.title,
         className: "imgpreview portal-pictures-image",
         dataset: {
@@ -122,23 +122,26 @@ function showDialog() {
     })]
   });
 
-  dialog({
-    id: "plugin-portal-pictures",
+  window.dialog({
+    id: 'plugin-portal-pictures',
     html: container,
-    title: "Show portal pictures",
-    width: "auto",
+    title: 'Show portal pictures',
+    width: 'auto',
     closeCallback: () => {
-      window.removeHook("portalDetailsUpdated", onPortalDetailsUpdated);
+      window.removeHook('portalDetailsUpdated', onPortalDetailsUpdated);
     }
   });
-  window.addHook("portalDetailsUpdated", onPortalDetailsUpdated);
+  window.addHook('portalDetailsUpdated', onPortalDetailsUpdated);
 }
 
 function setup () {
   window.plugin.portalPictures = {};
   window.plugin.portalPictures.showDialog = showDialog;
-  $("<style>").html(".portal-pictures-image { padding: 1px }").appendTo("head");
-  $("#toolbox").append(' <a onclick="window.plugin.portalPictures.showDialog()">Portal pictures</a>');
+  $('<style>').html('.portal-pictures-image { padding: 1px }').appendTo('head');
+  $('#toolbox').append(jsx("a", {
+    onclick: showDialog,
+    children: "Portal pictures"
+  }));
 }
 
 if(!window.bootPlugins) window.bootPlugins = [];
