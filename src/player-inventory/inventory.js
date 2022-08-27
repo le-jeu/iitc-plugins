@@ -220,6 +220,7 @@ export class Inventory {
         if (count) {
           if (!data.items[type])
             data.items[type] = {
+              type: type,
               leveled: levelItemTypes.includes(type),
               count: {},
             };

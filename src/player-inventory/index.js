@@ -1,2 +1,2 @@
-import setup from "./index.jsx";
+import setup from './index.jsx';
 export default setup;

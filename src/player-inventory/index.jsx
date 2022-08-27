@@ -26,12 +26,12 @@ function getPortalLink(key) {
       title={key.address}
       href={window.makePermalink(latLng)}
       onclick={function (event) {
-        L.DomEvent.preventDefault(event);
+        event.preventDefault();
         window.renderPortalDetails(key.guid);
         window.selectPortalByLatLng(latLng);
       }}
       ondblclick={function (event) {
-        L.DomEvent.preventDefault(event);
+        event.preventDefault();
         window.renderPortalDetails(key.guid);
         window.zoomToAndShowPortal(key.guid, latLng);
       }}
@@ -41,12 +41,13 @@ function getPortalLink(key) {
   );
 }
 
-function localeCompare(a,b) {
-  if (typeof a !== "string") a = '';
-  if (typeof b !== "string") b = '';
-  return a.localeCompare(b)
+function localeCompare(a, b) {
+  if (typeof a !== 'string') a = '';
+  if (typeof b !== 'string') b = '';
+  return a.localeCompare(b);
 }
 
+// eslint-disable-next-line no-unused-vars
 function ItemRow(props) {
   const { item, lvl, count } = props;
   const lr = item.leveled ? 'L' + lvl : rarityShort[rarityToInt[lvl]];
@@ -121,6 +122,7 @@ function createAllSumTable(inventory) {
   return table;
 }
 
+// eslint-disable-next-line no-unused-vars
 function KeyMediaRow(props) {
   const { item, children } = props;
   const details = Array.from(item.count)
@@ -137,7 +139,7 @@ function KeyMediaRow(props) {
 }
 
 function createKeysTable(inventory) {
-  const keys = [...inventory.keys.values()].sort((a,b) => localeCompare(a.title, b.title));
+  const keys = [...inventory.keys.values()].sort((a, b) => localeCompare(a.title, b.title));
   return (
     <table>
       {keys.map((key) => (
@@ -195,37 +197,43 @@ function createCapsuleTable(inventory, capsule) {
 }
 
 function buildInventoryHTML(inventory) {
-  const container = L.DomUtil.create("div", "container");
+  const inventoryCount = inventory.count - inventory.keyLockersCount;
+  const keyInInventory = inventory.keys.size > 0 ? inventory.items['PORTAL_LINK_KEY'].counts['VERY_COMMON'][inventory.name] || 0 : 0;
+  const container = (
+    <div className="container">
+      <b>{`Summary I:${inventoryCount - keyInInventory} K:${keyInInventory} T:${inventoryCount}/2500 KL:${inventory.keyLockersCount}`}</b>
+      <div className="sum">{createAllSumTable(inventory)}</div>
 
-  const sumHeader = L.DomUtil.create("b", null, container);
-  {
-    const inventoryCount = inventory.count - inventory.keyLockersCount;
-    const keyInInventory = (inventory.keys.size > 0) ? inventory.items["PORTAL_LINK_KEY"].counts["VERY_COMMON"][inventory.name] || 0 : 0;
-    sumHeader.textContent = `Summary I:${inventoryCount - keyInInventory} K:${keyInInventory} T:${inventoryCount}/2500 KL:${inventory.keyLockersCount}`;
+      <b>Details</b>
+      <div className="all">{createAllTable(inventory)}</div>
+    </div>
+  );
+
+  if (inventory.keys.size > 0) {
+    container.append(
+      <>
+        <b>Keys</b>
+        <div className="medias">{createKeysTable(inventory)}</div>
+      </>
+    );
   }
-  const sum = L.DomUtil.create("div", "sum", container);
-  sum.appendChild(createAllSumTable(inventory));
-
-  const allHeader = L.DomUtil.create("b", null, container);
-  allHeader.textContent = "Details";
-  const all = L.DomUtil.create("div", "all", container);
-  all.appendChild(createAllTable(inventory));
-
-  const keysHeader = L.DomUtil.create("b", null, container);
-  keysHeader.textContent = "Keys";
-  const keys = L.DomUtil.create("div", "keys", container);
-  keys.appendChild(createKeysTable(inventory));
 
   if (inventory.medias.size > 0) {
-    const mediasHeader = L.DomUtil.create("b", null, container);
-    mediasHeader.textContent = "Medias";
-    const medias = L.DomUtil.create("div", "medias", container);
-    medias.appendChild(createMediaTable(inventory));
+    container.append(
+      <>
+        <b>Medias</b>
+        <div className="all">{createMediaTable(inventory)}</div>
+      </>
+    );
   }
 
   const onHand = inventory.onHand();
-  L.DomUtil.create("b", null, container).textContent = `On Hand (${onHand.size})`;
-  L.DomUtil.create("div", "capsule", container).appendChild(createCapsuleTable(inventory, onHand));
+  container.append(
+    <>
+      <b>On Hand ({onHand.size})</b>
+      <div className="capsule">{createCapsuleTable(inventory, onHand)}</div>
+    </>
+  );
 
   const mapping = playerInventory.settings.capsuleNameMap;
   const capsulesName = Object.keys(inventory.capsules).sort((a, b) => {
@@ -235,49 +243,58 @@ function buildInventoryHTML(inventory) {
     b = mapping[b] || b;
     return localeCompare(a, b);
   });
-  const keyLockers = capsulesName.filter((name) => inventory.capsules[name].type === "KEY_CAPSULE");
-  const quantums = capsulesName.filter((name) => inventory.capsules[name].type === "INTEREST_CAPSULE");
-  const commonCapsules = capsulesName.filter((name) => inventory.capsules[name].type === "CAPSULE");
+  const keyLockers = capsulesName.filter((name) => inventory.capsules[name].type === 'KEY_CAPSULE');
+  const quantums = capsulesName.filter((name) => inventory.capsules[name].type === 'INTEREST_CAPSULE');
+  const commonCapsules = capsulesName.filter((name) => inventory.capsules[name].type === 'CAPSULE');
   for (const names of [keyLockers, quantums, commonCapsules]) {
     for (const name of names) {
       const capsule = inventory.capsules[name];
       if (capsule.size > 0) {
-        const displayName = mapping[name] ?`${mapping[name]} [${name}]` : name;
+        const displayName = mapping[name] ? `${mapping[name]} [${name}]` : name;
         const typeName = itemTypes[capsule.type];
         const size = capsule.size;
 
-        const head = L.DomUtil.create("b", null, container);
-        head.textContent = `${typeName}: ${displayName} (${size})`;
+        const head = <b>{`${typeName}: ${displayName} (${size})`}</b>;
 
-        const div = L.DomUtil.create("div", "capsule", container);
-
-        const editDiv = L.DomUtil.create("div", "", div);
-        const editIcon = L.DomUtil.create("a", "edit-name-icon", editDiv);
-        editIcon.textContent = "✏️";
-        editIcon.title = "Change capsule name";
-
-        const editInput = L.DomUtil.create("input", "edit-name-input", editDiv);
-        if (mapping[name]) editInput.value = mapping[name];
-        editInput.placeholder = "Enter capsule name";
-        L.DomEvent.on(editIcon, 'click', () => {
-          editInput.style.display = editInput.style.display === "unset" ? null : "unset";
-        });
-        L.DomEvent.on(editInput, 'input', () => {
-          mapping[name] = editInput.value;
-          storeSettings(playerInventory.settings);
-          const displayName = mapping[name] ?`${mapping[name]} [${name}]` : name;
-          head.textContent = `${typeName}: ${displayName} (${size})`;
-        });
-
-        div.appendChild(createCapsuleTable(inventory, capsule));
+        container.append(
+          <>
+            {head}
+            <div className="capsule">
+              <div>
+                <a
+                  className="edit-name-icon"
+                  title="Change capsule name"
+                  onclick={(ev) => {
+                    const input = ev.target.nextElementSibling;
+                    input.style.display = input.style.display === 'unset' ? null : 'unset';
+                  }}
+                >
+                  ✏️
+                </a>
+                <input
+                  className="edit-name-input"
+                  value={mapping[name] || ''}
+                  placeholder="Enter capsule name"
+                  oninput={(ev) => {
+                    mapping[name] = ev.target.value;
+                    storeSettings(playerInventory.settings);
+                    const displayName = mapping[name] ? `${mapping[name]} [${name}]` : name;
+                    head.textContent = `${typeName}: ${displayName} (${size})`;
+                  }}
+                />
+              </div>
+              {createCapsuleTable(inventory, capsule)}
+            </div>
+          </>
+        );
       }
     }
   }
 
   $(container).accordion({
-      header: 'b',
-      heightStyle: 'fill',
-      collapsible: true,
+    header: 'b',
+    heightStyle: 'fill',
+    collapsible: true,
   });
 
   return container;
@@ -290,10 +307,9 @@ function fillPane(inventory) {
 }
 
 function getTitle() {
-  let title = "Inventory";
+  let title = 'Inventory';
   if (playerInventory.lastRefresh) {
-    title =
-      title + " (" + new Date(playerInventory.lastRefresh).toLocaleTimeString() + ")";
+    title = title + ' (' + new Date(playerInventory.lastRefresh).toLocaleTimeString() + ')';
   }
   return title;
 }
@@ -311,9 +327,9 @@ function displayInventory(inventory) {
       'ui-dialog-content': 'inventory-box',
     },
     buttons: {
-      "Refresh": refreshInventory,
-      "Options": displayOpt,
-    }
+      Refresh: refreshInventory,
+      Options: displayOpt,
+    },
   });
 
   refreshIfOld();
@@ -341,7 +357,7 @@ function refreshInventory() {
         alert('Inventory: Last refresh failed. ' + e);
         autoRefresh();
       }
-    })
+    });
 }
 
 function refreshIfOld() {
@@ -541,7 +557,7 @@ function displayOpt() {
 function setupCSS() {
   let colorStyle = '';
   if (playerInventory.settings.lvlColorEnable) {
-    window.COLORS_LVL.forEach((c,i) => {
+    window.COLORS_LVL.forEach((c, i) => {
       colorStyle += `.level_L${i}{ color: ${c} }`;
     });
     rarity.forEach((r, i) => {
@@ -561,18 +577,18 @@ function setupDisplay() {
     window.addHook('paneChanged', function (pane) {
       if (pane === 'playerInventory') {
         refreshIfOld();
-        playerInventory.pane.style.display = "";
+        playerInventory.pane.style.display = '';
       } else if (playerInventory.pane) {
-        playerInventory.pane.style.display = "none";
+        playerInventory.pane.style.display = 'none';
       }
     });
-    playerInventory.pane = L.DomUtil.create('div', 'inventory-box mobile', document.body);
-    playerInventory.pane.id = 'pane-inventory';
-    playerInventory.pane.style.display = "none";
-
-    const refreshButton = L.DomUtil.create('button', null, playerInventory.pane);
-    refreshButton.textContent = 'Refresh';
-    L.DomEvent.on(refreshButton, 'click', refreshInventory);
+    playerInventory.pane = (
+      <div className="inventory-box mobile" id="pane-inventory">
+        <button onclick={refreshInventory}>Refresh</button>
+      </div>
+    );
+    playerInventory.pane.style.display = 'none';
+    document.body.append(playerInventory.pane);
 
     document.getElementById('toolbox').append(
       <a title="Inventory options" onclick={displayOpt}>
@@ -629,16 +645,14 @@ export default function () {
     }
     if (playerInventory.dialog) {
       playerInventory.dialog.html(buildInventoryHTML(data.inventory));
-      playerInventory.dialog.dialog("option", "title", getTitle());
+      playerInventory.dialog.dialog('option', 'title', getTitle());
     }
     if (playerInventory.pane) {
       fillPane(data.inventory);
-      const button = playerInventory.pane.querySelector("button");
-      if (button)
-        button.textContent =
-          "Refresh (" + new Date(playerInventory.lastRefresh).toLocaleTimeString() + ")";
+      const button = playerInventory.pane.querySelector('button');
+      if (button) button.textContent = 'Refresh (' + new Date(playerInventory.lastRefresh).toLocaleTimeString() + ')';
     }
-  })
+  });
 
   window.addHook('mapDataEntityInject', injectKeys);
   window.addHook('portalSelected', (data) => {
@@ -651,7 +665,7 @@ export default function () {
       }
     }
   });
-  window.addHook("portalDetailsUpdated", (data) => {
+  window.addHook('portalDetailsUpdated', (data) => {
     // {guid: guid, portal: portal, portalDetails: details, portalData: data}
     if (!playerInventory.settings.keysSidebarEnable) return;
     const total = playerInventory.inventory.countKey(data.guid);

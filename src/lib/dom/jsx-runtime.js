@@ -1,5 +1,7 @@
 export function Fragment(attrs) {
-  return attrs.children;
+  const fragment = document.createDocumentFragment();
+  recursiveAppend(fragment, attrs.children);
+  return fragment;
 }
 
 function recursiveAppend(element, children) {
