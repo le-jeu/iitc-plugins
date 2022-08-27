@@ -54,6 +54,10 @@
   text-align: left;
 }
 
+.inventory-box tr td:last-child span:not(:last-child)::after {
+  content: ', ';
+}
+
 .inventory-box .all tr td:first-child,
 .inventory-box .keys tr td:first-child,
 .inventory-box .medias tr td:first-child,

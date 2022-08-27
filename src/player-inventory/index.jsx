@@ -1,5 +1,3 @@
-// eslint-disable-next-line no-unused-vars
-import { createElement } from '../lib/dom';
 import playerInventoryCSS from './player-inventory.css';
 
 import playerInventory from './plugin';
@@ -49,112 +47,148 @@ function localeCompare(a,b) {
   return a.localeCompare(b)
 }
 
+function ItemRow(props) {
+  const { item, lvl, count } = props;
+  const lr = item.leveled ? 'L' + lvl : rarityShort[rarityToInt[lvl]];
+  const className = (item.leveled ? 'level_' : 'rarity_') + lr;
+  const name = itemTypes[item.type];
+  return (
+    <tr className={className}>
+      <td>{count}</td>
+      <td>{lr}</td>
+      <td>{name}</td>
+    </tr>
+  );
+}
+
 function createAllTable(inventory) {
-  const table = L.DomUtil.create("table");
+  const table = <table></table>;
   for (const type in inventory.items) {
     const total = inventory.countType(type);
-    if (total === 0)
-      continue;
+    if (total === 0) continue;
     const item = inventory.items[type];
     for (const i in item.counts) {
       const num = inventory.countType(type, i);
       if (num > 0) {
-        const lr = item.leveled ? "L" + i : rarityShort[rarityToInt[i]];
-        const row = L.DomUtil.create('tr', (item.leveled ? "level_" : "rarity_") + lr, table);
-        row.innerHTML = `<td>${num}</td><td>${lr}</td><td>${item.name}</td>`;
+        table.append(<ItemRow item={item} count={num} lvl={i} />);
       }
     }
   }
   return table;
+}
+
+function keysSum(inventory) {
+  const total = inventory.items['PORTAL_LINK_KEY'].total;
+  const inventoryCount = inventory.items['PORTAL_LINK_KEY'].counts['VERY_COMMON'][inventory.name] || 0;
+  const otherCount = total - inventoryCount - inventory.keyLockersCount;
+  return (
+    <>
+      <span>
+        {inventory.name}: {inventoryCount}
+      </span>
+      <span>Key Lockers: {inventory.keyLockersCount}</span>
+      <span>Other: {otherCount}</span>
+    </>
+  );
+}
+
+function itemSum(item) {
+  return Object.keys(item.counts).map((k) => {
+    const lr = item.leveled ? 'L' + k : rarityShort[rarityToInt[k]];
+    return (
+      <span className={(item.leveled ? 'level_' : 'rarity_') + lr}>
+        {item.counts[k].total} {lr}
+      </span>
+    );
+  });
 }
 
 function createAllSumTable(inventory) {
-  const table = L.DomUtil.create("table");
+  const table = <table></table>;
   for (const type in inventory.items) {
     const total = inventory.countType(type);
-    if (total === 0)
-      continue;
+    if (total === 0) continue;
     const item = inventory.items[type];
 
-    const row = L.DomUtil.create('tr', null, table);
-
-    const nums = [];
-
-    if (type === "PORTAL_LINK_KEY") {
-      const inventoryCount = item.counts["VERY_COMMON"][inventory.name] || 0;
-      const otherCount = total - inventoryCount - inventory.keyLockersCount;
-      nums.push(`<span class="level_L1">${inventory.name}: ${inventoryCount}</span>`);
-      nums.push(`<span class="level_L1">Key Lockers: ${inventory.keyLockersCount}</span>`);
-      nums.push(`<span class="level_L1">Other: ${otherCount}</span>`);
-    } else {
-      for (const k in item.counts) {
-        const num = inventory.countType(type, k);
-        if (num > 0) {
-          const lr = item.leveled ? "L" + k : rarityShort[rarityToInt[k]];
-          const className = (item.leveled ? "level_" : "rarity_") + lr;
-          nums.push(`<span class="${className}">${num} ${lr}</span>`);
-        }
-      }
-    }
-
-    row.innerHTML = `<td>${item.name}</td><td>${total}</td><td>${nums.join(', ')}</td>`;
+    table.append(
+      <tr>
+        <td>{item.name}</td>
+        <td>{total}</td>
+        {type === 'PORTAL_LINK_KEY' ? <td className="level_L1">{keysSum(inventory)}</td> : <td>{itemSum(item)}</td>}
+      </tr>
+    );
   }
   return table;
+}
+
+function KeyMediaRow(props) {
+  const { item, children } = props;
+  const details = Array.from(item.count)
+    .map(([name, count]) => `${name}: ${count}`)
+    .join(', ');
+  return (
+    <tr>
+      <td>
+        <a title={details}>{item.total}</a>
+      </td>
+      <td>{children}</td>
+    </tr>
+  );
 }
 
 function createKeysTable(inventory) {
-  const table = L.DomUtil.create("table");
   const keys = [...inventory.keys.values()].sort((a,b) => localeCompare(a.title, b.title));
-  for (const key of keys) {
-    const a = getPortalLink(key);
-    const total = inventory.countKey(key.guid);
-    const counts = Array.from(key.count).map(([name, count]) => `${name}: ${count}`).join(', ');
-
-    const row = L.DomUtil.create('tr', null, table);
-    L.DomUtil.create('td', null, row).innerHTML = `<a title="${counts}">${total}</a>`;
-    L.DomUtil.create('td', null, row).appendChild(a);
-    // L.DomUtil.create('td', null, row).textContent = counts;
-  }
-  return table;
+  return (
+    <table>
+      {keys.map((key) => (
+        <KeyMediaRow item={key}>{getPortalLink(key)}</KeyMediaRow>
+      ))}
+    </table>
+  );
 }
 
 function createMediaTable(inventory) {
-  const table = L.DomUtil.create("table");
-  const medias = [...inventory.medias.values()].sort((a,b) => localeCompare(a.name, b.name));
-  for (const media of medias) {
-    const counts = Array.from(media.count).map(([name, count]) => `${name}: ${count}`).join(', ');
-
-    L.DomUtil.create('tr', 'level_L1', table).innerHTML =
-        `<td><a title="${counts}">${media.total}</a></td>`
-      + `<td><a href="${media.url}">${media.name}</a>`;
-  }
-  return table;
+  const medias = [...inventory.medias.values()].sort((a, b) => localeCompare(a.name, b.name));
+  return (
+    <table>
+      {medias.map((media) => (
+        <KeyMediaRow item={media}>
+          <a href={media.url}>{media.name}</a>
+        </KeyMediaRow>
+      ))}
+    </table>
+  );
 }
 
 function createCapsuleTable(inventory, capsule) {
-  const table = L.DomUtil.create("table");
-  const keys = Object.values(capsule.keys).sort((a,b) => localeCompare(a.title, b.title));
+  const table = <table></table>;
+  const keys = Object.values(capsule.keys).sort((a, b) => localeCompare(a.title, b.title));
   for (const item of keys) {
-    const a = getPortalLink(item);
-    const total = item.count;
-
-    const row = L.DomUtil.create('tr', null, table);
-    L.DomUtil.create('td', null, row).textContent = total;
-    if (capsule.type !== "KEY_CAPSULE") L.DomUtil.create('td', null, row);
-    L.DomUtil.create('td', null, row).appendChild(a);
+    table.append(
+      <tr>
+        <td>{item.count}</td>
+        {capsule.type !== 'KEY_CAPSULE' ? <td></td> : null}
+        <td>{getPortalLink(item)}</td>
+      </tr>
+    );
   }
-  const medias = Object.values(capsule.medias).sort((a,b) => localeCompare(a.name, b.name));
+  const medias = Object.values(capsule.medias).sort((a, b) => localeCompare(a.name, b.name));
   for (const item of medias) {
-    L.DomUtil.create('tr', 'level_L1', table).innerHTML = `<td>${item.count}</td><td>M</td><td><a href="${item.url}">${item.name}</a>`;
+    table.append(
+      <tr className="level_L1">
+        <td>{item.count}</td>
+        <td>M</td>
+        <td>
+          <a href={item.url}>{item.name}</a>
+        </td>
+      </tr>
+    );
   }
   for (const type in itemTypes) {
     const item = capsule.items[type];
     if (!item) continue;
-    const name = itemTypes[type];
-    for (const k in item.count) {
-      const lr = item.leveled ? "L" + k : rarityShort[rarityToInt[k]];
-      const row = L.DomUtil.create('tr', (item.leveled ? "level_" : "rarity_") + lr, table);
-      row.innerHTML = `<td>${item.count[k]}</td><td>${lr}</td><td>${name}</td>`;
+    for (const i in item.count) {
+      table.append(<ItemRow count={item.count[i]} item={item} lvl={i} />);
     }
   }
   return table;
@@ -297,7 +331,6 @@ function handleInventory(data) {
   autoRefresh();
 }
 
-
 function refreshInventory() {
   clearTimeout(playerInventory.autoRefreshTimer);
   requestInventory()
@@ -347,15 +380,18 @@ function exportToClipboard() {
     }
   }
   const shared = data.join('\n');
+  const content = (
+    <textarea
+      onclick={() => {
+        content.select();
+      }}
+    >
+      {shared}
+    </textarea>
+  );
 
-  if(typeof android !== 'undefined' && android && android.shareString)
-    android.shareString(shared);
+  if (typeof android !== 'undefined' && android && android.shareString) android.shareString(shared);
   else {
-    const content = L.DomUtil.create('textarea', "container");
-    content.textContent = shared;
-    L.DomEvent.on(content, 'click', () => {
-      content.select();
-    });
     window.dialog({
       title: 'Keys',
       html: content,
@@ -366,18 +402,17 @@ function exportToClipboard() {
 }
 
 function displayNameMapping() {
-  const container = L.DomUtil.create("textarea", "container");
-  container.placeholder = "AAAAAAAA: Name of AAAAAAAA\nBBBBBBBB: Name of BBBBBBBB\n...";
-
   const capsules = playerInventory.inventory.capsules;
   const mapping = playerInventory.settings.capsuleNameMap;
   const capsulesName = Object.keys(capsules).sort();
   const text = [];
   for (const name of capsulesName) {
-    if (mapping[name])
-      text.push(`${name}: ${mapping[name]}`);
+    if (mapping[name]) text.push(`${name}: ${mapping[name]}`);
   }
-  container.value = text.join("\n");
+
+  const container = (
+    <textarea className="container" placeholder="AAAAAAAA: Name of AAAAAAAA\nBBBBBBBB: Name of BBBBBBBB\n..." value={text.join('\n')}></textarea>
+  );
 
   window.dialog({
     title: 'Inventory Capsule Names',
@@ -385,7 +420,7 @@ function displayNameMapping() {
     html: container,
     buttons: [
       {
-        text: "Set",
+        text: 'Set',
         click: () => {
           const lines = container.value.trim().split('\n');
           for (const line of lines) {
@@ -398,11 +433,11 @@ function displayNameMapping() {
         },
       },
       {
-        text: "Close",
+        text: 'Close',
         click: function () {
           $(this).dialog('close');
-        }
-      }
+        },
+      },
     ],
   });
 }

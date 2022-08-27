@@ -119,7 +119,7 @@ export class Inventory {
       if (item.type === 'PORTAL_LINK_KEY') data.keys[item.guid] = item;
       else if (item.type === 'MEDIA') data.medias[item.mediaId] = item;
       else {
-        if (!data.items[item.type]) data.items[item.type] = { repr: item, leveled: levelItemTypes.includes(item.type), count: {} };
+        if (!data.items[item.type]) data.items[item.type] = { repr: item, leveled: levelItemTypes.includes(item.type), count: {}, type: item.type };
         data.items[item.type].count[item.rarity || item.level] = item.count;
       }
     }
