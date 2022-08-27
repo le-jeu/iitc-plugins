@@ -1,8 +1,5 @@
-// @author         jaiperdu
-// @name           Player Inventory
-// @category       Info
-// @version        0.3.3
-// @description    View inventory and highlight portals with keys at any zoom. Can be used with the official plugins Keys and Keys on map to show the number of keys on the map.
+import { createElement } from "../lib/dom";
+import playerInventoryCSS from "./player-inventory.css";
 
 // stock intel
 const itemTypes = {
@@ -1164,7 +1161,7 @@ function displayOpt() {
 }
 
 function setupCSS() {
-  document.head.append(h('style', {}, '@include_css:player-inventory.css@'));
+  document.head.append(h('style', {}, playerInventoryCSS));
   let colorStyle = "";
   window.COLORS_LVL.forEach((c,i) => {
     colorStyle += `.level_L${i}{ color: ${c} }`;
@@ -1244,7 +1241,7 @@ function h(tagName, attrs = {}, ...children) {
 
 
 // iitc setup
-function setup() {
+export default function() {
   // Dummy inventory
   plugin.inventory = new Inventory();
 
