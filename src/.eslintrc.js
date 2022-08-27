@@ -7,13 +7,7 @@ module.exports = {
     ecmaVersion: 13,
     sourceType: 'module',
     ecmaFeatures: {
-        jsx: true
-    }
-  },
-  overrides: [
-    {
-      files: ["*.jsx"],
-      parser: "@babel/eslint-parser",
+      jsx: true,
     },
-  ],
+  },
 };
