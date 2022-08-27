@@ -664,7 +664,7 @@ function displayOpt() {
 }
 
 function setupCSS() {
-  document.head.append(h('style', {}, playerInventoryCSS));
+  document.head.append(<style>{playerInventoryCSS}</style>);
   let colorStyle = "";
   window.COLORS_LVL.forEach((c,i) => {
     colorStyle += `.level_L${i}{ color: ${c} }`;
@@ -673,7 +673,7 @@ function setupCSS() {
     if (window.COLORS_MOD[r])
       colorStyle += `.rarity_${rarityShort[i]} { color: ${window.COLORS_MOD[r]}}`;
   });
-  document.head.append(h('style', {}, colorStyle));
+  document.head.append(<style>{colorStyle}</style>);
 }
 
 function setupDisplay() {
@@ -697,51 +697,19 @@ function setupDisplay() {
     refreshButton.textContent = 'Refresh';
     L.DomEvent.on(refreshButton, 'click', refreshInventory);
 
-    document.getElementById("toolbox").append(
-      h(
-        "a",
-        { title: "Inventory options", onclick: displayOpt },
-        "Inventory Opt"
-      )
+    document.getElementById('toolbox').append(
+      <a title="Inventory options" onclick={displayOpt}>
+        Inventory Opt
+      </a>
     );
   } else {
-    document.getElementById("toolbox").append(
-      h(
-        "a",
-        {
-          title: "Show inventory",
-          onclick: () => displayInventory(playerInventory.inventory),
-        },
-        "Inventory"
-      )
+    document.getElementById('toolbox').append(
+      <a title="Show inventory" onclick={() => displayInventory(playerInventory.inventory)}>
+        Inventory
+      </a>
     );
   }
 }
-
-/** createElement alias h */
-function h(tagName, attrs = {}, ...children) {
-  if (tagName === "fragment") return children;
-  attrs = attrs || {};
-  const rawHtml = attrs.rawHtml;
-  delete attrs.rawHtml;
-  const elem = document.createElement(tagName);
-  // dataset
-  if (attrs.dataset) {
-    for (const key in attrs.dataset) elem.dataset[key] = attrs.dataset[key];
-    delete attrs.dataset;
-  }
-  Object.assign(elem, attrs);
-  if (rawHtml) {
-    elem.innerHTML = rawHtml;
-    return elem;
-  }
-  for (const child of children) {
-    if (Array.isArray(child)) elem.append(...child);
-    else elem.append(child);
-  }
-  return elem;
-}
-
 
 // iitc setup
 export default function() {
@@ -813,23 +781,17 @@ export default function() {
     if (total > 0) {
       const key = playerInventory.inventory.keys.get(data.guid);
       const mapping = playerInventory.settings.capsuleNameMap;
-      const capsules = Array.from(key.count.keys()).map((name) =>
-        h(
-          "div",
-          { title: mapping[name] ? `${mapping[name]} [${name}]` : name },
-          mapping[name] ? `${mapping[name]}` : name
-        )
-      );
+      const capsules = Array.from(key.count.keys()).map((name) => (
+        <div title={mapping[name] ? `${mapping[name]} [${name}]` : name}>{mapping[name] ? `${mapping[name]}` : name}</div>
+      ));
 
-      document.getElementById("randdetails").append(
-        h(
-          "tr",
-          { className: "inventory-details"},
-          h("td", {}, `${total}`),
-          h("th", {}, "Keys"),
-          h("th", {}, "Capsules"),
-          h("td", {}, capsules)
-        )
+      document.getElementById('randdetails').append(
+        <tr className="inventory-details">
+          <td>{total}</td>
+          <td>Keys</td>
+          <td>Capsules</td>
+          <td>{capsules}</td>
+        </tr>
       );
     }
   });
