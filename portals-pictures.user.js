@@ -17,9 +17,20 @@ function wrapper(plugin_info) {
 // ensure plugin framework is there, even if iitc is not yet loaded
 if(typeof window.plugin !== 'function') window.plugin = function() {};
 
-function createElement(tagName, attrs = {}, ...children) {
-  if (tagName === "fragment") return children;
-  attrs = attrs || {};
+function recursiveAppend(element, children) {
+  // cast to string to display "undefined" or "null"
+  if (children === undefined || children === null) return;
+  if (Array.isArray(children)) {
+    for (const child of children) recursiveAppend(element, child);
+  } else {
+    element.append(children);
+  }
+}
+
+function jsx(tagName, attrs) {
+  if (typeof tagName === 'function') return tagName(attrs);
+  const children = attrs.children;
+  delete attrs.children;
   const rawHtml = attrs.rawHtml;
   delete attrs.rawHtml;
   const elem = document.createElement(tagName);
@@ -40,12 +51,11 @@ function createElement(tagName, attrs = {}, ...children) {
     elem.innerHTML = rawHtml;
     return elem;
   }
-  for (const child of children) {
-    if (Array.isArray(child)) elem.append(...child);
-    else elem.append(child);
-  }
+  recursiveAppend(elem, children);
   return elem;
 }
+
+const jsxs = jsx;
 
 const defaultImage = "https://fevgames.net/wp-content/uploads/2018/11/FS-Onyx.png";
 
@@ -93,21 +103,25 @@ function showDialog() {
     }
   }
 
-  const container = createElement("div", {
-    style: "max-width: 1000px"
-  }, createElement("input", {
-    placeholder: "Filter by title",
-    oninput: filterOnInput
-  }), createElement("hr", null), createElement("div", null, portals.map(portal => createElement("img", {
-    src: (portal.options.data.image || defaultImage).replace("http:", ""),
-    title: portal.options.data.title,
-    className: "imgpreview portal-pictures-image",
-    dataset: {
-      guid: portal.options.guid,
-      count: 0
-    },
-    onclick: imgOnClick
-  }))));
+  const container = jsxs("div", {
+    style: "max-width: 1000px",
+    children: [jsx("input", {
+      placeholder: "Filter by title",
+      oninput: filterOnInput
+    }), jsx("hr", {}), jsx("div", {
+      children: portals.map(portal => jsx("img", {
+        src: (portal.options.data.image || defaultImage).replace("http:", ""),
+        title: portal.options.data.title,
+        className: "imgpreview portal-pictures-image",
+        dataset: {
+          guid: portal.options.guid,
+          count: 0
+        },
+        onclick: imgOnClick
+      }))
+    })]
+  });
+
   dialog({
     id: "plugin-portal-pictures",
     html: container,
