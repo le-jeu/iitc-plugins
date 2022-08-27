@@ -1,10 +1,6 @@
 const plugin_info = `
 var info = {};
 if (typeof GM_info !== 'undefined' && GM_info && GM_info.script) info.script = { version: GM_info.script.version, name: GM_info.script.name, description: GM_info.script.description };
-
-info.buildName = '@build_name@';
-info.dateTimeVersion = '@build_date@';
-info.pluginId = '@plugin_id@';
 `;
 
 const framework = {
@@ -97,10 +93,7 @@ export default function metablock(options = {}) {
   const header = lines.join("\n");
   const useMeta = options.updateMeta;
   const useWrapper = !options.noWrapper;
-  const pluginInfo = plugin_info
-    .replace("@build_date@", buildDate)
-    .replace("@plugin_id@", pluginId)
-    .replace("@build_name@", options.buildName || "rollup");
+  const pluginInfo = plugin_info;
 
   return {
     banner() {

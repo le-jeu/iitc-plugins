@@ -10,12 +10,19 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v2.3.1
 
-      - name: Build 🔧
+      - name: Sync previous build
         run: |
           mkdir dist
           git fetch origin dist --depth 1
           git worktree add dist origin/dist
-          python3 build_plugin.py --out-dir dist lejeu plugins/*.js
+
+      - name: Install deps 🔧
+        run: npm install
+
+      - name: Build 🔧
+        run: |
+          npm run build:lejeu
+          npm run rollup:lejeu
 
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4.4.0

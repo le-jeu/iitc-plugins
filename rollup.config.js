@@ -7,6 +7,8 @@ import path from "path";
 
 import metablock from "./rollup-plugin-iitcplugin";
 
+const buildName = process.env.BUILD;
+
 const buildPath = "dist";
 const pluginsPath = "src";
 
@@ -29,9 +31,9 @@ export default pluginsId.map((p) => ({
       meta: require("./" + path.join(pluginsPath, p, "meta.json")),
       downloadRoot: "https://le-jeu.github.io/iitc-plugins/",
       //updateMeta: true,
-      timestamp: true,
+      timestamp: buildName === "local",
       noWrapper: false,
-      buildName: "lejeu",
+      buildName: buildName,
     }),
     resolve(),
     postcss({
