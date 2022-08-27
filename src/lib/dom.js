@@ -1,3 +1,13 @@
+function recursiveAppend(element, children) {
+  // cast to string to display "undefined" or "null"
+  if (children === undefined || children === null) return;
+  if (Array.isArray(children)) {
+    for (const child of children) recursiveAppend(element, child);
+  } else {
+    element.append(children);
+  }
+}
+
 export function createElement(tagName, attrs = {}, ...children) {
   if (tagName === 'fragment') return children;
   attrs = attrs || {};
@@ -21,9 +31,6 @@ export function createElement(tagName, attrs = {}, ...children) {
     elem.innerHTML = rawHtml;
     return elem;
   }
-  for (const child of children.flat()) {
-    // cast to string to display "undefined" or "null"
-    if (child !== undefined && child !== null) elem.append(child);
-  }
+  recursiveAppend(elem, children);
   return elem;
 }
