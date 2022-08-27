@@ -1,5 +1,3 @@
-import { createElement } from "../lib/dom";
-
 const defaultImage =
   "https://fevgames.net/wp-content/uploads/2018/11/FS-Onyx.png";
 
