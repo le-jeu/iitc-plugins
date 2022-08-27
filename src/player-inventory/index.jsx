@@ -479,6 +479,18 @@ function displayOpt() {
           storeSettings(playerInventory.settings);
         }}
       ></input>
+
+      <label htmlFor="plugin-player-inventory-lvlcolor-enable">Level/rarity colors</label>
+      <input
+        type="checkbox"
+        checked={playerInventory.settings.lvlColorEnable}
+        id="plugin-player-inventory-keys-lvlcolor-enable"
+        onchange={(ev) => {
+          playerInventory.settings.lvlColorEnable = ev.target.checked === 'true' || (ev.target.checked === 'false' ? false : ev.target.checked);
+          setupCSS();
+          storeSettings(playerInventory.settings);
+        }}
+      ></input>
     </div>
   );
 
@@ -492,16 +504,18 @@ function displayOpt() {
 }
 
 function setupCSS() {
-  document.head.append(<style>{playerInventoryCSS}</style>);
-  let colorStyle = "";
-  window.COLORS_LVL.forEach((c,i) => {
-    colorStyle += `.level_L${i}{ color: ${c} }`;
-  });
-  rarity.forEach((r,i) => {
-    if (window.COLORS_MOD[r])
-      colorStyle += `.rarity_${rarityShort[i]} { color: ${window.COLORS_MOD[r]}}`;
-  });
-  document.head.append(<style>{colorStyle}</style>);
+  let colorStyle = '';
+  if (playerInventory.settings.lvlColorEnable) {
+    window.COLORS_LVL.forEach((c,i) => {
+      colorStyle += `.level_L${i}{ color: ${c} }`;
+    });
+    rarity.forEach((r, i) => {
+      if (window.COLORS_MOD[r]) colorStyle += `.rarity_${rarityShort[i]} { color: ${window.COLORS_MOD[r]}}`;
+    });
+  }
+  const style = document.head.querySelector('#player-inventory-css') || <style id="player-inventory-css"></style>;
+  style.textContent = playerInventoryCSS + colorStyle;
+  document.head.append(style);
 }
 
 function setupDisplay() {
@@ -556,6 +570,7 @@ export default function () {
     autoSyncKeys: false,
     keysSidebarEnable: false,
     capsuleNameMap: {},
+    lvlColorEnable: true,
   };
 
   $.extend(playerInventory.settings, loadSettings());
