@@ -31,7 +31,7 @@ function imgOnClick(ev) {
     prev = prev.previousElementSibling;
   if (prev) img.parentNode.insertBefore(img, prev.nextSibling);
   else img.parentNode.insertBefore(img, img.parentNode.firstElementChild);
-  renderPortalDetails(portal.options.guid);
+  renderPortalDetails(img.dataset.guid);
   ev.preventDefault();
   return false;
 }

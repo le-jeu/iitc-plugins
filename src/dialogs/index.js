@@ -1,5 +1,4 @@
-import W from "unsafeWindow";
-
+const W = window;
 let DIALOGS = {};
 
 function itemOnClick(ev) {

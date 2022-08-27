@@ -5,7 +5,7 @@ import url from "postcss-url";
 
 import path from "path";
 
-import metablock from "./rollup-plugin-iitcplugin";
+import iitcplugin from "./rollup-plugin-iitcplugin";
 
 const buildName = process.env.BUILD;
 
@@ -16,17 +16,14 @@ let pluginsId = ["search-guid", "portals-pictures", "what3words", "dialogs"];
 
 export default pluginsId.map((p) => ({
   input: path.join(pluginsPath, p),
-  external: ["unsafeWindow"],
   output: {
-    format: "iife",
-    name: "setup",
+    format: "es",
+    exports: "none",
     file: path.join(buildPath, p + ".user.js"),
-    globals: {
-      unsafeWindow: "{ default: unsafeWindow }",
-    },
+    interop: "auto",
   },
   plugins: [
-    metablock({
+    iitcplugin({
       id: p,
       meta: require("./" + path.join(pluginsPath, p, "meta.json")),
       downloadRoot: "https://le-jeu.github.io/iitc-plugins/",
@@ -44,6 +41,6 @@ export default pluginsId.map((p) => ({
         }),
       ],
     }),
-    babel({ babelHelpers: "bundled" }),
+    babel({ babelHelpers: "bundled", extensions: ['.jsx'] }),
   ],
 }));

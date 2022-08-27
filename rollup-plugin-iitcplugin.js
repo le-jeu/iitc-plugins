@@ -1,22 +1,7 @@
-const plugin_info = `
-var info = {};
-if (typeof GM_info !== 'undefined' && GM_info && GM_info.script) info.script = { version: GM_info.script.version, name: GM_info.script.name, description: GM_info.script.description };
-`;
-
-const framework = {
-  header: `
-if (typeof unsafeWindow === 'undefined')
-  unsafeWindow = window.unsafeWindow || window;
+const framework = `
 // ensure plugin framework is there, even if iitc is not yet loaded
-if(typeof unsafeWindow.plugin !== 'function') unsafeWindow.plugin = function() {};
-`,
-  footer: `
-if(!unsafeWindow.bootPlugins) unsafeWindow.bootPlugins = [];
-unsafeWindow.bootPlugins.push(setup);
-// if IITC has already booted, immediately run the 'setup' function
-if(unsafeWindow.iitcLoaded && typeof setup === 'function') setup(unsafeWindow);
-`,
-};
+if(typeof window.plugin !== 'function') window.plugin = function() {};
+`;
 
 const wrapper = {
   header: "function wrapper(plugin_info) {\n",
@@ -27,6 +12,9 @@ const noWrapper = "setup.info = info;\n";
 
 const injection = `
 // inject code into site context
+var info = {};
+if (typeof GM_info !== 'undefined' && GM_info && GM_info.script) info.script = { version: GM_info.script.version, name: GM_info.script.name, description: GM_info.script.description };
+
 var script = document.createElement('script');
 // if on last IITC mobile, will be replaced by wrapper(info)
 var mobile = \`script.appendChild(document.createTextNode('('+ wrapper +')('+JSON.stringify(info)+');'));
@@ -93,21 +81,18 @@ export default function metablock(options = {}) {
   const header = lines.join("\n");
   const useMeta = options.updateMeta;
   const useWrapper = !options.noWrapper;
-  const pluginInfo = plugin_info;
 
   return {
     banner() {
       return (
         header +
         "\n" +
-        pluginInfo +
         (useWrapper ? wrapper.header : "") +
-        framework.header
+        framework
       );
     },
     footer() {
       return (
-        framework.footer +
         (useWrapper
           ? wrapper.footer + injection.replace("@plugin_id@", pluginId)
           : noWrapper)
@@ -121,5 +106,21 @@ export default function metablock(options = {}) {
           source: header,
         });
     },
+    resolveId (source, _, options ) {
+      if (options.isEntry && source.includes(pluginId)) {
+        return "iitc-plugin-entry-point"
+      }
+      return null;
+    },
+    load ( id ) {
+      if (id === 'iitc-plugin-entry-point') {
+        return `import setup from "./src/${pluginId}";
+if(!window.bootPlugins) window.bootPlugins = [];
+window.bootPlugins.push(setup);
+// if IITC has already booted, immediately run the 'setup' function
+if(window.iitcLoaded && typeof setup === 'function') setup();`; 
+      }
+      return null;
+    }
   };
 }

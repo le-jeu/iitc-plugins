@@ -1,4 +1,4 @@
-import W from "unsafeWindow";
+const W = window;
 
 const guid_re = /[0-9a-f]{32}\.[0-9a-f]{2}/;
 
@@ -26,7 +26,7 @@ function addResult(query, data) {
           W.map.setView(result.position);
         W.renderPortalDetails(guid);
       } else {
-        w.selectPortalByLatLng(result.position);
+        W.selectPortalByLatLng(result.position);
       }
       return true; // prevent default behavior
     },
