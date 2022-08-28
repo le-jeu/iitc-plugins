@@ -49,10 +49,9 @@ export const itemTypes = {
   'PORTAL_POWERUP:FW_ENL': 'Enlightened Fireworks',
   'PORTAL_POWERUP:FW_RES': 'Resistance Fireworks',
   'PORTAL_POWERUP:BN_BLM': 'Beacon - Black Lives Matter',
+  // missing strings from stock intel
+  'PORTAL_POWERUP:BB_BATTLE_RARE': 'Rare Battle Beacon',
 };
-
-// missing strings from stock intel
-itemTypes['PORTAL_POWERUP:BB_BATTLE_RARE'] = 'Rare Battle Beacon';
 
 const dontCount = ['DRONE'];
 
@@ -64,15 +63,102 @@ export const levelItemTypes = ['EMITTER_A', 'EMP_BURSTER', 'POWER_CUBE', 'ULTRA_
 
 export const rarity = ['VERY_COMMON', 'COMMON', 'LESS_COMMON', 'RARE', 'VERY_RARE', 'EXTREMELY_RARE'];
 
+type ItemType = keyof typeof itemTypes;
+type Level = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+type Rarity = 'VERY_COMMON' | 'COMMON' | 'LESS_COMMON' | 'RARE' | 'VERY_RARE' | 'EXTREMELY_RARE';
+
+type LevelRarity = Level | Rarity;
+
+type CapsuleCount = { [name: string]: number };
+
+interface InventoryItem {
+  type: ItemType;
+  name: string;
+  leveled: boolean;
+  counts: { [Property in LevelRarity]?: CapsuleCount };
+  total: number;
+}
+
+interface InventoryKey {
+  guid: string;
+  title: string;
+  latLng: [number, number];
+  address: string;
+  count: Map<string, number>;
+  total: number;
+}
+
+interface InventoryMedia {
+  mediaId: string;
+  name: string;
+  url: string;
+  count: Map<string, number>;
+  total: number;
+}
+
+interface ParsedItem {
+  type: ItemType;
+  count: number;
+  capsule: string;
+  level?: Level;
+  rarity?: Rarity;
+}
+
+interface ParsedKey extends ParsedItem {
+  type: 'PORTAL_LINK_KEY';
+  guid: string;
+  title: string;
+  latLng: [number, number];
+  address: string;
+}
+
+interface ParsedMedia extends ParsedItem {
+  type: 'MEDIA';
+  mediaId: string;
+  name: string;
+  url: string;
+}
+
+interface ParsedCapsule extends ParsedItem {
+  type: 'CAPSULE' | 'KEY_CAPSULE' | 'INTEREST_CAPSULE' | 'KINETIC_CAPSULE';
+  name: string;
+  size: number;
+  content: ParsedItem[];
+}
+
+interface InventoryCapsule {
+  name: string;
+  size: number;
+  type: ParsedCapsule['type'];
+  keys: { [guid: string]: ParsedKey };
+  medias: { [mediaid: string]: ParsedMedia };
+  items: {
+    [Property in ItemType]?: {
+      type: ItemType;
+      leveled: boolean;
+      count: { [Property in LevelRarity]?: number };
+      repr: ParsedItem;
+    };
+  };
+}
+
 export class Inventory {
-  constructor(name) {
+  name: string;
+  keys: Map<string, InventoryKey>;
+  medias: Map<string, InventoryMedia>;
+  items: { [Property in ItemType]: InventoryItem };
+  capsules: { [name: string]: InventoryCapsule };
+  count: number;
+  keyLockersCount: number;
+
+  constructor(name: string) {
     this.name = name;
     this.keys = new Map(); // guid => {counts: caps => count}
     this.medias = new Map();
     this.clear();
   }
 
-  clearItem(type) {
+  clearItem(type: ItemType) {
     defaultTypeString(type);
     this.items[type] = {
       type: type,
@@ -87,21 +173,21 @@ export class Inventory {
     this.keys.clear();
     this.medias.clear();
     this.capsules = {};
-    this.items = {};
+    this.items = {} as Inventory['items'];
     for (const type in itemTypes) {
-      this.clearItem(type);
+      this.clearItem(type as ItemType);
     }
     this.count = 0;
     this.keyLockersCount = 0;
   }
 
-  getItem(type) {
+  getItem(type: ItemType) {
     if (!(type in this.items)) this.clearItem(type);
     return this.items[type];
   }
 
-  addCapsule(capsule) {
-    const data = {
+  addCapsule(capsule: ParsedCapsule) {
+    const data: InventoryCapsule = {
       name: capsule.name,
       size: capsule.size,
       type: capsule.type,
@@ -116,18 +202,19 @@ export class Inventory {
     this.addItem(capsule);
     for (const item of capsule.content) {
       this.addItem(item);
-      if (item.type === 'PORTAL_LINK_KEY') data.keys[item.guid] = item;
-      else if (item.type === 'MEDIA') data.medias[item.mediaId] = item;
+      if (item.type === 'PORTAL_LINK_KEY') data.keys[(item as ParsedKey).guid] = item as ParsedKey;
+      else if (item.type === 'MEDIA') data.medias[(item as ParsedMedia).mediaId] = item as ParsedMedia;
       else {
-        if (!data.items[item.type]) data.items[item.type] = { repr: item, leveled: levelItemTypes.includes(item.type), count: {}, type: item.type };
-        data.items[item.type].count[item.rarity || item.level] = item.count;
+        const cat = data.items[item.type] || { repr: item, leveled: levelItemTypes.includes(item.type), count: {}, type: item.type };
+        cat.count[item.rarity || (item.level as LevelRarity)] = item.count;
+        data.items[item.type] = cat;
       }
     }
   }
 
-  addItem(item) {
+  addItem(item: ParsedItem) {
     const cat = this.getItem(item.type);
-    const lr = cat.leveled ? item.level : item.rarity;
+    const lr = '' + (cat.leveled ? item.level : item.rarity);
     if (!cat.counts[lr]) cat.counts[lr] = {};
     const count = cat.counts[lr];
     if (!item.capsule) item.capsule = this.name;
@@ -139,13 +226,13 @@ export class Inventory {
     if (!dontCount.includes(item.type)) this.count += item.count;
 
     if (item.type === 'PORTAL_LINK_KEY') {
-      this.addKey(item);
+      this.addKey(item as ParsedKey);
     } else if (item.type === 'MEDIA') {
-      this.addMedia(item);
+      this.addMedia(item as ParsedMedia);
     }
   }
 
-  countType(type, levelRarity) {
+  countType(type: ItemType, levelRarity) {
     const cat = this.getItem(type);
     if (levelRarity !== undefined) {
       return cat.counts[levelRarity] ? cat.counts[levelRarity].total : 0;
@@ -153,7 +240,7 @@ export class Inventory {
     return cat.total;
   }
 
-  addMedia(media) {
+  addMedia(media: ParsedMedia) {
     if (!this.medias.has(media.mediaId))
       this.medias.set(media.mediaId, {
         mediaId: media.mediaId,
@@ -162,18 +249,18 @@ export class Inventory {
         count: new Map(),
         total: 0,
       });
-    const current = this.medias.get(media.mediaId);
+    const current = this.medias.get(media.mediaId) as InventoryMedia;
     const entry = current.count.get(media.capsule) || 0;
     current.count.set(media.capsule, entry + (media.count || 1));
     current.total += media.count || 1;
   }
 
-  countKey(guid) {
+  countKey(guid: string) {
     if (!this.keys.has(guid)) return 0;
-    return this.keys.get(guid).total;
+    return (this.keys.get(guid) as InventoryKey).total;
   }
 
-  addKey(key) {
+  addKey(key: ParsedKey) {
     if (!this.keys.has(key.guid))
       this.keys.set(key.guid, {
         guid: key.guid,
@@ -183,7 +270,7 @@ export class Inventory {
         count: new Map(),
         total: 0,
       });
-    const current = this.keys.get(key.guid);
+    const current = this.keys.get(key.guid) as InventoryKey;
     const entry = current.count.get(key.capsule) || 0;
     current.count.set(key.capsule, entry + (key.count || 1));
     current.total += key.count || 1;
@@ -214,7 +301,7 @@ export class Inventory {
 
     for (const type in itemTypes) {
       if (type === 'PORTAL_LINK_KEY') continue;
-      const item = this.getItem(type);
+      const item = this.getItem(type as ItemType);
       for (const k in item.counts) {
         const count = item.counts[k][this.name];
         if (count) {

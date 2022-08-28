@@ -1,29 +1,31 @@
 {
-    "env": {
-        "browser": true,
-        "es6": true,
-        "jquery": true,
-        "greasemonkey": true
-    },
-    "extends": [
-        "eslint:recommended",
-        "plugin:prettier/recommended",
-        "prettier"
-    ],
-    "ignorePatterns": [
-        "/core/external/*.js",
-        "/plugins/external/*.js"
-    ],
-    "plugins": ["prettier"],
-    "rules": {
-        "eqeqeq": "error",
-        "spaced-comment": "error",
-        "no-unused-expressions": "error",
-        "prettier/prettier": "warn"
-    },
-    "globals": {
-        "L": "readonly",
-        "portals": "readonly",
-        "android": "readonly"
-    }
+  "env": {
+    "browser": true,
+    "es6": true,
+    "jquery": true,
+    "greasemonkey": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:prettier/recommended",
+    "prettier"
+  ],
+  "ignorePatterns": [
+    "plugins/external/*.js",
+    "/*.js"
+  ],
+  "plugins": [
+    "prettier"
+  ],
+  "rules": {
+    "eqeqeq": "error",
+    "spaced-comment": "error",
+    "no-unused-expressions": "error",
+    "prettier/prettier": "warn"
+  },
+  "globals": {
+    "L": "readonly",
+    "portals": "readonly",
+    "android": "readonly"
+  }
 }
