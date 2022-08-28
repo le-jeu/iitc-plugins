@@ -461,7 +461,7 @@ function displayNameMapping() {
 function displayOpt() {
   const container = (
     <div className="container">
-      <label htmlFor="plugin-player-inventory-popup-enable">Auto-sync with Keys</label>
+      <label htmlFor="plugin-player-inventory-popup-enable">Keys popup</label>
       <input
         type="checkbox"
         checked={playerInventory.settings.popupEnable}
