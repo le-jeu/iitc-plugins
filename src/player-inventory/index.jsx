@@ -479,7 +479,7 @@ function displayOpt() {
         }}
       ></input>
 
-      <label htmlFor="plugin-player-inventory-autorefresh-enable">Auto-sync with Keys</label>
+      <label htmlFor="plugin-player-inventory-autorefresh-enable">Auto-refresh</label>
       <input
         type="checkbox"
         checked={playerInventory.settings.autoRefreshActive}
