@@ -29,39 +29,46 @@
 }
 
 .inventory-box table tr {
-  background: rgba(0, 0, 0, 0.6);
-}
-
-.inventory-box table tr:nth-child(2n + 1) {
   background: rgba(0, 0, 0, 0.3);
 }
 
-.inventory-box tr td:first-child {
-  text-align: right;
+.inventory-box table tr:nth-child(2n + 1) {
+  background: rgba(0, 0, 0, 0.6);
 }
 
-.inventory-box .sum tr td:first-child {
-  text-align: left;
+.inventory-box .sum tr th {
   white-space: nowrap;
   width: max-content;
 }
 
-.inventory-box tr td:nth-child(2) {
+.inventory-box table tr:nth-child(2n + 1) th {
+  text-decoration: underline dotted;
+  font-weight: normal;
+}
+
+.inventory-box .sum tr {
   text-align: center;
 }
 
-.inventory-box tr td:last-child {
-  text-align: left;
+.inventory-box .all tr td:nth-child(2),
+.inventory-box .keys tr td:nth-child(2),
+.inventory-box .medias tr td:nth-child(2),
+.inventory-box .capsule tr td:nth-child(2) {
+  text-align: center;
 }
 
-.inventory-box tr td:last-child span:not(:last-child)::after {
-  content: ', ';
+.inventory-box .all tr td:last-child,
+.inventory-box .keys tr td:last-child,
+.inventory-box .medias tr td:last-child,
+.inventory-box .capsule tr td:last-child {
+  text-align: left;
 }
 
 .inventory-box .all tr td:first-child,
 .inventory-box .keys tr td:first-child,
 .inventory-box .medias tr td:first-child,
 .inventory-box .capsule tr td:first-child {
+  text-align: right;
   width: 2em;
 }
 
