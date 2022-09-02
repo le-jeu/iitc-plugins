@@ -446,7 +446,7 @@ function displayInventory(inventory) {
     id: 'inventory',
     html: container,
     width: 'auto',
-    height: '500',
+    height: '560',
     classes: {
       'ui-dialog-content': 'inventory-box',
     },
