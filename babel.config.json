@@ -2,7 +2,7 @@
   "plugins": [
     [
       "@babel/plugin-transform-react-jsx",
-      { "importSource": "../lib/dom", "runtime": "automatic" }
+      { "importSource": "lib/dom", "runtime": "automatic" }
     ]
   ],
   "presets": [

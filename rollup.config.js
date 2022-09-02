@@ -33,9 +33,10 @@ export default pluginsId.map((p) => ({
       buildName: buildName,
     }),
     resolve({
-      extensions: ['.js', '.jsx', '.ts']
+      moduleDirectories: ['node_modules', 'src'],
+      extensions: ['.js', '.jsx', '.ts', '.tsx']
     }),
-    babel({ babelHelpers: "bundled", extensions: ['.jsx', '.ts'] }),
+    babel({ babelHelpers: "bundled", extensions: ['.jsx', '.ts', '.tsx'] }),
     postcss({
       inject: false,
       plugins: [

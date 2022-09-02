@@ -2,43 +2,20 @@ import playerInventoryCSS from './player-inventory.css';
 
 import playerInventory from './plugin';
 
-import { rarity, Inventory, itemTypes } from './inventory';
+import { Inventory, itemTypes } from './inventory';
 import { parseInventory } from './parser';
 import { loadLastInventory, loadSettings, storeSettings, saveInventory } from './storage';
 import { requestInventory } from './request';
 import { createPopup, injectKeys, portalKeyHighlight } from './map';
 
-const rarityShort = rarity.map((v) =>
-  v
+// eslint-disable-next-line no-unused-vars
+import PortalKeyLink from './components/portalKeyLink';
+
+function shortenRarity(v) {
+  return v
     .split('_')
     .map((a) => a[0])
-    .join('')
-);
-
-const rarityToInt = {};
-for (const i in rarity) rarityToInt[rarity[i]] = i;
-
-// again...
-function getPortalLink(key) {
-  const latLng = [key.latLng[0].toFixed(6), key.latLng[1].toFixed(6)];
-  return (
-    <a
-      title={key.address}
-      href={window.makePermalink(latLng)}
-      onclick={function (event) {
-        event.preventDefault();
-        window.renderPortalDetails(key.guid);
-        window.selectPortalByLatLng(latLng);
-      }}
-      ondblclick={function (event) {
-        event.preventDefault();
-        window.renderPortalDetails(key.guid);
-        window.zoomToAndShowPortal(key.guid, latLng);
-      }}
-    >
-      {key.title}
-    </a>
-  );
+    .join('');
 }
 
 function localeCompare(a, b) {
@@ -50,7 +27,7 @@ function localeCompare(a, b) {
 // eslint-disable-next-line no-unused-vars
 function ItemRow(props) {
   const { item, lvl, count } = props;
-  const lr = item.leveled ? 'L' + lvl : rarityShort[rarityToInt[lvl]];
+  const lr = item.leveled ? 'L' + lvl : shortenRarity(lvl);
   const className = (item.leveled ? 'level_' : 'rarity_') + lr;
   const name = itemTypes[item.type];
   return (
@@ -267,7 +244,9 @@ function createKeysTable(inventory) {
   return (
     <table>
       {keys.map((key) => (
-        <KeyMediaRow item={key}>{getPortalLink(key)}</KeyMediaRow>
+        <KeyMediaRow item={key}>
+          <PortalKeyLink item={key} />
+        </KeyMediaRow>
       ))}
     </table>
   );
@@ -294,7 +273,9 @@ function createCapsuleTable(inventory, capsule) {
       <tr>
         <td>{item.count}</td>
         {capsule.type !== 'KEY_CAPSULE' ? <td></td> : null}
-        <td>{getPortalLink(item)}</td>
+        <td>
+          <PortalKeyLink item={item} />
+        </td>
       </tr>
     );
   }
@@ -691,9 +672,9 @@ function setupCSS() {
     window.COLORS_LVL.forEach((c, i) => {
       colorStyle += `.level_L${i}{ color: ${c} }`;
     });
-    rarity.forEach((r, i) => {
-      if (window.COLORS_MOD[r]) colorStyle += `.rarity_${rarityShort[i]} { color: ${window.COLORS_MOD[r]}}`;
-    });
+    for (const r in window.COLORS_MOD) {
+      colorStyle += `.rarity_${shortenRarity(r)} { color: ${window.COLORS_MOD[r]} }`;
+    }
   }
   const style = document.head.querySelector('#player-inventory-css') || <style id="player-inventory-css"></style>;
   style.textContent = playerInventoryCSS + colorStyle;
