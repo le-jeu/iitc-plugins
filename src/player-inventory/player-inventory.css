@@ -41,7 +41,7 @@
   width: max-content;
 }
 
-.inventory-box table tr:nth-child(2n + 1) th {
+.inventory-box .sum tr:nth-child(2n) th {
   text-decoration: underline dotted;
   font-weight: normal;
 }
