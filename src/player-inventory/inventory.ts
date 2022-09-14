@@ -63,11 +63,11 @@ export const levelItemTypes = ['EMITTER_A', 'EMP_BURSTER', 'POWER_CUBE', 'ULTRA_
 
 export const rarity = ['VERY_COMMON', 'COMMON', 'LESS_COMMON', 'RARE', 'VERY_RARE', 'EXTREMELY_RARE'];
 
-type ItemType = keyof typeof itemTypes;
+export type ItemType = keyof typeof itemTypes;
 type Level = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 type Rarity = 'VERY_COMMON' | 'COMMON' | 'LESS_COMMON' | 'RARE' | 'VERY_RARE' | 'EXTREMELY_RARE';
 
-type LevelRarity = Level | Rarity;
+export type LevelRarity = Level | Rarity;
 
 type CapsuleCount = { [name: string]: number };
 

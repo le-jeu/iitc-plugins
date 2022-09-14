@@ -6,38 +6,13 @@ import { Inventory, itemTypes } from './inventory';
 import { parseInventory } from './parser';
 import { loadLastInventory, loadSettings, storeSettings, saveInventory } from './storage';
 import { requestInventory } from './request';
+import { shortenRarity, localeCompare } from './utils';
 import { createPopup, injectKeys, portalKeyHighlight } from './map';
 
 // eslint-disable-next-line no-unused-vars
 import PortalKeyLink from './components/portalKeyLink';
-
-function shortenRarity(v) {
-  return v
-    .split('_')
-    .map((a) => a[0])
-    .join('');
-}
-
-function localeCompare(a, b) {
-  if (typeof a !== 'string') a = '';
-  if (typeof b !== 'string') b = '';
-  return a.localeCompare(b);
-}
-
 // eslint-disable-next-line no-unused-vars
-function ItemRow(props) {
-  const { item, lvl, count } = props;
-  const lr = item.leveled ? 'L' + lvl : shortenRarity(lvl);
-  const className = (item.leveled ? 'level_' : 'rarity_') + lr;
-  const name = itemTypes[item.type];
-  return (
-    <tr className={className}>
-      <td>{count}</td>
-      <td>{lr}</td>
-      <td>{name}</td>
-    </tr>
-  );
-}
+import ItemRow from './components/itemRow';
 
 function createAllTable(inventory) {
   const table = <table></table>;
