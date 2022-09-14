@@ -1,4 +1,4 @@
-import { getItemName } from "./extract";
+import { getItemName } from './extract';
 
 const dontCount = ['DRONE'];
 

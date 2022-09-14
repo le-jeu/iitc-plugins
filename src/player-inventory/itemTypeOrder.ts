@@ -1,4 +1,4 @@
-import { ItemType } from "./inventory";
+import { ItemType } from './inventory';
 
 export const orderedTypes = [
   'PORTAL_LINK_KEY',
