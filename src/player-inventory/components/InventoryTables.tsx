@@ -1,14 +1,15 @@
 import { Inventory } from '../inventory';
 import { localeCompare } from '../utils';
 import { getItemName } from '../extract';
+import { storeSettings } from '../storage';
+
+import playerInventory from '../plugin';
+
 import AllTable from './AllTable';
 import AllSumTable from './AllSumTable';
 import KeysTable from './KeysTable';
 import MediaTable from './MediaTable';
 import CapsuleTable from './CapsuleTable';
-
-import { storeSettings } from '../storage';
-import playerInventory from '../plugin';
 
 export default function ({ inventory }: { inventory: Inventory }) {
   const inventoryCount = inventory.count - inventory.keyLockersCount;

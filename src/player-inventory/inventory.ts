@@ -1,65 +1,62 @@
 import { getItemName } from "./extract";
 
-export const orderedTypes = [
-  'PORTAL_LINK_KEY',
-  'EMITTER_A',
-  'EMP_BURSTER',
-  'ULTRA_STRIKE',
-  'FLIP_CARD',
-  'FLIP_CARD:ADA',
-  'FLIP_CARD:JARVIS',
-  'POWER_CUBE',
-  'BOOSTED_POWER_CUBE',
-  'BOOSTED_POWER_CUBE_K',
-  'RES_SHIELD',
-  'EXTRA_SHIELD',
-  'TURRET',
-  'FORCE_AMP',
-  'LINK_AMPLIFIER',
-  'ULTRA_LINK_AMP',
-  'HEATSINK',
-  'MULTIHACK',
-  'TRANSMUTER_ATTACK',
-  'TRANSMUTER_DEFENSE',
-  'MEDIA',
-  'CAPSULE',
-  'INTEREST_CAPSULE',
-  'KEY_CAPSULE',
-  'KINETIC_CAPSULE',
-  'DRONE',
-  'MYSTERIOUS_ITEM_PLACEHOLDER',
-  'PLAYER_POWERUP',
-  'PLAYER_POWERUP:APEX',
-  'PORTAL_POWERUP',
-  'PORTAL_POWERUP:FRACK',
-  'PORTAL_POWERUP:NEMESIS',
-  'PORTAL_POWERUP:TOASTY',
-  'PORTAL_POWERUP:EXO5',
-  'PORTAL_POWERUP:MAGNUSRE',
-  'PORTAL_POWERUP:VIANOIR',
-  'PORTAL_POWERUP:VIALUX',
-  'PORTAL_POWERUP:INITIO',
-  'PORTAL_POWERUP:AEGISNOVA',
-  'PORTAL_POWERUP:OBSIDIAN',
-  'PORTAL_POWERUP:NIA',
-  'PORTAL_POWERUP:ENL',
-  'PORTAL_POWERUP:RES',
-  'PORTAL_POWERUP:MEET',
-  'PORTAL_POWERUP:LOOK',
-  'PORTAL_POWERUP:BB_BATTLE',
-  'PORTAL_POWERUP:BB_BATTLE_RARE',
-  'PORTAL_POWERUP:FW_ENL',
-  'PORTAL_POWERUP:FW_RES',
-  'PORTAL_POWERUP:BN_BLM',
-] as const;
-
 const dontCount = ['DRONE'];
 
 export const levelItemTypes = ['EMITTER_A', 'EMP_BURSTER', 'POWER_CUBE', 'ULTRA_STRIKE', 'MEDIA'];
 
 export const rarity = ['VERY_COMMON', 'COMMON', 'LESS_COMMON', 'RARE', 'VERY_RARE', 'EXTREMELY_RARE'];
 
-export type ItemType = typeof orderedTypes[number];
+export type ItemType =
+  | 'PORTAL_LINK_KEY'
+  | 'EMITTER_A'
+  | 'EMP_BURSTER'
+  | 'ULTRA_STRIKE'
+  | 'FLIP_CARD'
+  | 'FLIP_CARD:ADA'
+  | 'FLIP_CARD:JARVIS'
+  | 'POWER_CUBE'
+  | 'BOOSTED_POWER_CUBE'
+  | 'BOOSTED_POWER_CUBE_K'
+  | 'RES_SHIELD'
+  | 'EXTRA_SHIELD'
+  | 'TURRET'
+  | 'FORCE_AMP'
+  | 'LINK_AMPLIFIER'
+  | 'ULTRA_LINK_AMP'
+  | 'HEATSINK'
+  | 'MULTIHACK'
+  | 'TRANSMUTER_ATTACK'
+  | 'TRANSMUTER_DEFENSE'
+  | 'MEDIA'
+  | 'CAPSULE'
+  | 'INTEREST_CAPSULE'
+  | 'KEY_CAPSULE'
+  | 'KINETIC_CAPSULE'
+  | 'DRONE'
+  | 'MYSTERIOUS_ITEM_PLACEHOLDER'
+  | 'PLAYER_POWERUP'
+  | 'PLAYER_POWERUP:APEX'
+  | 'PORTAL_POWERUP'
+  | 'PORTAL_POWERUP:FRACK'
+  | 'PORTAL_POWERUP:NEMESIS'
+  | 'PORTAL_POWERUP:TOASTY'
+  | 'PORTAL_POWERUP:EXO5'
+  | 'PORTAL_POWERUP:MAGNUSRE'
+  | 'PORTAL_POWERUP:VIANOIR'
+  | 'PORTAL_POWERUP:VIALUX'
+  | 'PORTAL_POWERUP:INITIO'
+  | 'PORTAL_POWERUP:AEGISNOVA'
+  | 'PORTAL_POWERUP:OBSIDIAN'
+  | 'PORTAL_POWERUP:NIA'
+  | 'PORTAL_POWERUP:ENL'
+  | 'PORTAL_POWERUP:RES'
+  | 'PORTAL_POWERUP:MEET'
+  | 'PORTAL_POWERUP:LOOK'
+  | 'PORTAL_POWERUP:BB_BATTLE'
+  | 'PORTAL_POWERUP:BB_BATTLE_RARE'
+  | 'PORTAL_POWERUP:FW_ENL'
+  | 'PORTAL_POWERUP:FW_RES'
+  | 'PORTAL_POWERUP:BN_BLM';
 type Level = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 type Rarity = 'VERY_COMMON' | 'COMMON' | 'LESS_COMMON' | 'RARE' | 'VERY_RARE' | 'EXTREMELY_RARE';
 
@@ -84,7 +81,7 @@ export interface InventoryKey {
   total: number;
 }
 
-interface InventoryMedia {
+export interface InventoryMedia {
   mediaId: string;
   name: string;
   url: string;
@@ -169,9 +166,6 @@ export class Inventory {
     this.medias.clear();
     this.capsules = {};
     this.items = {} as Inventory['items'];
-    for (const type of orderedTypes) {
-      this.clearItem(type as ItemType);
-    }
     this.count = 0;
     this.keyLockersCount = 0;
   }
@@ -295,9 +289,9 @@ export class Inventory {
       }
     }
 
-    for (const type of orderedTypes) {
+    for (const type in this.items) {
       if (type === 'PORTAL_LINK_KEY') continue;
-      const item = this.getItem(type);
+      const item = this.getItem(type as ItemType);
       for (const k in item.counts) {
         const count = item.counts[k][this.name];
         if (count) {

@@ -1,4 +1,5 @@
-import { InventoryCapsule, orderedTypes } from '../inventory';
+import { InventoryCapsule } from '../inventory';
+import { orderedTypes } from '../itemTypeOrder';
 import { localeCompare } from '../utils';
 import ItemRow from './ItemRow';
 import PortalKeyLink from './PortalKeyLink';
