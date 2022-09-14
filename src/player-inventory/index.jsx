@@ -269,40 +269,37 @@ function createMediaTable(inventory) {
   );
 }
 
-function createCapsuleTable(inventory, capsule) {
-  const table = <table></table>;
+function createCapsuleTable(capsule) {
   const keys = Object.values(capsule.keys).sort((a, b) => localeCompare(a.title, b.title));
-  for (const item of keys) {
-    table.append(
-      <tr>
-        <td>{item.count}</td>
-        {capsule.type !== 'KEY_CAPSULE' ? <td></td> : null}
-        <td>
-          <PortalKeyLink item={item} />
-        </td>
-      </tr>
-    );
-  }
   const medias = Object.values(capsule.medias).sort((a, b) => localeCompare(a.name, b.name));
-  for (const item of medias) {
-    table.append(
-      <tr className="level_L1">
-        <td>{item.count}</td>
-        <td>M</td>
-        <td>
-          <a href={item.url}>{item.name}</a>
-        </td>
-      </tr>
-    );
-  }
-  for (const type in itemTypes) {
-    const item = capsule.items[type];
-    if (!item) continue;
-    for (const i in item.count) {
-      table.append(<ItemRow count={item.count[i]} item={item} lvl={i} />);
-    }
-  }
-  return table;
+  return (
+    <table>
+      {keys.map((item) => (
+        <tr>
+          <td>{item.count}</td>
+          {capsule.type !== 'KEY_CAPSULE' ? <td></td> : null}
+          <td>
+            <PortalKeyLink item={item} />
+          </td>
+        </tr>
+      ))}
+      {medias.map((item) => (
+        <tr className="level_L1">
+          <td>{item.count}</td>
+          <td>M</td>
+          <td>
+            <a href={item.url}>{item.name}</a>
+          </td>
+        </tr>
+      ))}
+      {Object.keys(itemTypes).map((type) => {
+        const item = capsule.items[type];
+        if (item) {
+          return Object.keys(item.count).map((i) => <ItemRow count={item.count[i]} item={item} lvl={i} />);
+        }
+      })}
+    </table>
+  );
 }
 
 function buildInventoryHTML(inventory) {
@@ -340,7 +337,7 @@ function buildInventoryHTML(inventory) {
   container.append(
     <>
       <b>On Hand ({onHand.size})</b>
-      <div className="capsule">{createCapsuleTable(inventory, onHand)}</div>
+      <div className="capsule">{createCapsuleTable(onHand)}</div>
     </>
   );
 
@@ -392,7 +389,7 @@ function buildInventoryHTML(inventory) {
                   }}
                 />
               </div>
-              {createCapsuleTable(inventory, capsule)}
+              {createCapsuleTable(capsule)}
             </div>
           </>
         );
