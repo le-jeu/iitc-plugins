@@ -1,6 +1,4 @@
-import type { Key } from "../inventorydb";
-
-export default function (props: { item: Key }) {
+export default function (props: { item: { latLng: [number, number]; address: string; guid: string; title: string } }) {
   const { item } = props;
   const latLng = [item.latLng[0].toFixed(6), item.latLng[1].toFixed(6)];
   return (

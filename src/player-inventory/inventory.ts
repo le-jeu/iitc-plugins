@@ -1,69 +1,65 @@
-// stock intel
-export const itemTypes = {
-  PORTAL_LINK_KEY: 'Portal Key',
-  EMITTER_A: 'Resonator',
-  EMP_BURSTER: 'Xmp Burster',
-  ULTRA_STRIKE: 'Ultra Strike',
-  FLIP_CARD: 'Alignment Virus',
-  'FLIP_CARD:ADA': 'ADA Refactor',
-  'FLIP_CARD:JARVIS': 'JARVIS Virus',
-  POWER_CUBE: 'Power Cube',
-  BOOSTED_POWER_CUBE: 'Hypercube',
-  BOOSTED_POWER_CUBE_K: 'Hypercube',
-  RES_SHIELD: 'Portal Shield',
-  EXTRA_SHIELD: 'Aegis Shield',
-  TURRET: 'Turret',
-  FORCE_AMP: 'Force Amp',
-  LINK_AMPLIFIER: 'Link Amp',
-  ULTRA_LINK_AMP: 'Ultra Link',
-  HEATSINK: 'Heat Sink',
-  MULTIHACK: 'Multi-hack',
-  TRANSMUTER_ATTACK: 'Ito En Transmuter (-)',
-  TRANSMUTER_DEFENSE: 'Ito En Transmuter (+)',
-  MEDIA: 'Media',
-  CAPSULE: 'Capsule',
-  INTEREST_CAPSULE: 'Quantum Capsule',
-  KEY_CAPSULE: 'Key Capsule',
-  KINETIC_CAPSULE: 'Kinetic Capsule',
-  DRONE: 'Drone',
-  MYSTERIOUS_ITEM_PLACEHOLDER: 'Mysterious item',
-  PLAYER_POWERUP: 'Player Powerup',
-  'PLAYER_POWERUP:APEX': 'Apex Mod',
-  PORTAL_POWERUP: 'Portal Powerup',
-  'PORTAL_POWERUP:FRACK': 'Portal Fracker',
-  'PORTAL_POWERUP:NEMESIS': 'Beacon - Nemesis',
-  'PORTAL_POWERUP:TOASTY': 'Beacon - Toast!',
-  'PORTAL_POWERUP:EXO5': 'Beacon - EXO5',
-  'PORTAL_POWERUP:MAGNUSRE': 'Beacon - Reawakens',
-  'PORTAL_POWERUP:VIANOIR': 'Beacon - Via Noir',
-  'PORTAL_POWERUP:VIALUX': 'Beacon - Via Lux',
-  'PORTAL_POWERUP:INITIO': 'Beacon - Initio',
-  'PORTAL_POWERUP:AEGISNOVA': 'Beacon - Aegis Nova',
-  'PORTAL_POWERUP:OBSIDIAN': 'Beacon - Obsidian',
-  'PORTAL_POWERUP:NIA': 'Beacon - Niantic',
-  'PORTAL_POWERUP:ENL': 'Beacon - ENL',
-  'PORTAL_POWERUP:RES': 'Beacon - RES',
-  'PORTAL_POWERUP:MEET': 'Beacon - Meetup',
-  'PORTAL_POWERUP:LOOK': 'Beacon - Target',
-  'PORTAL_POWERUP:BB_BATTLE': 'Battle Beacon',
-  'PORTAL_POWERUP:FW_ENL': 'Enlightened Fireworks',
-  'PORTAL_POWERUP:FW_RES': 'Resistance Fireworks',
-  'PORTAL_POWERUP:BN_BLM': 'Beacon - Black Lives Matter',
-  // missing strings from stock intel
-  'PORTAL_POWERUP:BB_BATTLE_RARE': 'Rare Battle Beacon',
-};
+import { getItemName } from "./extract";
+
+export const orderedTypes = [
+  'PORTAL_LINK_KEY',
+  'EMITTER_A',
+  'EMP_BURSTER',
+  'ULTRA_STRIKE',
+  'FLIP_CARD',
+  'FLIP_CARD:ADA',
+  'FLIP_CARD:JARVIS',
+  'POWER_CUBE',
+  'BOOSTED_POWER_CUBE',
+  'BOOSTED_POWER_CUBE_K',
+  'RES_SHIELD',
+  'EXTRA_SHIELD',
+  'TURRET',
+  'FORCE_AMP',
+  'LINK_AMPLIFIER',
+  'ULTRA_LINK_AMP',
+  'HEATSINK',
+  'MULTIHACK',
+  'TRANSMUTER_ATTACK',
+  'TRANSMUTER_DEFENSE',
+  'MEDIA',
+  'CAPSULE',
+  'INTEREST_CAPSULE',
+  'KEY_CAPSULE',
+  'KINETIC_CAPSULE',
+  'DRONE',
+  'MYSTERIOUS_ITEM_PLACEHOLDER',
+  'PLAYER_POWERUP',
+  'PLAYER_POWERUP:APEX',
+  'PORTAL_POWERUP',
+  'PORTAL_POWERUP:FRACK',
+  'PORTAL_POWERUP:NEMESIS',
+  'PORTAL_POWERUP:TOASTY',
+  'PORTAL_POWERUP:EXO5',
+  'PORTAL_POWERUP:MAGNUSRE',
+  'PORTAL_POWERUP:VIANOIR',
+  'PORTAL_POWERUP:VIALUX',
+  'PORTAL_POWERUP:INITIO',
+  'PORTAL_POWERUP:AEGISNOVA',
+  'PORTAL_POWERUP:OBSIDIAN',
+  'PORTAL_POWERUP:NIA',
+  'PORTAL_POWERUP:ENL',
+  'PORTAL_POWERUP:RES',
+  'PORTAL_POWERUP:MEET',
+  'PORTAL_POWERUP:LOOK',
+  'PORTAL_POWERUP:BB_BATTLE',
+  'PORTAL_POWERUP:BB_BATTLE_RARE',
+  'PORTAL_POWERUP:FW_ENL',
+  'PORTAL_POWERUP:FW_RES',
+  'PORTAL_POWERUP:BN_BLM',
+] as const;
 
 const dontCount = ['DRONE'];
-
-function defaultTypeString(s) {
-  if (!(s in itemTypes)) itemTypes[s] = s;
-}
 
 export const levelItemTypes = ['EMITTER_A', 'EMP_BURSTER', 'POWER_CUBE', 'ULTRA_STRIKE', 'MEDIA'];
 
 export const rarity = ['VERY_COMMON', 'COMMON', 'LESS_COMMON', 'RARE', 'VERY_RARE', 'EXTREMELY_RARE'];
 
-export type ItemType = keyof typeof itemTypes;
+export type ItemType = typeof orderedTypes[number];
 type Level = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 type Rarity = 'VERY_COMMON' | 'COMMON' | 'LESS_COMMON' | 'RARE' | 'VERY_RARE' | 'EXTREMELY_RARE';
 
@@ -79,7 +75,7 @@ interface InventoryItem {
   total: number;
 }
 
-interface InventoryKey {
+export interface InventoryKey {
   guid: string;
   title: string;
   latLng: [number, number];
@@ -126,10 +122,10 @@ interface ParsedCapsule extends ParsedItem {
   content: ParsedItem[];
 }
 
-interface InventoryCapsule {
+export interface InventoryCapsule {
   name: string;
   size: number;
-  type: ParsedCapsule['type'];
+  type?: ParsedCapsule['type'];
   keys: { [guid: string]: ParsedKey };
   medias: { [mediaid: string]: ParsedMedia };
   items: {
@@ -137,7 +133,7 @@ interface InventoryCapsule {
       type: ItemType;
       leveled: boolean;
       count: { [Property in LevelRarity]?: number };
-      repr: ParsedItem;
+      repr?: ParsedItem;
     };
   };
 }
@@ -159,10 +155,9 @@ export class Inventory {
   }
 
   clearItem(type: ItemType) {
-    defaultTypeString(type);
     this.items[type] = {
       type: type,
-      name: itemTypes[type],
+      name: getItemName(type),
       leveled: levelItemTypes.includes(type),
       counts: {},
       total: 0,
@@ -174,7 +169,7 @@ export class Inventory {
     this.medias.clear();
     this.capsules = {};
     this.items = {} as Inventory['items'];
-    for (const type in itemTypes) {
+    for (const type of orderedTypes) {
       this.clearItem(type as ItemType);
     }
     this.count = 0;
@@ -277,7 +272,7 @@ export class Inventory {
   }
 
   onHand() {
-    const data = {
+    const data: InventoryCapsule = {
       name: this.name,
       size: 0,
       keys: {},
@@ -288,6 +283,7 @@ export class Inventory {
     for (const key of this.keys.values()) {
       const count = key.count.get(this.name);
       if (count) {
+        // @ts-ignore: type/capsule missing
         data.keys[key.guid] = {
           guid: key.guid,
           title: key.title,
@@ -299,9 +295,9 @@ export class Inventory {
       }
     }
 
-    for (const type in itemTypes) {
+    for (const type of orderedTypes) {
       if (type === 'PORTAL_LINK_KEY') continue;
-      const item = this.getItem(type as ItemType);
+      const item = this.getItem(type);
       for (const k in item.counts) {
         const count = item.counts[k][this.name];
         if (count) {
