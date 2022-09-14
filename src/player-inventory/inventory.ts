@@ -232,7 +232,7 @@ export class Inventory {
     }
   }
 
-  countType(type: ItemType, levelRarity) {
+  countType(type: ItemType, levelRarity?: LevelRarity) {
     const cat = this.getItem(type);
     if (levelRarity !== undefined) {
       return cat.counts[levelRarity] ? cat.counts[levelRarity].total : 0;

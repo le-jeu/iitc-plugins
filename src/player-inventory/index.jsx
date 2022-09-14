@@ -195,7 +195,11 @@ function createAllSumTable(inventory) {
           <td>{inventory.countType('CAPSULE')}</td>
           <td>{inventory.countType('INTEREST_CAPSULE')}</td>
           <td>{inventory.countType('KEY_CAPSULE')}</td>
-          <td>{inventory.countType('KINETIC_CAPSULE')}</td>
+          <td>
+            <span className="rarity_C">{inventory.countType('KINETIC_CAPSULE', 'COMMON')}</span>
+            {' + '}
+            <span className="rarity_R">{inventory.countType('KINETIC_CAPSULE', 'RARE')}</span>
+          </td>
           <td>{inventory.countType('MEDIA')}</td>
         </tr>
       </table>
