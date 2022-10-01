@@ -18,7 +18,7 @@ export default function ({ inventory }: { inventory: Inventory }) {
         case 'PORTAL_POWERUP:FW_RES':
           break;
         default:
-          beacon++;
+          beacon += inventory.countType(type);
       }
     }
   }
