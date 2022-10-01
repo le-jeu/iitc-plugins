@@ -52,3 +52,14 @@ export const orderedTypes = [
   'PORTAL_POWERUP:FW_RES',
   'PORTAL_POWERUP:BN_BLM',
 ] as ItemType[];
+
+export function addIfMissing(type: ItemType) {
+  if (!orderedTypes.includes(type)) orderedTypes.push(type);
+}
+
+export function completeFromTypeList(types: ItemType[]) {
+  const known = new Set(orderedTypes);
+  for (const type of types) {
+    if (!known.has(type)) orderedTypes.push(type);
+  }
+}

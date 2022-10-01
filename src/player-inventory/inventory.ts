@@ -1,4 +1,5 @@
 import { getItemName } from './extract';
+import { addIfMissing } from './itemTypeOrder';
 
 const dontCount = ['DRONE'];
 
@@ -152,6 +153,7 @@ export class Inventory {
   }
 
   clearItem(type: ItemType) {
+    addIfMissing(type);
     this.items[type] = {
       type: type,
       name: getItemName(type),
