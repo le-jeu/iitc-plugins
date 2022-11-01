@@ -4,8 +4,8 @@ import type { Inventory } from '../inventory';
 const C_R_VR = ['COMMON', 'RARE', 'VERY_RARE'] as const;
 
 export default function ({ inventory }: { inventory: Inventory }) {
-  const total = inventory.items['PORTAL_LINK_KEY'].total;
-  const inventoryCount = inventory.items['PORTAL_LINK_KEY'].counts['VERY_COMMON'][inventory.name] || 0;
+  const total = inventory.getItem('PORTAL_LINK_KEY').total;
+  const inventoryCount = inventory.getItem('PORTAL_LINK_KEY').counts['VERY_COMMON'][inventory.name] || 0;
   const otherCount = total - inventoryCount - inventory.keyLockersCount;
   let beacon = 0;
   for (const type in inventory.items) {
@@ -105,7 +105,9 @@ export default function ({ inventory }: { inventory: Inventory }) {
           <td>{inventory.countType('TURRET')}</td>
           <td>{inventory.countType('FORCE_AMP')}</td>
           <td>{inventory.countType('LINK_AMPLIFIER', 'RARE')}</td>
-          {inventory.countType('LINK_AMPLIFIER', 'VERY_RARE') ? <td>{inventory.countType('LINK_AMPLIFIER', 'VERY_RARE')}</td> : null}
+          {inventory.countType('LINK_AMPLIFIER', 'VERY_RARE') ? (
+            <td>{inventory.countType('LINK_AMPLIFIER', 'VERY_RARE')}</td>
+          ) : null}
           <td>{inventory.countType('ULTRA_LINK_AMP')}</td>
           <td>{inventory.countType('TRANSMUTER_DEFENSE')}</td>
           <td>{inventory.countType('TRANSMUTER_ATTACK')}</td>

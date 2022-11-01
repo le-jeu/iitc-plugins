@@ -178,7 +178,9 @@ export default function () {
       const key = playerInventory.inventory.keys.get(data.guid);
       const mapping = playerInventory.settings.capsuleNameMap;
       const capsules = Array.from(key.count.keys()).map((name) => (
-        <div title={mapping[name] ? `${mapping[name]} [${name}]` : name}>{mapping[name] ? `${mapping[name]}` : name}</div>
+        <div title={mapping[name] ? `${mapping[name]} [${name}]` : name}>
+          {mapping[name] ? `${mapping[name]}` : name}
+        </div>
       ));
 
       document.getElementById('randdetails').append(

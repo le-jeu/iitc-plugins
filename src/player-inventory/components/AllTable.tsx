@@ -8,7 +8,7 @@ export default function createAllTable({ inventory }: { inventory: Inventory }) 
   for (const type of orderedTypes) {
     const total = inventory.countType(type);
     if (total === 0) continue;
-    const item = inventory.items[type];
+    const item = inventory.getItem(type);
     for (const i in item.counts) {
       const num = inventory.countType(type, i as LevelRarity);
       if (num > 0) {

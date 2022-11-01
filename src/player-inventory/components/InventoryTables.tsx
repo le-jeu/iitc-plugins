@@ -13,10 +13,13 @@ import CapsuleTable from './CapsuleTable';
 
 export default function ({ inventory }: { inventory: Inventory }) {
   const inventoryCount = inventory.count - inventory.keyLockersCount;
-  const keyInInventory = inventory.keys.size > 0 ? inventory.items['PORTAL_LINK_KEY'].counts['VERY_COMMON'][inventory.name] || 0 : 0;
+  const keyInInventory =
+    inventory.keys.size > 0 ? inventory.getItem('PORTAL_LINK_KEY').counts['VERY_COMMON'][inventory.name] || 0 : 0;
   const container = (
     <div className="container">
-      <b>{`Summary I:${inventoryCount - keyInInventory} K:${keyInInventory} T:${inventoryCount}/2500 KL:${inventory.keyLockersCount}`}</b>
+      <b>{`Summary I:${inventoryCount - keyInInventory} K:${keyInInventory} T:${inventoryCount}/2500 KL:${
+        inventory.keyLockersCount
+      }`}</b>
       <div className="sum">
         <AllSumTable inventory={inventory} />
       </div>

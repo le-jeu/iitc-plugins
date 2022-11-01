@@ -43,7 +43,10 @@ export function refreshIfOld() {
 
 export function autoRefresh() {
   if (!playerInventory.settings.autoRefreshActive) return;
-  playerInventory.autoRefreshTimer = setTimeout(() => refreshInventory(true), playerInventory.settings.autoRefreshDelay * 60 * 1000);
+  playerInventory.autoRefreshTimer = setTimeout(
+    () => refreshInventory(true),
+    playerInventory.settings.autoRefreshDelay * 60 * 1000
+  );
 }
 
 export function stopAutoRefresh() {

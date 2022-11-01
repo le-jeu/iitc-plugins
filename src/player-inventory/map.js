@@ -26,7 +26,11 @@ export function portalKeyHighlight(data) {
         weight: 2 * Math.sqrt(window.portalMarkerScale()),
         dashArray: '',
       });
-    } else if (window.map.getZoom() < 15 && data.portal.options.team === window.TEAM_NONE && !window.portalDetail.isFresh(guid))
+    } else if (
+      window.map.getZoom() < 15 &&
+      data.portal.options.team === window.TEAM_NONE &&
+      !window.portalDetail.isFresh(guid)
+    )
       // injected without intel data
       data.portal.setStyle({ color: 'red', fillColor: 'gray' });
     else data.portal.setStyle({ color: 'red' });

@@ -196,7 +196,12 @@ export class Inventory {
       if (item.type === 'PORTAL_LINK_KEY') data.keys[(item as ParsedKey).guid] = item as ParsedKey;
       else if (item.type === 'MEDIA') data.medias[(item as ParsedMedia).mediaId] = item as ParsedMedia;
       else {
-        const cat = data.items[item.type] || { repr: item, leveled: levelItemTypes.includes(item.type), count: {}, type: item.type };
+        const cat = data.items[item.type] || {
+          repr: item,
+          leveled: levelItemTypes.includes(item.type),
+          count: {},
+          type: item.type,
+        };
         cat.count[item.rarity || (item.level as LevelRarity)] = item.count;
         data.items[item.type] = cat;
       }

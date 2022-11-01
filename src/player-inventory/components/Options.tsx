@@ -14,7 +14,8 @@ export default function () {
         checked={playerInventory.settings.popupEnable}
         id="plugin-player-inventory-popup-enable"
         onchange={(ev) => {
-          playerInventory.settings.popupEnable = ev.target.checked === 'true' || (ev.target.checked === 'false' ? false : ev.target.checked);
+          playerInventory.settings.popupEnable =
+            ev.target.checked === 'true' || (ev.target.checked === 'false' ? false : ev.target.checked);
           storeSettings(playerInventory.settings);
         }}
       ></input>
@@ -25,7 +26,8 @@ export default function () {
         checked={playerInventory.settings.autoRefreshActive}
         id="plugin-player-inventory-autorefresh-enable"
         onchange={(ev) => {
-          playerInventory.settings.autoRefreshActive = ev.target.checked === 'true' || (ev.target.checked === 'false' ? false : ev.target.checked);
+          playerInventory.settings.autoRefreshActive =
+            ev.target.checked === 'true' || (ev.target.checked === 'false' ? false : ev.target.checked);
           if (playerInventory.settings.autoRefreshActive) {
             autoRefresh();
           } else {
@@ -57,7 +59,8 @@ export default function () {
             checked={playerInventory.settings.autoSyncKeys}
             id="plugin-player-inventory-autosync-enable"
             onchange={(ev) => {
-              playerInventory.settings.autoSyncKeys = ev.target.checked === 'true' || (ev.target.checked === 'false' ? false : ev.target.checked);
+              playerInventory.settings.autoSyncKeys =
+                ev.target.checked === 'true' || (ev.target.checked === 'false' ? false : ev.target.checked);
               storeSettings(playerInventory.settings);
             }}
           ></input>
@@ -73,7 +76,8 @@ export default function () {
         checked={playerInventory.settings.keysSidebarEnable}
         id="plugin-player-inventory-keys-sidebar-enable"
         onchange={(ev) => {
-          playerInventory.settings.keysSidebarEnable = ev.target.checked === 'true' || (ev.target.checked === 'false' ? false : ev.target.checked);
+          playerInventory.settings.keysSidebarEnable =
+            ev.target.checked === 'true' || (ev.target.checked === 'false' ? false : ev.target.checked);
           storeSettings(playerInventory.settings);
         }}
       ></input>
@@ -84,7 +88,8 @@ export default function () {
         checked={playerInventory.settings.lvlColorEnable}
         id="plugin-player-inventory-keys-lvlcolor-enable"
         onchange={(ev) => {
-          playerInventory.settings.lvlColorEnable = ev.target.checked === 'true' || (ev.target.checked === 'false' ? false : ev.target.checked);
+          playerInventory.settings.lvlColorEnable =
+            ev.target.checked === 'true' || (ev.target.checked === 'false' ? false : ev.target.checked);
           setupCSS();
           storeSettings(playerInventory.settings);
         }}
@@ -133,7 +138,11 @@ function displayNameMapping() {
   }
 
   const container = (
-    <textarea className="container" placeholder="AAAAAAAA: Name of AAAAAAAA\nBBBBBBBB: Name of BBBBBBBB\n..." value={text.join('\n')}></textarea>
+    <textarea
+      className="container"
+      placeholder="AAAAAAAA: Name of AAAAAAAA\nBBBBBBBB: Name of BBBBBBBB\n..."
+      value={text.join('\n')}
+    ></textarea>
   );
 
   window.dialog({
