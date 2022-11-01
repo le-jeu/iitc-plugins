@@ -5,7 +5,7 @@ const C_R_VR = ['COMMON', 'RARE', 'VERY_RARE'] as const;
 
 export default function ({ inventory }: { inventory: Inventory }) {
   const total = inventory.getItem('PORTAL_LINK_KEY').total;
-  const inventoryCount = inventory.getItem('PORTAL_LINK_KEY').counts['VERY_COMMON'][inventory.name] || 0;
+  const inventoryCount = total ? inventory.getItem('PORTAL_LINK_KEY').counts['VERY_COMMON'][inventory.name] || 0 : 0;
   const otherCount = total - inventoryCount - inventory.keyLockersCount;
   let beacon = 0;
   for (const type in inventory.items) {
