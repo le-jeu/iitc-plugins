@@ -3,7 +3,7 @@
 // @author        jaiperdu
 // @name          IITC plugin: Player Inventory
 // @category      Info
-// @version       0.4.2
+// @version       0.4.3
 // @description   View inventory and highlight portals with keys at any zoom. Can be used with the official plugins Keys and Keys on map to show the number of keys on the map.
 // @id            player-inventory
 // @namespace     https://github.com/IITC-CE/ingress-intel-total-conversion
@@ -821,7 +821,7 @@ function AllSumTable ({
   inventory
 }) {
   const total = inventory.getItem('PORTAL_LINK_KEY').total;
-  const inventoryCount = inventory.getItem('PORTAL_LINK_KEY').counts['VERY_COMMON'][inventory.name] || 0;
+  const inventoryCount = total ? inventory.getItem('PORTAL_LINK_KEY').counts['VERY_COMMON'][inventory.name] || 0 : 0;
   const otherCount = total - inventoryCount - inventory.keyLockersCount;
   let beacon = 0;
   for (const type in inventory.items) {
