@@ -124,24 +124,31 @@ export function filterEntities() {
  * @extends L.Layer
  * @param {{name: string, filter: FilterDesc}} options
  */
-export const FilterLayer = L.Layer.extend({
-  options: {
-    name: null,
-    filter: {},
-  },
+let FilterLayer = null;
 
-  initialize: function (options) {
-    L.setOptions(this, options);
-    set(this.options.name, this.options.filter);
-  },
+export function filterLayer(options) {
+  if (!FilterLayer) {
+    FilterLayer = L.Layer.extend({
+      options: {
+        name: null,
+        filter: {},
+      },
 
-  onAdd: function () {
-    remove(this.options.name);
-    filterEntities();
-  },
+      initialize: function (options) {
+        L.setOptions(this, options);
+        set(this.options.name, this.options.filter);
+      },
 
-  onRemove: function () {
-    set(this.options.name, this.options.filter);
-    filterEntities();
-  },
-});
+      onAdd: function () {
+        remove(this.options.name);
+        filterEntities();
+      },
+
+      onRemove: function () {
+        set(this.options.name, this.options.filter);
+        filterEntities();
+      },
+    });
+  }
+  return new FilterLayer(options);
+}
