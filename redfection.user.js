@@ -3,7 +3,7 @@
 // @author        jaiperdu
 // @name          IITC plugin: Redfection
 // @category      Info
-// @version       0.2.1
+// @version       0.2.2
 // @description   Show redfection portals and links
 // @id            redfection
 // @namespace     https://github.com/IITC-CE/ingress-intel-total-conversion
@@ -139,33 +139,40 @@ function filterEntities() {
  * @extends L.Layer
  * @param {{name: string, filter: FilterDesc}} options
  */
-const FilterLayer = L.Layer.extend({
-  options: {
-    name: null,
-    filter: {},
-  },
+let FilterLayer = null;
 
-  initialize: function (options) {
-    L.setOptions(this, options);
-    set(this.options.name, this.options.filter);
-  },
+function filterLayer(options) {
+  if (!FilterLayer) {
+    FilterLayer = L.Layer.extend({
+      options: {
+        name: null,
+        filter: {},
+      },
 
-  onAdd: function () {
-    remove(this.options.name);
-    filterEntities();
-  },
+      initialize: function (options) {
+        L.setOptions(this, options);
+        set(this.options.name, this.options.filter);
+      },
 
-  onRemove: function () {
-    set(this.options.name, this.options.filter);
-    filterEntities();
-  },
-});
+      onAdd: function () {
+        remove(this.options.name);
+        filterEntities();
+      },
+
+      onRemove: function () {
+        set(this.options.name, this.options.filter);
+        filterEntities();
+      },
+    });
+  }
+  return new FilterLayer(options);
+}
 
 function createDefaultOverlays() {
   var addLayers = {};
 
   var portalsLayers = [];
-  portalsLayers[0] = new FilterLayer({
+  portalsLayers[0] = filterLayer({
     name: 'Unclaimed/Placeholder Portals',
     filter: [
       { portal: true, data: { team: 'N' } },
@@ -175,7 +182,7 @@ function createDefaultOverlays() {
   addLayers['Unclaimed/Placeholder Portals'] = portalsLayers[0];
   for (var i = 1; i <= 8; i++) {
     var t = 'Level ' + i + ' Portals';
-    portalsLayers[i] = new FilterLayer({
+    portalsLayers[i] = filterLayer({
       name: t,
       filter: [
         { portal: true, data: { level: i, team: 'R' } },
@@ -186,28 +193,28 @@ function createDefaultOverlays() {
     addLayers[t] = portalsLayers[i];
   }
 
-  var fieldsLayer = new FilterLayer({
+  var fieldsLayer = filterLayer({
     name: 'Fields',
     filter: { field: true },
   });
   addLayers['Fields'] = fieldsLayer;
 
-  var linksLayer = new FilterLayer({
+  var linksLayer = filterLayer({
     name: 'Links',
     filter: { link: true },
   });
   addLayers['Links'] = linksLayer;
 
   // faction-specific layers
-  var resistanceLayer = new FilterLayer({
+  var resistanceLayer = filterLayer({
     name: 'Resistance',
     filter: { portal: true, link: true, field: true, data: { team: 'R' } },
   });
-  var enlightenedLayer = new FilterLayer({
+  var enlightenedLayer = filterLayer({
     name: 'Enlightened',
     filter: { portal: true, link: true, field: true, data: { team: 'E' } },
   });
-  var machinaLayer = new FilterLayer({
+  var machinaLayer = filterLayer({
     name: window.TEAM_NAMES[window.TEAM_MAC],
     filter: { portal: true, link: true, field: true, data: { team: 'M' } },
   });
