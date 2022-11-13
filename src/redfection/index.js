@@ -9,6 +9,7 @@ import {
   addPortalToMapLayer,
   removePortalFromMapLayer,
 } from './map_data_render';
+import { teamStringToId } from './entity_info';
 
 function setup() {
   window.Render.prototype.bringPortalsToFront = bringPortalsToFront;
@@ -29,6 +30,23 @@ function setup() {
       LayerChooser.prototype.initialize.apply(this, arguments);
     },
   });
+
+  window.TEAM_MAC = 3;
+  window.COLORS[window.TEAM_MAC] = '#ff0028';
+  window.TEAM_TO_CSS[window.TEAM_MAC] = 'mac';
+  window.TEAM_NAMES[window.TEAM_MAC] = 'U̶͚̓̍N̴̖̈K̠͔̍͑̂͜N̞̥͋̀̉Ȯ̶̹͕̀W̶̢͚͑̚͝Ṉ̨̟̒̅ ';
+
+  window.teamStringToId = teamStringToId;
+
+  const decodePortal = window.decodeArray.portal;
+  window.decodeArray.portal = function (a, details) {
+    if (a.length > 6 && a[1] === 'N' && a[6] > 0) a[1] = 'M';
+    return decodePortal(a, details);
+  };
+
+  const css = document.createElement('style');
+  css.textContent = '.mac { color: #f74a4a }';
+  document.head.append(css);
 }
 
 setup.priority = 'boot';

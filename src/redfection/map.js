@@ -19,6 +19,7 @@ export function createDefaultOverlays() {
       filter: [
         { portal: true, data: { level: i, team: 'R' } },
         { portal: true, data: { level: i, team: 'E' } },
+        { portal: true, data: { level: i, team: 'M' } },
       ],
     });
     addLayers[t] = portalsLayers[i];
@@ -45,6 +46,10 @@ export function createDefaultOverlays() {
     name: 'Enlightened',
     filter: { portal: true, link: true, field: true, data: { team: 'E' } },
   });
+  var machinaLayer = new FilterLayer({
+    name: window.TEAM_NAMES[window.TEAM_MAC],
+    filter: { portal: true, link: true, field: true, data: { team: 'M' } },
+  });
 
   // to avoid any favouritism, we'll put the player's own faction layer first
   if (window.PLAYER.team === 'RESISTANCE') {
@@ -54,6 +59,7 @@ export function createDefaultOverlays() {
     addLayers['Enlightened'] = enlightenedLayer;
     addLayers['Resistance'] = resistanceLayer;
   }
+  addLayers[machinaLayer.options.name] = machinaLayer;
 
   // compatibility
   addLayers.Neutral = L.layerGroup();

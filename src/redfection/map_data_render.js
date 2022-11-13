@@ -44,6 +44,8 @@ export function deleteFieldEntity(guid) {
 export function createFieldEntity(ent) {
   this.seenFieldsGuid[ent[0]] = true; // flag we've seen it
 
+  if (ent[2][1] === 'N') ent[2][1] = 'M';
+
   var data = {
     //    type: ent[2][0],
     team: ent[2][1],
@@ -96,6 +98,8 @@ export function createLinkEntity(ent, faked) {
   if (fakedLink.test(ent[0])) return;
 
   this.seenLinksGuid[ent[0]] = true;
+
+  if (ent[2][1] === 'N') ent[2][1] = 'M';
 
   var data = {
     team: ent[2][1],
