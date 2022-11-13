@@ -21,13 +21,18 @@ function setup() {
   window.Render.prototype.addPortalToMapLayer = addPortalToMapLayer;
   window.Render.prototype.removePortalFromMapLayer = removePortalFromMapLayer;
 
-  const LayerChooser = window.LayerChooser;
-  window.LayerChooser = LayerChooser.extend({
+  const lcInit = (window.LayerChooser || L.Control.Layers).prototype.initialize;
+  (window.LayerChooser || L.Control.Layers).include({
     initialize: function (baseLayers, overlays, options) {
       for (const key in overlays) delete overlays[key];
       const newOverlays = createDefaultOverlays();
-      for (const key in newOverlays) overlays[key] = newOverlays[key];
-      LayerChooser.prototype.initialize.apply(this, arguments);
+      for (const key in newOverlays) {
+        overlays[key] = newOverlays[key];
+        if (!window.LayerChooser && window.isLayerGroupDisplayed(key, true)) {
+          overlays[key].addTo(window.map);
+        }
+      }
+      lcInit.apply(this, arguments);
     },
   });
 
