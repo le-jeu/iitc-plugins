@@ -3,7 +3,7 @@
 // @author        jaiperdu
 // @name          IITC plugin: Redfection
 // @category      Info
-// @version       0.2.3
+// @version       0.2.4
 // @description   Show redfection portals and links
 // @id            redfection
 // @namespace     https://github.com/IITC-CE/ingress-intel-total-conversion
@@ -229,9 +229,6 @@ function createDefaultOverlays() {
   }
   addLayers[machinaLayer.options.name] = machinaLayer;
 
-  // compatibility
-  addLayers.Neutral = L.layerGroup();
-
   return addLayers;
 }
 
@@ -278,8 +275,6 @@ function deleteFieldEntity(guid) {
 
 function createFieldEntity(ent) {
   this.seenFieldsGuid[ent[0]] = true; // flag we've seen it
-
-  if (ent[2][1] === 'N') ent[2][1] = 'M';
 
   var data = {
     //    type: ent[2][0],
@@ -333,8 +328,6 @@ function createLinkEntity(ent, faked) {
   if (fakedLink.test(ent[0])) return;
 
   this.seenLinksGuid[ent[0]] = true;
-
-  if (ent[2][1] === 'N') ent[2][1] = 'M';
 
   var data = {
     team: ent[2][1],
@@ -434,8 +427,7 @@ function setup() {
   const decodePortal = window.decodeArray.portal;
   window.decodeArray.portal = function (a, details) {
     const res = decodePortal(a, details);
-    if (res.team === 'N' && res.resCount) {
-      res.team = 'M';
+    if (res.team === 'M') {
       if (res.owner) res.owner = window.TEAM_NAMES[window.TEAM_MAC];
       if (res.resonators) {
         for (const r of res.resonators) {
@@ -447,9 +439,10 @@ function setup() {
   };
 
   const css = document.createElement('style');
-  css.textContent = 
-    '.mac { color: #f74a4a }\n'
-    + '#portalslist table tr.mac td { background-color: #a22121 }';
+  css.textContent =
+    '.mac { color: #f74a4a }\n' +
+    '#portalslist table tr.mac td { background-color: #a22121 }\n' +
+    '#mobileinfo .mac .filllevel { background-color: #ff0028 }';
   document.head.append(css);
 }
 
