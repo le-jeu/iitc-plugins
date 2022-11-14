@@ -47,8 +47,7 @@ function setup() {
   const decodePortal = window.decodeArray.portal;
   window.decodeArray.portal = function (a, details) {
     const res = decodePortal(a, details);
-    if (res.team === 'N' && res.resCount) {
-      res.team = 'M';
+    if (res.team === 'M') {
       if (res.owner) res.owner = window.TEAM_NAMES[window.TEAM_MAC];
       if (res.resonators) {
         for (const r of res.resonators) {
@@ -60,9 +59,10 @@ function setup() {
   };
 
   const css = document.createElement('style');
-  css.textContent = 
-    '.mac { color: #f74a4a }\n'
-    + '#portalslist table tr.mac td { background-color: #a22121 }';
+  css.textContent =
+    '.mac { color: #f74a4a }\n' +
+    '#portalslist table tr.mac td { background-color: #a22121 }\n' +
+    '#mobileinfo .mac .filllevel { background-color: #ff0028 }';
   document.head.append(css);
 }
 

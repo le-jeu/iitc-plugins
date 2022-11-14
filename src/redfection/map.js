@@ -61,8 +61,5 @@ export function createDefaultOverlays() {
   }
   addLayers[machinaLayer.options.name] = machinaLayer;
 
-  // compatibility
-  addLayers.Neutral = L.layerGroup();
-
   return addLayers;
 }
