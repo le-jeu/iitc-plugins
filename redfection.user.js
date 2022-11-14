@@ -447,7 +447,9 @@ function setup() {
   };
 
   const css = document.createElement('style');
-  css.textContent = '.mac { color: #f74a4a }';
+  css.textContent = 
+    '.mac { color: #f74a4a }\n'
+    + '#portalslist table tr.mac td { background-color: #a22121 }';
   document.head.append(css);
 }
 
