@@ -12,7 +12,7 @@ const buildName = process.env.BUILD;
 const buildPath = "dist";
 const pluginsPath = "src";
 
-let pluginsId = ["search-guid", "portals-pictures", "what3words", "dialogs", "player-inventory", "redfection"];
+let pluginsId = ["search-guid", "portals-pictures", "what3words", "dialogs", "player-inventory", "redfection", "highlight-customize"];
 
 export default pluginsId.map((p) => ({
   input: path.join(pluginsPath, p),
