@@ -94,6 +94,18 @@ export default function () {
           storeSettings(playerInventory.settings);
         }}
       ></input>
+
+      <label>Highlighter Color</label>
+      <input
+        type="color"
+        value={playerInventory.settings.highlightColor}
+        onchange={(ev) => {
+          playerInventory.settings.highlightColor = ev.target.value || '#ff0000';
+          storeSettings(playerInventory.settings);
+          // @ts-ignore
+          window.resetHighlightedPortals();
+        }}
+      ></input>
     </div>
   );
   return container;

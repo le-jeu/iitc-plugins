@@ -127,6 +127,7 @@ export default function () {
     keysSidebarEnable: false,
     capsuleNameMap: {},
     lvlColorEnable: true,
+    highlightColor: '#ff0000',
   };
 
   $.extend(playerInventory.settings, loadSettings());

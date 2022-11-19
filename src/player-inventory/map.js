@@ -19,10 +19,11 @@ export function injectKeys(data) {
 export function portalKeyHighlight(data) {
   const guid = data.portal.options.guid;
   if (playerInventory.inventory.keys.has(guid)) {
+    const color = playerInventory.settings.highlightColor;
     // place holder
     if (data.portal.options.team !== window.TEAM_NONE && data.portal.options.level === 0) {
       data.portal.setStyle({
-        color: 'red',
+        color: color,
         weight: 2 * Math.sqrt(window.portalMarkerScale()),
         dashArray: '',
       });
@@ -32,8 +33,8 @@ export function portalKeyHighlight(data) {
       !window.portalDetail.isFresh(guid)
     )
       // injected without intel data
-      data.portal.setStyle({ color: 'red', fillColor: 'gray' });
-    else data.portal.setStyle({ color: 'red' });
+      data.portal.setStyle({ color: color, fillColor: 'gray' });
+    else data.portal.setStyle({ color: color });
   }
 }
 

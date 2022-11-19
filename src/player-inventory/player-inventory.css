@@ -136,6 +136,10 @@
   margin-bottom: auto;
 }
 
+#dialog-inventory-opt input[type=color] {
+  height: 100%;
+}
+
 #dialog-inventory-names textarea.container {
   width: 100%;
   height: 100%;
