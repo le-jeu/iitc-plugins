@@ -1,27 +1,21 @@
-// ==UserScript==
-// @author         jaiperdu
-// @name           IITC plugin: Customized highlighter
-// @category       Highlighter
-// @version        0.2.1
-// @description    Configure you own highlighter
-// @id             highlight-customize
-// @namespace      https://github.com/IITC-CE/ingress-intel-total-conversion
-// @updateURL      https://le-jeu.github.io/iitc-plugins/highlight-customize.user.js
-// @downloadURL    https://le-jeu.github.io/iitc-plugins/highlight-customize.user.js
-// @match          https://intel.ingress.com/*
-// @grant          none
-// ==/UserScript==
 
+// ==UserScript==
+// @author        jaiperdu
+// @name          IITC plugin: Customized highlighter
+// @category      Highlighter
+// @version       0.2.1
+// @description   Configure you own highlighter
+// @id            highlight-customize
+// @namespace     https://github.com/IITC-CE/ingress-intel-total-conversion
+// @updateURL     https://le-jeu.github.io/iitc-plugins/highlight-customize.user.js
+// @downloadURL   https://le-jeu.github.io/iitc-plugins/highlight-customize.user.js
+// @match         https://intel.ingress.com/*
+// @grant         none
+// ==/UserScript==
 function wrapper(plugin_info) {
+
 // ensure plugin framework is there, even if iitc is not yet loaded
 if(typeof window.plugin !== 'function') window.plugin = function() {};
-
-//PLUGIN AUTHORS: writing a plugin outside of the IITC build environment? if so, delete these lines!!
-//(leaving them in place might break the 'About IITC' page or break update checks)
-plugin_info.buildName = 'lejeu';
-plugin_info.dateTimeVersion = '2022-08-10-183531';
-plugin_info.pluginId = 'highlight-customize';
-//END PLUGIN AUTHORS NOTE
 
 function clamp(a, min, max) {
   if (a < min) return min;
@@ -31,8 +25,10 @@ function clamp(a, min, max) {
 
 class Color {
   constructor(rgb) {
-    this.array = rgb;
+    if (rgb instanceof Array && rgb.length === 3) this.array = rgb.map((v) => +v | 0);
+    else this.array = [0, 0, 0];
   }
+
   toString() {
     return (
       '#' +
@@ -46,9 +42,11 @@ class Color {
 }
 
 function compareExpr(expr, portal) {
+  if (expr.length !== 3) return false;
   const [op, e1, e2] = expr;
   const v1 = evaluateExpr(e1, portal);
   const v2 = evaluateExpr(e2, portal);
+
   switch (op) {
     case '==':
       return v1 === v2;
@@ -63,11 +61,13 @@ function compareExpr(expr, portal) {
     case '>=':
       return v1 >= v2;
   }
+
   return false;
 }
 
 function booleanExpr(expr, portal) {
   const op = expr[0];
+
   switch (op) {
     case 'any':
     case 'or':
@@ -77,6 +77,7 @@ function booleanExpr(expr, portal) {
         }
       }
       return false;
+
     case 'all':
     case 'and':
       for (let i = 1; i < expr.length; i++) {
@@ -85,21 +86,23 @@ function booleanExpr(expr, portal) {
         }
       }
       return true;
+
     case 'not':
     case '!':
       return !evaluateExpr(expr[1], portal);
+
     case 'in': {
       const v = evaluateExpr(expr[1], portal);
       const a = evaluateExpr(expr[2], portal);
-      return a && !!a.find((a) => a === v);
+      return a instanceof Array && !!a.find((a) => a === v);
     }
-    default:
-    // unknown op
   }
+
   return false;
 }
 
 function caseExpr(expr, portal) {
+  if (expr.length < 2) return null;
   for (let i = 1; i < expr.length - 1; i += 2) {
     if (evaluateExpr(expr[i], portal)) return evaluateExpr(expr[i + 1], portal);
   }
@@ -107,41 +110,55 @@ function caseExpr(expr, portal) {
 }
 
 function matchExpr(expr, portal) {
+  if (expr.length < 2) return null;
   const v = evaluateExpr(expr[1], portal);
+
   for (let i = 2; i < expr.length - 1; i += 2) {
     if (evaluateExpr(expr[i], portal) === v) return evaluateExpr(expr[i + 1], portal);
   }
+
   return evaluateExpr(expr[expr.length - 1], portal);
 }
 
 function interpolateExpr(expr, portal) {
+  if (expr.length < 5) return 0;
+  // length should be odd, ignore last element otherwise
+  const length = expr.length & 1 ? expr.length : expr.length - 1;
+  // interpolation steps should be literal numbers
+  for (let i = 3; i < length; i += 2) if (typeof expr[i] !== 'number') return null;
   // assume expr[1] == ['linear']
   const v = evaluateExpr(expr[2], portal);
+  if (typeof v !== 'number') return null;
   if (v <= expr[3]) return evaluateExpr(expr[4], portal);
-  if (expr[expr.length - 2] < v) return evaluateExpr(expr[expr.length - 1], portal);
+  if (expr[length - 2] < v) return evaluateExpr(expr[length - 1], portal);
   let index = 5;
-  while (index < expr.length && expr[index] < v) index += 2;
-  // last item
+
+  while (index < length && expr[index] < v) index += 2; // last item
+
   const subValue = evaluateExpr(expr[index - 1], portal);
   const supValue = evaluateExpr(expr[index + 1], portal);
   return interpolate(v, expr[index - 2], expr[index], subValue, supValue);
 }
 
 function interpolate(v, inMin, inMax, outMin, outMax) {
-  if (typeof outMin === 'number') {
+  if (typeof outMin === 'number' && typeof outMax === 'number') {
     return outMin + ((outMax - outMin) * (v - inMin)) / (inMax - inMin);
   }
-  if (outMin instanceof Array) {
+
+  if (outMin instanceof Array && outMax instanceof Array) {
     const ret = [];
+
     for (let i = 0; i < outMin.length; i++) {
       ret.push(interpolate(v, inMin, inMax, outMin[i], outMax[i]));
     }
+
     return ret;
   }
-  if (outMin instanceof Color) {
+
+  if (outMin instanceof Color && outMax instanceof Color) {
     return new Color(interpolate(v, inMin, inMax, outMin.array, outMax.array));
-  }
-  // error?
+  } // error?
+
   return 0;
 }
 
@@ -152,27 +169,38 @@ function rgbExpr(expr, portal) {
 function sliceExpr(expr, portal) {
   const a = evaluateExpr(expr[1], portal);
   const s = evaluateExpr(expr[2], portal);
-  return a.slice(s);
+  const e = evaluateExpr(expr[3], portal);
+  if (a instanceof Array) return a.slice(s, e);
+  else return null;
 }
 
 function mathExpr(expr, portal) {
   const op = expr[0];
+
   if (op === '+') {
     let ret = 0;
+
     for (let i = 1; i < expr.length; i++) {
-      ret += evaluateExpr(expr[i], portal);
+      ret += +evaluateExpr(expr[i], portal);
     }
+
     return ret;
   }
+
   if (op === '*') {
     let ret = 1;
+
     for (let i = 1; i < expr.length; i++) {
-      ret *= evaluateExpr(expr[i], portal);
+      ret *= +evaluateExpr(expr[i], portal);
     }
+
     return ret;
   }
-  const v1 = evaluateExpr(expr[1], portal);
-  const v2 = evaluateExpr(expr[2], portal);
+
+  if (expr.length < 3) return null;
+  const v1 = +evaluateExpr(expr[1], portal);
+  const v2 = +evaluateExpr(expr[2], portal);
+
   switch (op) {
     case '-':
       return v1 - v2;
@@ -183,21 +211,26 @@ function mathExpr(expr, portal) {
     case '^':
       return v1 ^ v2;
   }
+
   return null;
 }
 
 /** Retrieve the value of the property `prop` of the portal */
 function getExpr(expr, portal) {
   const prop = expr[1];
+
   if (prop in portal.options) {
     return portal.options[prop];
   }
+
   if (prop in portal.options.data) {
     return portal.options.data[prop];
   }
+
   if (portal.options.data.history && prop in portal.options.data.history) {
     return portal.options.data.history[prop];
   }
+
   return null;
 }
 
@@ -206,12 +239,11 @@ function literalExpr(expr) {
 }
 
 function zoomExpr() {
+  // @ts-ignore
   return window.map.getZoom();
 }
 
-const customHighlight = {};
-
-customHighlight.operators = {
+const operators = {
   // value
   get: getExpr,
   literal: literalExpr,
@@ -253,13 +285,14 @@ customHighlight.operators = {
 function evaluateExpr(expr, portal) {
   if (expr instanceof Array) {
     const operator = expr[0];
-    if (operator in customHighlight.operators) {
-      return customHighlight.operators[operator](expr, portal);
+    if (operator in operators) {
+      return operators[operator](expr, portal);
     }
-    return null;
   }
   return expr;
 }
+
+const customHighlight = {};
 
 function computeStyle(style, portal) {
   const res = {};
@@ -276,8 +309,28 @@ function computeStyle(style, portal) {
 const exampleStyles = {
   // examples, this needs a UI to define user based.
   rainbow: {
-    color: ['interpolate', ['linear'], ['get', 'level'], 0, ['rgb', 255, 0, 0], 4, ['rgb', 0, 255, 0], 8, ['rgb', 0, 0, 255]],
-    fillColor: ['interpolate', ['linear'], ['get', 'level'], 0, ['rgb', 255, 0, 0], 4, ['rgb', 0, 255, 0], 8, ['rgb', 0, 0, 255]],
+    color: [
+      'interpolate',
+      ['linear'],
+      ['get', 'level'],
+      0,
+      ['rgb', 255, 0, 0],
+      4,
+      ['rgb', 0, 255, 0],
+      8,
+      ['rgb', 0, 0, 255],
+    ],
+    fillColor: [
+      'interpolate',
+      ['linear'],
+      ['get', 'level'],
+      0,
+      ['rgb', 255, 0, 0],
+      4,
+      ['rgb', 0, 255, 0],
+      8,
+      ['rgb', 0, 0, 255],
+    ],
   },
   transparentCaptured: {
     fillOpacity: ['case', ['get', 'captured'], 0, 0.6],
@@ -415,8 +468,7 @@ function showDialog() {
 
 const STORAGE_KEY = 'plugin-highlight-customized';
 
-/* exported setup */
-function setup() {
+function setup () {
   $('<style>')
     .prop('type', 'text/css')
     .html(
@@ -452,16 +504,28 @@ function setup() {
   });
 }
 
-setup.info = plugin_info; //add the script info data to the function as a property
 if(!window.bootPlugins) window.bootPlugins = [];
 window.bootPlugins.push(setup);
 // if IITC has already booted, immediately run the 'setup' function
 if(window.iitcLoaded && typeof setup === 'function') setup();
-} // wrapper end
+
+setup.info = plugin_info; //add the script info data to the function as a property
+}
+
 // inject code into site context
-var script = document.createElement('script');
 var info = {};
 if (typeof GM_info !== 'undefined' && GM_info && GM_info.script) info.script = { version: GM_info.script.version, name: GM_info.script.name, description: GM_info.script.description };
-script.appendChild(document.createTextNode('('+ wrapper +')('+JSON.stringify(info)+');'));
-(document.body || document.head || document.documentElement).appendChild(script);
 
+var script = document.createElement('script');
+// if on last IITC mobile, will be replaced by wrapper(info)
+var mobile = `script.appendChild(document.createTextNode('('+ wrapper +')('+JSON.stringify(info)+');'));
+(document.body || document.head || document.documentElement).appendChild(script);`;
+// detect if mobile
+if (mobile.startsWith('script')) {
+  script.appendChild(document.createTextNode('('+ wrapper +')('+JSON.stringify(info)+');'));
+  script.appendChild(document.createTextNode('//# sourceURL=iitc:///plugins/highlight-customize.js'));
+  (document.body || document.head || document.documentElement).appendChild(script);
+} else {
+  // mobile string
+  wrapper(info);
+}
