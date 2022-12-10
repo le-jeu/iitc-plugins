@@ -782,10 +782,16 @@ function setup () {
     .appendTo("head");
 
   // injection
-  window.chat.renderDivider = renderDivider;
-  window.chat.writeDataToHash = writeDataToHash;
-  window.chat.renderData = renderData;
-  window.scrollBottom = scrollBottom;
+  if (window.script_info.script.version < "0.32") {
+    console.info("comm-filter: inject chat functions from 0.32");
+    window.chat.renderDivider = renderDivider;
+    window.chat.writeDataToHash = writeDataToHash;
+    window.chat.renderData = renderData;
+    window.scrollBottom = scrollBottom;
+  } else {
+    console.info("comm-filter: replace renderPortal");
+    window.chat.renderPortal = renderPortal;
+  }
 
   // plugin
   commFilter.filters = {
@@ -796,4 +802,4 @@ function setup () {
   tabCreate();
 
   window.addHook('publicChatDataAvailable', reparsePublicData);
-};
+}
