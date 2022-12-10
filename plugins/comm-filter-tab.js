@@ -469,7 +469,6 @@ function reParseData (data) {
     date = Date.parse(date);
     if (!isNaN(date)) {
       date = +date;
-      if (date > 10*Date.now()) date = date / 1000;
       parse.septicyle = date;
     }
   }
@@ -569,22 +568,6 @@ function showDistances(guids, data) {
   }
 }
 
-function fixScheduledTime (guids, data) {
-  for (const guid of guids) {
-    const parseData = data[guid][4];
-    const log = parseData['comm-filter'];
-    if (log.type === 'battle scheduled' && log.septicyle) {
-      parseData.markup[2][1].plain =
-        window.unixTimeToString(log.septicyle) +
-        " " +
-        window.unixTimeToHHmm(log.septicyle);
-      parseData.markup[3][1].plain = ") on ";
-      data[guid][2] = renderMsgRow(parseData);
-    }
-  }
-}
-
-
 function computeHidden() {
   let hidden = [];
   for (const prop of commFilter.viruses.values()) {
@@ -683,7 +666,6 @@ function reparsePublicData () {
 
   computeMUs(public.guids, public.data);
   findVirus(public.guids, public.data);
-  fixScheduledTime(public.guids, public.data);
   showDistances(public.guids, public.data);
 
   commFilter.hidden = computeHidden();
