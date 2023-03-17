@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Share intel coordinates
-// @category       Cache
-// @version        0.1.0
+// @category       Portal Info
+// @version        0.1.1
 // @description    Create your own urls to open portals into your favorite apps
 
 // use own namespace for plugin
