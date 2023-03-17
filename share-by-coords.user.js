@@ -1,8 +1,8 @@
 // ==UserScript==
 // @author         jaiperdu
 // @name           IITC plugin: Share intel coordinates
-// @category       Cache
-// @version        0.1.0
+// @category       Portal Info
+// @version        0.1.1
 // @description    Create your own urls to open portals into your favorite apps
 // @id             share-by-coords
 // @namespace      https://github.com/IITC-CE/ingress-intel-total-conversion
@@ -19,7 +19,7 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
 //PLUGIN AUTHORS: writing a plugin outside of the IITC build environment? if so, delete these lines!!
 //(leaving them in place might break the 'About IITC' page or break update checks)
 plugin_info.buildName = 'lejeu';
-plugin_info.dateTimeVersion = '2023-03-17-085401';
+plugin_info.dateTimeVersion = '2023-03-17-100332';
 plugin_info.pluginId = 'share-by-coords';
 //END PLUGIN AUTHORS NOTE
 
