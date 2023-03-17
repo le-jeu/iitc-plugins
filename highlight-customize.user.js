@@ -3,7 +3,7 @@
 // @author        jaiperdu
 // @name          IITC plugin: Customized highlighter
 // @category      Highlighter
-// @version       0.2.1
+// @version       0.2.2
 // @description   Configure you own highlighter
 // @id            highlight-customize
 // @namespace     https://github.com/IITC-CE/ingress-intel-total-conversion
@@ -396,11 +396,24 @@ const exampleStyles = {
   custom: {},
 };
 
+function highlight(data) {
+  const highlighter = this;
+  if (!highlighter || !highlighter.name) return;
+  const style = customHighlight.settings.styles[highlighter.name];
+  if (!style) return;
+  const portal = data.portal;
+  portal.setStyle(computeStyle(style, portal));
+}
+
 function showDialog() {
   const div = document.createElement('div');
 
   const styles = customHighlight.settings.styles;
   const selected = customHighlight.settings.selected;
+
+  const menu = document.createElement('div');
+  div.appendChild(menu);
+  menu.classList.add('menu');
 
   const selectStyle = document.createElement('select');
   for (const name in styles) {
@@ -410,7 +423,18 @@ function showDialog() {
     selectStyle.appendChild(option);
   }
   if (selected.length) selectStyle.value = selected[0];
-  div.appendChild(selectStyle);
+  menu.appendChild(selectStyle);
+
+  const newDiv = document.createElement('div');
+  menu.appendChild(newDiv);
+
+  const newInput = document.createElement('input');
+  newInput.placeholder = 'custom name';
+  newDiv.append(newInput);
+
+  const newButton = document.createElement('button');
+  newButton.textContent = 'New';
+  newDiv.append(newButton);
 
   const styleInput = document.createElement('textarea');
   if (selected.length) styleInput.value = JSON.stringify(styles[selected[0]], null, 2);
@@ -428,6 +452,20 @@ function showDialog() {
       // one element for now
       selected.splice(0, selected.length, value);
     }
+  });
+
+  newButton.addEventListener('click', function () {
+    const name = newInput.value;
+    if (!name || styles[name]) {
+      alert('Invalid or already used name: ' + name);
+      return;
+    }
+    styles[name] = {};
+    localStorage[STORAGE_KEY] = JSON.stringify(customHighlight.settings);
+    styleInput.value = JSON.stringify(styles[name], null, 2);
+    // one element for now
+    selected.splice(0, selected.length, name);
+    window.addPortalHighlighter('C.H.: ' + name, { name: name, highlight: highlight });
   });
 
   const buttons = {
@@ -472,7 +510,7 @@ function setup () {
   $('<style>')
     .prop('type', 'text/css')
     .html(
-      '#dialog-plugin-custom-highlight select { display: block }\
+      '#dialog-plugin-custom-highlight .menu { display: flex; justify-content: space-between;  }\
            #dialog-plugin-custom-highlight textarea { width: 100%; min-height:250px; font-family: monospace }'
     )
     .appendTo('head');
@@ -493,15 +531,9 @@ function setup () {
   toolButton.textContent = 'Custom HL';
   toolButton.addEventListener('click', showDialog);
 
-  window.addPortalHighlighter('Custom Highlighter', function (data) {
-    const portal = data.portal;
-    for (const name of customHighlight.settings.selected) {
-      if (name in customHighlight.settings.styles) {
-        const style = customHighlight.settings.styles[name];
-        portal.setStyle(computeStyle(style, portal));
-      }
-    }
-  });
+  for (const styleName in customHighlight.settings.styles) {
+    window.addPortalHighlighter('C.H.: ' + styleName, { name: styleName, highlight: highlight });
+  }
 }
 
 if(!window.bootPlugins) window.bootPlugins = [];
