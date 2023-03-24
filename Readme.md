@@ -73,6 +73,11 @@ The plugin only stores guid, coordinates, timestamp.and optionnaly team from int
 
 ## Info&Search
 
+### [Share Coords][share-by-coords] to any url based third party
+Add button in portal info to show custom links based on the portal coordinates or portal guid. 
+
+![preview](/img/share_coords.png)
+
 ### [Portals pictures dialog][portals-pictures] for easier portal lookup on IFS decoding
 Add a dialog including the pictures of all visible portals. When clicking one, the portal is selected. The list of picture is sorting according to the number of click so you can find easily a already clicked picture.
 
@@ -111,4 +116,5 @@ Copy agent profile link on press for IITC Mobile.
 [player-inventory]: https://le-jeu.github.io/iitc-plugins/player-inventory.user.js
 [portals-pictures]: https://le-jeu.github.io/iitc-plugins/portals-pictures.user.js
 [search-guid]: https://le-jeu.github.io/iitc-plugins/search-guid.user.js
+[share-by-coords]: https://le-jeu.github.io/iitc-plugins/share-by-coords.user.js
 [what3words]: https://le-jeu.github.io/iitc-plugins/what3words.user.js
