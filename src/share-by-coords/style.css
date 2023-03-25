@@ -1,0 +1,17 @@
+#dialog-plugin-share-coords-edit .raw-url,
+#dialog-plugin-share-coords .raw-url {
+  white-space: nowrap;
+  padding: 1px 4px;
+  background: #0005
+}
+
+#dialog-plugin-share-coords table {
+  line-height: 1.4em;
+}
+#dialog-plugin-share-coords .raw-url {
+  font-size: smaller;
+}
+
+#dialog-plugin-share-coords-edit .raw-url input {
+  width: 100%
+}

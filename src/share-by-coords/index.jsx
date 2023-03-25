@@ -1,3 +1,5 @@
+import css from './style.css';
+
 const shareCoords = {};
 shareCoords.default_templates = [
   {
@@ -75,7 +77,9 @@ function editTemplates() {
         {shareCoords.settings.templates.map((t) => (
           <tr>
             <td>{t.name}</td>
-            <td className="raw-url">{t.template}</td>
+            <td className="raw-url">
+              <code>{t.template}</code>
+            </td>
             <td>
               <button
                 onclick={(e) => {
@@ -156,10 +160,7 @@ function displayDialog() {
 
 export default function () {
   window.plugin.shareCoords = shareCoords;
-  const style = <style></style>;
-  style.textContent =
-    '#dialog-plugin-share-coords .raw-url { white-space: nowrap; padding: 1px 4px; background: #0005 }' +
-    '#dialog-plugin-share-coords-edit .raw-url input { width: 100% }';
+  const style = <style>{css}</style>;
   document.head.append(style);
 
   window.addHook('portalDetailsUpdated', function () {
