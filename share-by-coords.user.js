@@ -1,45 +1,76 @@
-// ==UserScript==
-// @author         jaiperdu
-// @name           IITC plugin: Share intel coordinates
-// @category       Portal Info
-// @version        0.1.1
-// @description    Create your own urls to open portals into your favorite apps
-// @id             share-by-coords
-// @namespace      https://github.com/IITC-CE/ingress-intel-total-conversion
-// @updateURL      https://le-jeu.github.io/iitc-plugins/share-by-coords.user.js
-// @downloadURL    https://le-jeu.github.io/iitc-plugins/share-by-coords.user.js
-// @match          https://intel.ingress.com/*
-// @grant          none
-// ==/UserScript==
 
+// ==UserScript==
+// @author        jaiperdu
+// @name          IITC plugin: Share intel coordinates
+// @category      Portal Info
+// @version       0.1.2
+// @description   Create your own urls to open portals into your favorite apps
+// @id            share-by-coords
+// @namespace     https://github.com/IITC-CE/ingress-intel-total-conversion
+// @updateURL     https://le-jeu.github.io/iitc-plugins/share-by-coords.user.js
+// @downloadURL   https://le-jeu.github.io/iitc-plugins/share-by-coords.user.js
+// @match         https://intel.ingress.com/*
+// @grant         none
+// ==/UserScript==
 function wrapper(plugin_info) {
+
 // ensure plugin framework is there, even if iitc is not yet loaded
 if(typeof window.plugin !== 'function') window.plugin = function() {};
 
-//PLUGIN AUTHORS: writing a plugin outside of the IITC build environment? if so, delete these lines!!
-//(leaving them in place might break the 'About IITC' page or break update checks)
-plugin_info.buildName = 'lejeu';
-plugin_info.dateTimeVersion = '2023-03-17-100332';
-plugin_info.pluginId = 'share-by-coords';
-//END PLUGIN AUTHORS NOTE
+var css_248z = "#dialog-plugin-share-coords-edit .raw-url,\n#dialog-plugin-share-coords .raw-url {\n  white-space: nowrap;\n  padding: 1px 4px;\n  background: #0005\n}\n\n#dialog-plugin-share-coords table {\n  line-height: 1.4em;\n}\n#dialog-plugin-share-coords .raw-url {\n  font-size: smaller;\n}\n\n#dialog-plugin-share-coords-edit .raw-url input {\n  width: 100%\n}";
 
-// use own namespace for plugin
+function recursiveAppend(element, children) {
+  // cast to string to display "undefined" or "null"
+  if (children === undefined || children === null) return;
+  if (Array.isArray(children)) {
+    for (const child of children) recursiveAppend(element, child);
+  } else {
+    element.append(children);
+  }
+}
+
+function jsx(tagName, attrs) {
+  if (typeof tagName === 'function') return tagName(attrs);
+  const children = attrs.children;
+  delete attrs.children;
+  const rawHtml = attrs.rawHtml;
+  delete attrs.rawHtml;
+  const elem = document.createElement(tagName);
+  // dataset
+  if (attrs.dataset) {
+    for (const key in attrs.dataset) elem.dataset[key] = attrs.dataset[key];
+    delete attrs.dataset;
+  }
+  // events
+  for (const key in attrs) {
+    if (key.startsWith('on')) {
+      elem.addEventListener(key.slice(2), attrs[key]);
+      delete attrs[key];
+    }
+  }
+  Object.assign(elem, attrs);
+  if (rawHtml) {
+    elem.innerHTML = rawHtml;
+    return elem;
+  }
+  recursiveAppend(elem, children);
+  return elem;
+}
+
+const jsxs = jsx;
+
 const shareCoords = {};
-shareCoords.default_templates = [
-  {
-    name: 'Waze',
-    template: 'https://waze.com/ul?ll={lat},{lng}',
-  },
-  {
-    name: 'Scanner',
-    template: 'https://link.ingress.com/?link=https://intel.ingress.com/portal/{guid}',
-  },
-];
+shareCoords.default_templates = [{
+  name: 'Waze',
+  template: 'https://waze.com/ul?ll={lat},{lng}'
+}, {
+  name: 'Scanner',
+  template: 'https://link.ingress.com/?link=https://intel.ingress.com/portal/{guid}'
+}];
 shareCoords.settings = {
-  templates: Array.from(shareCoords.default_templates),
+  templates: Array.from(shareCoords.default_templates)
 };
 shareCoords.SETTINGS_KEY = 'plugin-share-coords-settings';
-
 function loadSettings() {
   try {
     const settings = JSON.parse(localStorage[shareCoords.SETTINGS_KEY]);
@@ -48,69 +79,86 @@ function loadSettings() {
     // nothing to do
   }
 }
-
 function storeSettings() {
   localStorage[shareCoords.SETTINGS_KEY] = JSON.stringify(shareCoords.settings);
 }
-
 function editTemplates() {
-  const html = L.DomUtil.create('div', 'container');
-  const portal = window.portals[window.selectedPortal];
   const obj = {
-    lat: portal.getLatLng().lat,
-    lng: portal.getLatLng().lng,
-    guid: portal.options.guid,
+    lat: 0.42,
+    lng: -17,
+    guid: '0123456789abcdef'
   };
-
-  const urls = L.DomUtil.create('table', null, html);
-  urls.innerHTML = '<tr><th>Name</th><th>Template</th><th>Action</th></tr>';
-  for (const t of shareCoords.settings.templates) {
-    const row = L.DomUtil.create('tr', null, urls);
-    const name = L.DomUtil.create('td', null, row);
-    name.textContent = t.name;
-    const template = L.DomUtil.create('td', 'raw-url', row);
-    template.textContent = t.template;
-    const action = L.DomUtil.create('td', null, row);
-    const deleteButton = L.DomUtil.create('button', null, action);
-    deleteButton.textContent = 'Delete';
-    L.DomEvent.on(deleteButton, 'click', () => {
-      const i = shareCoords.settings.templates.findIndex((tt) => t === tt);
-      if (i >= 0) shareCoords.settings.templates.splice(i, 1);
-      row.remove();
-      storeSettings();
-    });
-  }
-  const row = L.DomUtil.create('tr', null, urls);
-  const name = L.DomUtil.create('td', null, row);
-  const nameInput = L.DomUtil.create('input', null, name);
-  nameInput.placeholder = 'Some name';
-  const template = L.DomUtil.create('td', 'raw-url', row);
-  const templateInput = L.DomUtil.create('input', null, template);
-  templateInput.placeholder = 'https://example.com/path/{lat}?foo={lng}#bar-{guid}';
-  const action = L.DomUtil.create('td', null, row);
-  const addButton = L.DomUtil.create('button', null, action);
-  addButton.textContent = 'Add';
-  L.DomEvent.on(addButton, 'click', () => {
-    const name = nameInput.value;
-    const template = templateInput.value;
-    if (!name) {
-      alert('Name is empty...');
-      return;
-    }
-    try {
-      L.Util.template(template, obj);
-    } catch (e) {
-      alert('Url cannot be used correctly: ' + e);
-      return;
-    }
-    shareCoords.settings.templates.push({
-      name,
-      template,
-    });
-    storeSettings();
-    editTemplates(); // I'm lazy
+  const nameInput = jsx("input", {
+    placeholder: "Some name"
   });
-
+  const templateInput = jsx("input", {
+    placeholder: "https://example.com/path/{lat}?foo={lng}#bar-{guid}"
+  });
+  const addButton = jsx("button", {
+    onclick: () => {
+      const name = nameInput.value;
+      const template = templateInput.value;
+      if (!name) {
+        alert('Name is empty...');
+        return;
+      }
+      try {
+        L.Util.template(template, obj);
+      } catch (e) {
+        alert('Url cannot be used correctly: ' + e);
+        return;
+      }
+      shareCoords.settings.templates.push({
+        name,
+        template
+      });
+      storeSettings();
+      editTemplates(); // I'm lazy
+    },
+    children: "Add"
+  });
+  const html = jsx("div", {
+    className: "container",
+    children: jsxs("table", {
+      children: [jsxs("tr", {
+        children: [jsx("th", {
+          children: "Name"
+        }), jsx("th", {
+          children: "Template"
+        }), jsx("th", {
+          children: "Action"
+        })]
+      }), shareCoords.settings.templates.map(t => jsxs("tr", {
+        children: [jsx("td", {
+          children: t.name
+        }), jsx("td", {
+          className: "raw-url",
+          children: jsx("code", {
+            children: t.template
+          })
+        }), jsx("td", {
+          children: jsx("button", {
+            onclick: e => {
+              const i = shareCoords.settings.templates.findIndex(tt => t === tt);
+              if (i >= 0) shareCoords.settings.templates.splice(i, 1);
+              e.target.closest('tr').remove();
+              storeSettings();
+            },
+            children: "Delete"
+          })
+        })]
+      })), jsxs("tr", {
+        children: [jsx("td", {
+          children: nameInput
+        }), jsx("td", {
+          className: "raw-url",
+          children: templateInput
+        }), jsx("td", {
+          children: addButton
+        })]
+      })]
+    })
+  });
   window.dialog({
     html: html,
     id: 'plugin-share-coords-edit',
@@ -121,69 +169,87 @@ function editTemplates() {
         shareCoords.settings.templates = shareCoords.settings.templates.concat(shareCoords.default_templates);
         storeSettings();
         editTemplates();
-      },
-    },
+      }
+    }
   });
 }
-
 function displayDialog() {
-  const html = L.DomUtil.create('div', 'container');
   const portal = window.portals[window.selectedPortal];
   const obj = {
     lat: portal.getLatLng().lat,
     lng: portal.getLatLng().lng,
-    guid: portal.options.guid,
+    guid: portal.options.guid
   };
-
-  const urls = L.DomUtil.create('ul', null, html);
-  for (const t of shareCoords.settings.templates) {
-    const li = L.DomUtil.create('li', null, urls);
-    const a = L.DomUtil.create('a', null, li);
-    a.href = L.Util.template(t.template, obj);
-    a.textContent = t.name;
-    a.target = '_blank';
-    const template = L.DomUtil.create('code', 'raw-url', li);
-    template.textContent = a.href;
-  }
-
+  const html = jsx("div", {
+    className: "container",
+    children: jsx("table", {
+      children: shareCoords.settings.templates.map(t => {
+        const url = L.Util.template(t.template, obj);
+        return jsxs("tr", {
+          children: [jsx("th", {
+            children: jsx("a", {
+              href: url,
+              target: "_blank",
+              children: t.name
+            })
+          }), jsx("td", {
+            className: "raw-url",
+            children: jsx("code", {
+              children: url
+            })
+          })]
+        });
+      })
+    })
+  });
   window.dialog({
     html: html,
     id: 'plugin-share-coords',
     title: 'Share Coords',
     buttons: {
-      Edit: editTemplates,
-    },
+      Edit: editTemplates
+    }
   });
 }
-
-window.plugin.shareCoords = shareCoords;
-
-/* eslint-disable-next-line no-unused-vars */
-function setup() {
-  const style = document.createElement('style');
-  style.textContent = '#dialog-plugin-share-coords .raw-url { margin-left: 1em; }';
-  style.append('//# sourceURL=iitc://share-by-coords.css');
-  document.head.append(style);
-
-  window.addHook('portalDetailsUpdated', function () {
-    const a = L.DomUtil.create('a', null, L.DomUtil.create('aside', null, document.querySelector('.linkdetails')));
-    a.textContent = 'ShareCoords';
-    L.DomEvent.on(a, 'click', displayDialog);
+function setup () {
+  window.plugin.shareCoords = shareCoords;
+  const style = jsx("style", {
+    children: css_248z
   });
-
+  document.head.append(style);
+  window.addHook('portalDetailsUpdated', function () {
+    document.querySelector('.linkdetails').append(jsx("aside", {
+      children: jsx("a", {
+        onclick: displayDialog,
+        children: "ShareCoords"
+      })
+    }));
+  });
   loadSettings();
 }
 
-setup.info = plugin_info; //add the script info data to the function as a property
 if(!window.bootPlugins) window.bootPlugins = [];
 window.bootPlugins.push(setup);
 // if IITC has already booted, immediately run the 'setup' function
 if(window.iitcLoaded && typeof setup === 'function') setup();
-} // wrapper end
+
+setup.info = plugin_info; //add the script info data to the function as a property
+}
+
 // inject code into site context
-var script = document.createElement('script');
 var info = {};
 if (typeof GM_info !== 'undefined' && GM_info && GM_info.script) info.script = { version: GM_info.script.version, name: GM_info.script.name, description: GM_info.script.description };
-script.appendChild(document.createTextNode('('+ wrapper +')('+JSON.stringify(info)+');'));
-(document.body || document.head || document.documentElement).appendChild(script);
 
+var script = document.createElement('script');
+// if on last IITC mobile, will be replaced by wrapper(info)
+var mobile = `script.appendChild(document.createTextNode('('+ wrapper +')('+JSON.stringify(info)+');'));
+(document.body || document.head || document.documentElement).appendChild(script);`;
+// detect if mobile
+if (mobile.startsWith('script')) {
+  script.appendChild(document.createTextNode('('+ wrapper +')('+JSON.stringify(info)+');'));
+  script.appendChild(document.createTextNode('//# sourceURL=iitc:///plugins/share-by-coords.js'));
+  (document.body || document.head || document.documentElement).appendChild(script);
+} else {
+  // mobile string
+  wrapper(info);
+}
