@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Glify layer
 // @category       Map Tiles
-// @version        0.1.0
+// @version        0.1.1
 // @description    GL layer
 
 var glLayers = {};
