@@ -18,6 +18,7 @@ function onPortalSelected(data) {
 var colors = {
   E: {r: 0, g: 1, b: 0, a: .5},
   R: {r: 0, g: 0, b: 1, a: .5},
+  M: {r: 1, g: 0, b: 0, a: .5},
   N: {r: 1, g: .4, b: 0, a: .5},
 };
 
@@ -63,7 +64,7 @@ function showCache() {
           pane: "cache",
           data: portals.map((p) => [p.latE6/1e6, p.lngE6/1e6, p.guid]),
           size: 10,
-          color: (i) => colors[portals[i].team || "N"],
+          color: (i) => colors[portals[i].team] || colors['N'],
           click: (e, feature) => {
             var guid = feature[2];
             if (guid in window.portals) {
