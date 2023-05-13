@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           COMM Filter Tab
 // @category       COMM
-// @version        0.4.7
+// @version        0.4.8
 // @description    Show virus in the regular Comm and add a new tab with portal/player name filter and event type filter.
 
 
@@ -23,6 +23,7 @@ function renderPortal (portal) {
   var spanClass = "";
   if (portal.team === 'RESISTANCE') spanClass = "res-light";
   else if (portal.team === 'ENLIGHTENED') spanClass = "enl-light";
+  else if (portal.team === 'MACHINA') spanClass = "mac-light";
   return '<a onclick="'+js+'"'
     + ' title="'+portal.address+'"'
     + ' href="'+perma+'" class="help portal ' + spanClass + '">'
@@ -111,7 +112,8 @@ function renderMsgRow(data) {
   var timeCell = renderTimeCell(data.time, timeClass);
 
   var nickClasses = ['nickname'];
-  if (data.player.team === window.TEAM_ENL || data.player.team === window.TEAM_RES) nickClasses.push(window.TEAM_TO_CSS[data.player.team]);
+  if (0 <= data.player.team && data.player.team < window.TEAM_TO_CSS.length)
+    nickClasses.push(window.TEAM_TO_CSS[data.player.team]);
   // highlight things said/done by the player in a unique colour (similar to @player mentions from others in the chat text itself)
   if (data.player.name === window.PLAYER.nickname) nickClasses.push('pl_nudge_me');
   var nickCell = renderNickCell(data.player.name, nickClasses.join(' '));
@@ -171,7 +173,14 @@ function parseMsgData(data) {
   var msgToPlayer = msgAlert && (isPublic || isSecure);
 
   var time = data[1];
-  var team = data[2].plext.team === 'RESISTANCE' ? window.TEAM_RES : window.TEAM_ENL;
+  var team =
+    data[2].plext.team === 'RESISTANCE'
+      ? window.TEAM_RES
+      : data[2].plext.team === 'ENLIGHTENED'
+      ? window.TEAM_ENL
+      : data[2].plext.team === 'MACHINA'
+      ? window.TEAM_MAC
+      : window.TEAM_NONE;
   var auto = data[2].plext.plextType !== 'PLAYER_GENERATED';
   var systemNarrowcast = data[2].plext.plextType === 'SYSTEM_NARROWCAST';
 
@@ -180,17 +189,24 @@ function parseMsgData(data) {
   var nick = '';
   markup.forEach(function(ent) {
     switch (ent[0]) {
-    case 'SENDER': // user generated messages
-      nick = ent[1].plain.slice(0, -2); // cut “: ” at end
-      break;
+      case 'SENDER': // user generated messages
+        nick = ent[1].plain.slice(0, -2); // cut “: ” at end
+        break;
 
-    case 'PLAYER': // automatically generated messages
-      nick = ent[1].plain;
-      team = ent[1].team === 'RESISTANCE' ? window.TEAM_RES : window.TEAM_ENL;
-      break;
+      case 'PLAYER': // automatically generated messages
+        nick = ent[1].plain;
+        team =
+          ent[1].team === 'RESISTANCE'
+            ? window.TEAM_RES
+            : ent[1].team === 'ENLIGHTENED'
+            ? window.TEAM_ENL
+            : ent[1].team === 'MACHINA'
+            ? window.TEAM_MAC
+            : window.TEAM_NONE;
+        break;
 
-    default:
-      break;
+      default:
+        break;
     }
   });
 
@@ -412,14 +428,19 @@ function matchRule (data) {
 function reParseData (data) {
   let parse = {};
   let markup = data.markup;
-  let portals = markup.filter(ent => ent[0] === 'PORTAL').map(ent => ent[1]);
-  let numbers = markup.filter(ent => ent[0] === 'TEXT' && !isNaN(ent[1].plain)).map(ent => parseInt(ent[1].plain));
-  let atPlayers = markup.filter(ent => ent[0] === 'AT_PLAYER').map(ent =>
-    ({
+  let portals = markup.filter((ent) => ent[0] === 'PORTAL').map((ent) => ent[1]);
+  let numbers = markup.filter((ent) => ent[0] === 'TEXT' && !isNaN(ent[1].plain)).map((ent) => parseInt(ent[1].plain));
+  let atPlayers = markup
+    .filter((ent) => ent[0] === 'AT_PLAYER')
+    .map((ent) => ({
       name: ent[1].plain.slice(1),
-      team: ent[1].team === 'RESISTANCE' ? window.TEAM_RES : window.TEAM_ENL
-    })
-  );
+      team:
+        ent[1].team === 'RESISTANCE'
+          ? window.TEAM_RES
+          : ent[1].team === 'ENLIGHTENED'
+          ? window.TEAM_ENL
+          : window.TEAM_MAC,
+    }));
 
   parse.type = matchRule(data);
 
@@ -450,6 +471,13 @@ function reParseData (data) {
     const fromLatLng = L.latLng(parse.from.latE6 * 1e-6, parse.from.lngE6 * 1e-6);
     const toLatLng = L.latLng(parse.to.latE6 * 1e-6, parse.to.lngE6 * 1e-6);
     parse.dist = fromLatLng.distanceTo(toLatLng);
+  }
+  if (parse.type === 'link' && data.player.name === '__MACHINA__') {
+    for (const ent of markup) {
+      if (ent[0] === 'PORTAL') ent[1].team = 'MACHINA';
+      if (ent[0] === 'PLAYER') ent[1].team = 'MACHINA';
+      data.player.team = window.TEAM_MAC;
+    }
   }
 
   if (parse.type === 'battle result') {
@@ -578,6 +606,7 @@ function computeHidden() {
   for (const guid of window.chat._public.guids) {
     const n = window.chat._public.data[guid][3];
     const d = window.chat._public.data[guid][4]['comm-filter'];
+    const p = window.chat._public.data[guid][4];
     let show = commFilter.filters.type.includes(d.type);
 
     // special type
@@ -585,6 +614,7 @@ function computeHidden() {
     if (commFilter.filters.type.includes('chat all') && (d.type === 'chat' || d.type === 'chat faction')) show = true;
     if (commFilter.filters.type.includes('chat public') && d.type === 'chat') show = true;
     if (commFilter.filters.type.includes('virus') && d.virus) show = true;
+    if (commFilter.filters.type.includes('machina') && p.player.name === '__MACHINA__') show = true;
 
     let match = false;
     if (n.includes(commFilter.filters.text)) match = true;
@@ -739,7 +769,7 @@ function tabCreate () {
     }
   }
 
-  const events = new Set(['all', 'chat all', 'chat public', 'chat faction', 'virus']);
+  const events = new Set(['all', 'chat all', 'chat public', 'chat faction', 'virus', 'machina']);
   for (const rule of commFilter.rules) {
     events.add(rule.type);
   }
@@ -792,6 +822,9 @@ function setup () {
     console.info("comm-filter: replace renderPortal");
     window.chat.renderPortal = renderPortal;
   }
+  // use machina css
+  window.chat.renderMsgRow = renderMsgRow;
+  window.chat.parseMsgData = parseMsgData;
 
   // plugin
   commFilter.filters = {

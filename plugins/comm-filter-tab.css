@@ -28,6 +28,10 @@
   color: #2de;
 }
 
+#chat .portal.mac-light {
+  color: #e22;
+}
+
 .pl_nudge_date {
   float: unset;
   text-align: unset;
