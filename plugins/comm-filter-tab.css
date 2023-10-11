@@ -29,7 +29,11 @@
 }
 
 #chat .portal.mac-light {
-  color: #e22;
+  color: #f44;
+}
+
+#chat .MACHINA {
+  color: #ff2020;
 }
 
 .pl_nudge_date {
