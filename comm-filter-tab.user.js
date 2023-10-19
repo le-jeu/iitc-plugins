@@ -2,7 +2,7 @@
 // @author         jaiperdu
 // @name           IITC plugin: COMM Filter Tab
 // @category       COMM
-// @version        0.4.9
+// @version        0.4.10
 // @description    Show virus in the regular Comm and add a new tab with portal/player name filter and event type filter.
 // @id             comm-filter-tab
 // @namespace      https://github.com/IITC-CE/ingress-intel-total-conversion
@@ -19,7 +19,7 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
 //PLUGIN AUTHORS: writing a plugin outside of the IITC build environment? if so, delete these lines!!
 //(leaving them in place might break the 'About IITC' page or break update checks)
 plugin_info.buildName = 'lejeu';
-plugin_info.dateTimeVersion = '2023-10-11-114146';
+plugin_info.dateTimeVersion = '2023-10-19-070329';
 plugin_info.pluginId = 'comm-filter-tab';
 //END PLUGIN AUTHORS NOTE
 
@@ -537,8 +537,11 @@ function findVirus(guids, data) {
   }
   for (const [guid, prop] of commFilter.viruses) {
     const parseData = data[guid][4];
-    parseData.markup[1][1].plain = 'destroyed ' + (prop.guids.length + 1) + ' Resonators on ';
-    data[guid][2] = renderMsgRow(parseData);
+    const id = parseData.markup.findIndex((m) => m[0] === 'TEXT' && m[1].plain.startsWith(' destroyed '));
+    if (id >= 0) {
+      parseData.markup[id][1].plain = ' destroyed ' + (prop.guids.length + 1) + ' Resonators on ';
+      data[guid][2] = renderMsgRow(parseData);
+    }
   }
 }
 
@@ -557,8 +560,12 @@ function computeMUs(guids, data) {
         agent: tot,
         all: sum,
       };
-      if (parseData.markup.length === 6) parseData.markup.push('');
-      parseData.markup[6] = ['TEXT', { plain: ' (' + tot.toLocaleString('en-US') + '/' + sum.toLocaleString('en-US') + ')' }];
+      let id = parseData.markup.findIndex((m) => m[0] === 'TEXT' && m[1].type === 'mus_total');
+      if (id < 0) {
+        id = parseData.markup.length;
+        parseData.markup.push(['TEXT', { plain: '', type: 'mus_total' }]);
+      }
+      parseData.markup[id][1].plain = ' (' + tot.toLocaleString('en-US') + '/' + sum.toLocaleString('en-US') + ')';
       data[guid][2] = renderMsgRow(parseData);
     }
   }
@@ -568,7 +575,7 @@ function showDistances(guids, data) {
   for (const guid of guids) {
     const parseData = data[guid][4];
     const log = parseData['comm-filter'];
-    if (log.type === 'link' && log.dist && parseData.markup.length === 5) {
+    if (log.type === 'link' && log.dist && parseData.markup.findIndex((m) => m[0] === 'TEXT' && m[1].type === 'length') < 0) {
       parseData.markup.push([
         'TEXT',
         {
@@ -576,6 +583,7 @@ function showDistances(guids, data) {
             ' (' +
             (log.dist < 1000 ? log.dist.toFixed(0) + 'm' : log.dist < 100 ? (log.dist / 1000).toFixed(2) + 'km' : (log.dist / 1000).toFixed(0) + 'km') +
             ')',
+          type: 'length'
         },
       ]);
       data[guid][2] = renderMsgRow(parseData);
