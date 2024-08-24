@@ -192,6 +192,17 @@ function mathExpr(expr, portal) {
   return null;
 }
 
+function pathExpr(expr, portal) {
+  const path = expr[1];
+  const obj = evaluateExpr(expr[2], portal);
+
+  if (typeof(obj) === 'object')
+    return obj[path];
+
+  return null;
+}
+
+
 /** Retrieve the value of the property `prop` of the portal */
 function getExpr(expr, portal) {
   const prop = expr[1];
@@ -257,6 +268,8 @@ const operators = {
   rgb: rgbExpr,
   // array
   slice: sliceExpr,
+  // obj/array
+  path: pathExpr,
 };
 
 export function evaluateExpr(expr, portal) {
