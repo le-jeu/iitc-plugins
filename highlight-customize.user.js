@@ -216,8 +216,8 @@ function mathExpr(expr, portal) {
 }
 
 function pathExpr(expr, portal) {
-  const path = expr[0];
-  const obj = evaluateExpr(expr[1], portal);
+  const path = expr[1];
+  const obj = evaluateExpr(expr[2], portal);
 
   if (typeof(obj) === 'object')
     return obj[path];
