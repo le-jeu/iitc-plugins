@@ -3,7 +3,7 @@
 // @author        jaiperdu
 // @name          IITC plugin: Customized highlighter
 // @category      Highlighter
-// @version       0.2.2
+// @version       0.2.3
 // @description   Configure you own highlighter
 // @id            highlight-customize
 // @namespace     https://github.com/IITC-CE/ingress-intel-total-conversion
@@ -215,6 +215,17 @@ function mathExpr(expr, portal) {
   return null;
 }
 
+function pathExpr(expr, portal) {
+  const path = expr[0];
+  const obj = evaluateExpr(expr[1], portal);
+
+  if (typeof(obj) === 'object')
+    return obj[path];
+
+  return null;
+}
+
+
 /** Retrieve the value of the property `prop` of the portal */
 function getExpr(expr, portal) {
   const prop = expr[1];
@@ -280,6 +291,8 @@ const operators = {
   rgb: rgbExpr,
   // array
   slice: sliceExpr,
+  // obj/array
+  path: pathExpr,
 };
 
 function evaluateExpr(expr, portal) {
