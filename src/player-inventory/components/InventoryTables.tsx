@@ -82,7 +82,7 @@ export default function ({ inventory }: { inventory: Inventory }) {
         const typeName = getItemName(capsule.type);
         const size = capsule.size;
 
-        const head = <b>{`${typeName}: ${displayName} (${size})`}</b>;
+        const head = <b dataset={{ capsule: name }}>{`${typeName}: ${displayName} (${size})`}</b>;
 
         container.append(
           <>

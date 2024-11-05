@@ -15,7 +15,7 @@ import InventoryTables from './components/InventoryTables';
 // eslint-disable-next-line no-unused-vars
 import Options from './components/Options';
 
-function buildInventoryHTML(inventory) {
+function buildInventoryHTML(inventory, capsule) {
   const container = <InventoryTables inventory={inventory} />;
 
   $(container).accordion({
@@ -23,6 +23,13 @@ function buildInventoryHTML(inventory) {
     heightStyle: 'fill',
     collapsible: true,
   });
+
+  if (capsule) {
+    let idx =
+      Array.from(container.children).filter((e) => e.tagName == 'B').findIndex((e) => e.dataset['capsule'] == capsule);
+    if (idx >= 0)
+      $(container).accordion("option", "active", idx);
+  }
 
   return container;
 }
@@ -41,8 +48,8 @@ function getTitle() {
   return title;
 }
 
-function displayInventory(inventory) {
-  const container = buildInventoryHTML(inventory);
+function displayInventory(inventory, capsule) {
+  const container = buildInventoryHTML(inventory, capsule);
 
   playerInventory.dialog = window.dialog({
     title: getTitle(),
@@ -195,7 +202,7 @@ export default function () {
       const key = playerInventory.inventory.keys.get(data.guid);
       const mapping = playerInventory.settings.capsuleNameMap;
       const capsules = Array.from(key.count.keys()).map((name) => (
-        <div title={mapping[name] ? `${mapping[name]} [${name}]` : name}>
+        <div title={mapping[name] ? `${mapping[name]} [${name}]` : name} onclick={() => displayInventory(playerInventory.inventory, name)}>
           {mapping[name] ? `${mapping[name]}` : name}
         </div>
       ));
