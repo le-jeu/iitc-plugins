@@ -95,17 +95,33 @@ function setupDisplay() {
     playerInventory.pane.style.display = 'none';
     document.body.append(playerInventory.pane);
 
-    document.getElementById('toolbox').append(
-      <a title="Inventory options" onclick={displayOpt}>
-        Inventory Opt
-      </a>
-    );
+    if (window.script_info.script.version < '0.38') {
+      document.getElementById('toolbox').append(
+        <a title="Inventory options" onclick={displayOpt}>
+          Inventory Opt
+        </a>
+      );
+    } else {
+      window.IITC.toolbox.addButton({
+        label: 'Inventory Opt',
+        title: 'Inventory options',
+        action: displayOpt
+      });
+    }
   } else {
-    document.getElementById('toolbox').append(
-      <a title="Show inventory" onclick={() => displayInventory(playerInventory.inventory)}>
-        Inventory
-      </a>
-    );
+    if (window.script_info.script.version < '0.38') {
+      document.getElementById('toolbox').append(
+        <a title="Show inventory" onclick={() => displayInventory(playerInventory.inventory)}>
+          Inventory
+        </a>
+      );
+    } else {
+      window.IITC.toolbox.addButton({
+        label: 'Inventory',
+        title: 'Show inventory',
+        action: () => displayInventory(playerInventory.inventory)
+      });
+    }
   }
 }
 
@@ -187,8 +203,8 @@ export default function () {
       document.getElementById('randdetails').append(
         <tr className="inventory-details">
           <td>{total}</td>
-          <td>Keys</td>
-          <td>Capsules</td>
+          <th>Keys</th>
+          <th>Capsules</th>
           <td>{capsules}</td>
         </tr>
       );
