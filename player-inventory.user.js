@@ -3,7 +3,7 @@
 // @author        jaiperdu
 // @name          IITC plugin: Player Inventory
 // @category      Info
-// @version       0.4.4
+// @version       0.4.5
 // @description   View inventory and highlight portals with keys at any zoom. Can be used with the official plugins Keys and Keys on map to show the number of keys on the map.
 // @id            player-inventory
 // @namespace     https://github.com/IITC-CE/ingress-intel-total-conversion
@@ -1249,6 +1249,9 @@ function InventoryTables ({
         const typeName = getItemName(capsule.type);
         const size = capsule.size;
         const head = jsx("b", {
+          dataset: {
+            capsule: name
+          },
           children: `${typeName}: ${displayName} (${size})`
         });
         container.append(jsxs(Fragment, {
@@ -1446,7 +1449,7 @@ function displayNameMapping() {
   });
 }
 
-function buildInventoryHTML(inventory) {
+function buildInventoryHTML(inventory, capsule) {
   const container = jsx(InventoryTables, {
     inventory: inventory
   });
@@ -1455,6 +1458,10 @@ function buildInventoryHTML(inventory) {
     heightStyle: 'fill',
     collapsible: true
   });
+  if (capsule) {
+    let idx = Array.from(container.children).filter(e => e.tagName == 'B').findIndex(e => e.dataset['capsule'] == capsule);
+    if (idx >= 0) $(container).accordion("option", "active", idx);
+  }
   return container;
 }
 function fillPane(inventory) {
@@ -1469,8 +1476,8 @@ function getTitle() {
   }
   return title;
 }
-function displayInventory(inventory) {
-  const container = buildInventoryHTML(inventory);
+function displayInventory(inventory, capsule) {
+  const container = buildInventoryHTML(inventory, capsule);
   playerInventory.dialog = window.dialog({
     title: getTitle(),
     id: 'inventory',
@@ -1519,17 +1526,33 @@ function setupDisplay() {
     });
     playerInventory.pane.style.display = 'none';
     document.body.append(playerInventory.pane);
-    document.getElementById('toolbox').append(jsx("a", {
-      title: "Inventory options",
-      onclick: displayOpt,
-      children: "Inventory Opt"
-    }));
+    if (window.script_info.script.version < '0.38') {
+      document.getElementById('toolbox').append(jsx("a", {
+        title: "Inventory options",
+        onclick: displayOpt,
+        children: "Inventory Opt"
+      }));
+    } else {
+      window.IITC.toolbox.addButton({
+        label: 'Inventory Opt',
+        title: 'Inventory options',
+        action: displayOpt
+      });
+    }
   } else {
-    document.getElementById('toolbox').append(jsx("a", {
-      title: "Show inventory",
-      onclick: () => displayInventory(playerInventory.inventory),
-      children: "Inventory"
-    }));
+    if (window.script_info.script.version < '0.38') {
+      document.getElementById('toolbox').append(jsx("a", {
+        title: "Show inventory",
+        onclick: () => displayInventory(playerInventory.inventory),
+        children: "Inventory"
+      }));
+    } else {
+      window.IITC.toolbox.addButton({
+        label: 'Inventory',
+        title: 'Show inventory',
+        action: () => displayInventory(playerInventory.inventory)
+      });
+    }
   }
 }
 
@@ -1595,15 +1618,16 @@ function setup () {
       const mapping = playerInventory.settings.capsuleNameMap;
       const capsules = Array.from(key.count.keys()).map(name => jsx("div", {
         title: mapping[name] ? `${mapping[name]} [${name}]` : name,
+        onclick: () => displayInventory(playerInventory.inventory, name),
         children: mapping[name] ? `${mapping[name]}` : name
       }));
       document.getElementById('randdetails').append(jsxs("tr", {
         className: "inventory-details",
         children: [jsx("td", {
           children: total
-        }), jsx("td", {
+        }), jsx("th", {
           children: "Keys"
-        }), jsx("td", {
+        }), jsx("th", {
           children: "Capsules"
         }), jsx("td", {
           children: capsules
