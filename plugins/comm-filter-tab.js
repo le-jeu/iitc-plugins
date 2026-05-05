@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           COMM Filter Tab
 // @category       COMM
-// @version        0.4.13
+// @version        0.4.14
 // @description    Show virus in the regular Comm and add a new tab with portal/player name filter and event type filter.
 
 // todo list
@@ -543,14 +543,8 @@ window.plugin.commFilter = commFilter;
 function setup() {
   $('<style>').prop('type', 'text/css').html('@include_string:comm-filter-tab.css@').appendTo('head');
 
-  // injection
-  if (window.script_info.script.version < '0.34') {
-    alert('comm-filter: require IITC 0.34+');
-    return;
-  } else {
-    console.info('comm-filter: replace renderPortal');
-    window.chat.renderPortal = renderPortal;
-  }
+  console.info('comm-filter: replace renderPortal');
+  window.chat.renderPortal = renderPortal;
 
   // plugin
   commFilter.filters = {
