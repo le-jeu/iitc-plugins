@@ -102,33 +102,17 @@ function setupDisplay() {
     playerInventory.pane.style.display = 'none';
     document.body.append(playerInventory.pane);
 
-    if (window.script_info.script.version < '0.38') {
-      document.getElementById('toolbox').append(
-        <a title="Inventory options" onclick={displayOpt}>
-          Inventory Opt
-        </a>
-      );
-    } else {
-      window.IITC.toolbox.addButton({
-        label: 'Inventory Opt',
-        title: 'Inventory options',
-        action: displayOpt
-      });
-    }
+    window.IITC.toolbox.addButton({
+      label: 'Inventory Opt',
+      title: 'Inventory options',
+      action: displayOpt
+    });
   } else {
-    if (window.script_info.script.version < '0.38') {
-      document.getElementById('toolbox').append(
-        <a title="Show inventory" onclick={() => displayInventory(playerInventory.inventory)}>
-          Inventory
-        </a>
-      );
-    } else {
-      window.IITC.toolbox.addButton({
-        label: 'Inventory',
-        title: 'Show inventory',
-        action: () => displayInventory(playerInventory.inventory)
-      });
-    }
+    window.IITC.toolbox.addButton({
+      label: 'Inventory',
+      title: 'Show inventory',
+      action: () => displayInventory(playerInventory.inventory)
+    });
   }
 }
 
