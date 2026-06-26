@@ -1,7 +1,7 @@
 // @author         jaiperdu
 // @name           Ingress Icons
 // @category       Appearance
-// @version        0.1.3
+// @version        0.1.4
 // @description    Bring ameba64/ingress-items icons into IITC
 
 function getModList(d) {
